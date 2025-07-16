@@ -2,7 +2,7 @@
 
     <!-- 右侧聊天界面 -->
     <div class="chat-interface-container">
-        <div v-if="selectedChatId" class="chat-interface">
+        <div v-if="chatStore.selectedChatId" class="chat-interface">
             <!-- 聊天头部 -->
             <div class="chat-header">
                 <div class="chat-user-info">
@@ -15,7 +15,25 @@
                     </div>
                 </div>
                 <div class="chat-actions">
-                    <button class="action-btn" title="更多">⋯</button>
+                    <div class="more-menu-container">
+                        <button class="action-btn" title="更多" @click="showMore()">⋯</button>
+                        <transition name="menu-fade">
+                            <div v-if="showMoreMenu" class="more-menu" @click.stop>
+                                <div class="menu-item" @click="editRemark">
+                                    <span class="menu-icon">✏️</span>
+                                    <span>修改备注</span>
+                                </div>
+                                <div class="menu-item" @click="deleteChatHistory">
+                                    <span class="menu-icon">🗑️</span>
+                                    <span>删除聊天记录</span>
+                                </div>
+                                <div class="menu-item danger" @click="deleteFriend">
+                                    <span class="menu-icon">❌</span>
+                                    <span>删除好友</span>
+                                </div>
+                            </div>
+                        </transition>
+                    </div>
                 </div>
             </div>
 
@@ -43,11 +61,15 @@
                     <button class="tool-btn" title="图片" @click="showPic()">🖼️</button>
                 </div>
                 <div class="input-area">
-                    <textarea v-model="messageInput" placeholder="输入消息..." class="message-input"
-                        @keydown.enter.prevent="sendMessage" @keydown.ctrl.enter="addNewLine"></textarea>
-                    <button class="send-btn" :disabled="!messageInput.trim()" @click="sendMessage">
-                        发送
-                    </button>
+                    <div class="input-wrapper">
+                        <textarea v-model="messageInput" placeholder="输入消息..." class="message-input"
+                            @keydown="handleKeydown" ref="messageTextarea"></textarea>
+                            <transition name="gentle">
+                              <div class="send-btn" v-show="messageInput.trim()" @click="sendMessage">
+                                发送
+                              </div>
+                            </transition>
+                    </div>
                 </div>
             </div>
         </div>
@@ -59,49 +81,54 @@
             <p>选择一个聊天开始对话</p>
         </div>
     </div>
+    
+    <!-- 确认弹窗组件 -->
+    <CustomDialog
+      v-model:visible="showConfirmDialog"
+      title="确认"
+      type="confirm"
+      :message="confirmMessage"
+      :show-cancel="true"
+      cancel-text="取消"
+      confirm-text="确定"
+      @confirm="handleConfirmDialogConfirm"
+      @cancel="closeConfirmDialog"
+      @close="closeConfirmDialog"
+    />
 </template>
 
 <script setup>
-import {ref, computed, nextTick} from 'vue'
-import avatar from '../assets/images/gjj.jpg'
+import {ref, computed, nextTick, watch, onUnmounted} from 'vue'
+import { useChatStore } from '../store/chat'
+import { useUserStore } from '../store/user'
+import CustomDialog from './customDialog.vue'
 
-// 定义props来接收父组件传递的数据
-const props = defineProps({
-  selectedChatId: {
-    type: Number,
-    default: null
-  },
-  chatList: {
-    type: Array,
-    default: () => []
-  },
-  messages: {
-    type: Object,
-    default: () => ({})
-  }
-})
-
-// 定义emits来向父组件发送事件
-const emit = defineEmits(['update-messages', 'update-chat-list'])
+// 使用Chat Store
+const chatStore = useChatStore()
+const userStore = useUserStore()
 
 // 本地响应式数据
 const messageInput = ref('')
 const messagesContainer = ref(null)
-const userProfile = ref({
-  name: 'GJJ',
-  avatar: avatar
-})
+const messageTextarea = ref(null)
+const showMoreMenu = ref(false)
+const userProfile = computed(() => userStore.userProfile)
+
+// 确认弹窗相关数据
+const showConfirmDialog = ref(false)
+const confirmMessage = ref('')
+const confirmCallback = ref(null)
 
 const currentChat = computed(() => {
-  return props.chatList.find(chat => chat.id === props.selectedChatId)
+  return chatStore.currentChat
 })
 
 const currentMessages = computed(() => {
-  return props.messages[props.selectedChatId] || []
+  return chatStore.currentMessages
 })
 
-function sendMessage() {
-  if (!messageInput.value.trim() || !props.selectedChatId) return
+function sendMessage() {  
+  if (!messageInput.value.trim() || !chatStore.selectedChatId) return
   
   const newMessage = {
     id: Date.now(),
@@ -109,23 +136,23 @@ function sendMessage() {
     content: messageInput.value.trim(),
     time: new Date(),
     isOwn: true,
-    avatar: userProfile.value.avatar
+    avatar: userProfile.value.avatar,
+    name: userProfile.value.name
   }
   
-  // 通过emit向父组件发送更新消息的事件
-  emit('update-messages', {
-    chatId: props.selectedChatId,
-    message: newMessage
-  })
+  // 直接使用store方法添加消息
+  chatStore.addMessage(chatStore.selectedChatId, newMessage)
   
-  // 通过emit向父组件发送更新聊天列表的事件
-  emit('update-chat-list', {
-    chatId: props.selectedChatId,
-    lastMessage: newMessage.content,
-    lastTime: newMessage.time
-  })
+  // 直接使用store方法更新聊天列表
+  chatStore.updateChatLastMessage(chatStore.selectedChatId, newMessage.content, newMessage.time)
   
   messageInput.value = ''
+  // 重置textarea高度
+  nextTick(() => {
+    if (messageTextarea.value) {
+      messageTextarea.value.style.height = 'auto'
+    }
+  })
   scrollToBottom()
 }
 
@@ -152,9 +179,53 @@ function formatTime(time) {
   }
 }
 
-function addNewLine() {
-  messageInput.value += '\n'
+function handleKeydown(event) {
+  if (event.key === 'Enter') {
+    if (event.shiftKey) {
+      // Shift+Enter: 换行，不阻止默认行为
+      return
+    } else {
+      // 普通Enter: 发送消息
+      event.preventDefault()
+      sendMessage()
+    }
+  }
 }
+
+function autoResize() {
+  if (messageTextarea.value) {
+    messageTextarea.value.style.height = 'auto'
+    messageTextarea.value.style.height = messageTextarea.value.scrollHeight + 'px'
+  }
+}
+
+// 监听输入内容变化，自动调整高度
+watch(messageInput, () => {
+  nextTick(() => {
+    autoResize()
+  })
+})
+
+// 监听选中聊天变化，自动聚焦输入框
+watch(() => chatStore.selectedChatId, (newChatId) => {
+  if (newChatId) {
+    nextTick(() => {
+      focusInput()
+    })
+  }
+})
+
+// 聚焦输入框的方法
+function focusInput() {
+  if (messageTextarea.value) {
+    messageTextarea.value.focus()
+  }
+}
+
+// 暴露方法给父组件
+defineExpose({
+  focusInput
+})
 
 function showEmo(){
     console.log("show Emo")
@@ -167,6 +238,79 @@ function showFile(){
 function showPic(){
     console.log("show Pic")
 }
+
+function showMore() {
+    showMoreMenu.value = !showMoreMenu.value
+}
+
+function editRemark() {
+    console.log('修改备注')
+    // TODO: 实现修改备注功能
+    showMoreMenu.value = false
+}
+
+function deleteChatHistory() {
+    console.log('删除聊天记录')
+    showConfirm('确定要删除所有聊天记录吗？此操作不可恢复。', () => {
+        // 清空当前聊天的消息
+        // TODO: 实现清空聊天记录功能
+        console.log('清空聊天记录')
+    })
+    showMoreMenu.value = false
+}
+
+function deleteFriend() {
+    console.log('删除好友')
+    showConfirm('确定要删除该好友吗？删除后将无法恢复聊天记录。', () => {
+        // 删除好友逻辑
+        // TODO: 实现删除好友功能
+        console.log('删除好友')
+    })
+    showMoreMenu.value = false
+}
+
+// 显示确认弹窗
+function showConfirm(message, callback) {
+  confirmMessage.value = message
+  confirmCallback.value = callback
+  showConfirmDialog.value = true
+}
+
+// 关闭确认弹窗
+function closeConfirmDialog() {
+  showConfirmDialog.value = false
+  confirmMessage.value = ''
+  confirmCallback.value = null
+}
+
+// 处理确认弹窗的确认事件
+function handleConfirmDialogConfirm() {
+  if (confirmCallback.value) {
+    confirmCallback.value()
+  }
+  closeConfirmDialog()
+}
+
+// 点击其他地方关闭菜单
+function handleClickOutside(event) {
+    if (!event.target.closest('.more-menu-container')) {
+        showMoreMenu.value = false
+    }
+}
+
+// 监听全局点击事件
+watch(showMoreMenu, (newVal) => {
+    if (newVal) {
+        document.addEventListener('click', handleClickOutside)
+    } else {
+        document.removeEventListener('click', handleClickOutside)
+    }
+})
+
+// 组件卸载时清理事件监听
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped>
@@ -227,6 +371,10 @@ function showPic(){
   gap: 10px;
 }
 
+.more-menu-container {
+  position: relative;
+}
+
 .action-btn {
   width: 40px;
   height: 40px;
@@ -241,6 +389,86 @@ function showPic(){
 .action-btn:hover {
   background: rgba(102, 126, 234, 0.2);
   transform: translateY(-2px);
+}
+
+.more-menu {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  min-width: 160px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.menu-item.danger:hover {
+  background: rgba(244, 67, 54, 0.05);
+  color: #f44336;
+}
+
+.menu-icon {
+  margin-right: 10px;
+  font-size: 14px;
+}
+
+.menu-item span:last-child {
+  font-size: 14px;
+  color: #333;
+}
+
+.menu-item.danger span:last-child {
+  color: inherit;
+}
+
+/* 菜单动画 */
+.menu-fade-enter-active {
+  animation: menuSlideIn 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.menu-fade-leave-active {
+  animation: menuSlideOut 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes menuSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes menuSlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
 }
 
 .messages-container {
@@ -301,8 +529,10 @@ function showPic(){
 }
 
 .input-container {
-  padding: 20px;
+  height: 30%;
+  padding: 30px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
+  width: 100%;
 }
 
 .input-tools {
@@ -328,15 +558,22 @@ function showPic(){
 
 .input-area {
   display: flex;
-  gap: 10px;
+  align-items: flex-end;
+}
+
+.input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
   align-items: flex-end;
 }
 
 .message-input {
-  flex: 1;
+  width: 100%;
   min-height: 40px;
-  max-height: 120px;
+  max-height: 140px;
   padding: 12px 15px;
+  padding-right: 80px;
   border: 2px solid transparent;
   border-radius: 20px;
   background: rgba(240, 240, 240, 0.8);
@@ -346,6 +583,12 @@ function showPic(){
   font-size: 14px;
   line-height: 1.4;
   transition: all 0.3s ease;
+  overflow: auto;
+  box-sizing: border-box;
+
+    /* 隐藏滚动条（适用于大多数现代浏览器） */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
 }
 
 .message-input:focus {
@@ -354,25 +597,39 @@ function showPic(){
   box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
 }
 
+.message-input::-webkit-scrollbar {
+  display: none;
+}
+
 .send-btn {
-  padding: 12px 20px;
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 8px 16px;
   background: linear-gradient(45deg, #667eea, #764ba2);
   color: white;
   border: none;
-  border-radius: 20px;
+  border-radius: 15px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 12px;
   transition: all 0.3s ease;
+  z-index: 1;
 }
 
-.send-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+.send-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
 }
 
-.send-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* 进入时的动画 */
+.gentle-enter-active {
+  animation: gentleScaleUp 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* 离开时的动画 */
+.gentle-leave-active {
+  animation: gentleScaleDown 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 /* 空聊天状态 */
@@ -399,6 +656,28 @@ function showPic(){
 .empty-chat p {
   margin: 0;
   font-size: 14px;
+}
+
+@keyframes gentleScaleUp {
+  from {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes gentleScaleDown {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.8);
+    opacity: 0;
+  }
 }
 
 @media (max-width: 768px) {

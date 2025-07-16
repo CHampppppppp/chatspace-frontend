@@ -7,14 +7,11 @@
     <div class="my-ai-list-container">
       <div class="my-ai-list-header">
         <h2>我的AI</h2>
-        <div class="search-box">
-          <input 
-            v-model="searchQuery" 
-            type="text" 
-            placeholder="搜索我的AI..."
-            class="search-input"
-          />
-        </div>
+        <SearchBox
+          v-model="searchQuery"
+          placeholder="搜索我的AI..."
+          @search="handleSearch"
+        />
       </div>
       
       <div class="my-ai-list-content">
@@ -157,13 +154,41 @@
       </div>
     </div>
   </div>
+  
+  <!-- 提示弹窗组件 -->
+  <CustomDialog
+    v-model:visible="showAlertDialog"
+    :title="alertType === 'success' ? '成功' : alertType === 'error' ? '错误' : '提示'"
+    :type="alertType"
+    :message="alertMessage"
+    :show-cancel="false"
+    confirm-text="确定"
+    @confirm="closeAlertDialog"
+    @close="closeAlertDialog"
+  />
+
+  <!-- 确认弹窗组件 -->
+  <CustomDialog
+    v-model:visible="showConfirmDialog"
+    title="确认"
+    type="confirm"
+    :message="confirmMessage"
+    :show-cancel="true"
+    cancel-text="取消"
+    confirm-text="确定"
+    @confirm="handleConfirmDialogConfirm"
+    @cancel="closeConfirmDialog"
+    @close="closeConfirmDialog"
+  />
 </template>
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '../../store/user'
+import CustomDialog from '../../components/customDialog.vue'
 import ToolBar from '../../components/toolBar.vue'
-import avatar from '../../assets/images/youcai.jpg'
+import SearchBox from '../../components/SearchBox.vue'
 
 const router = useRouter()
 
@@ -176,10 +201,16 @@ const toolBarRef = ref(null)
 const showCreateDialog = ref(false)
 const editingAI = ref(null)
 
-const userProfile = ref({
-  name: 'GJJ',
-  avatar: avatar
-})
+// 弹窗相关数据
+const showAlertDialog = ref(false)
+const alertMessage = ref('')
+const alertType = ref('warning')
+const showConfirmDialog = ref(false)
+const confirmMessage = ref('')
+const confirmCallback = ref(null)
+
+const userStore = useUserStore()
+const userProfile = computed(() => userStore.userProfile)
 
 const aiForm = ref({
   name: '',
@@ -254,13 +285,13 @@ function editAI(ai) {
 }
 
 function deleteAI(aiId) {
-  if (confirm('确定要删除这个AI助手吗？')) {
+  showConfirm('确定要删除这个AI助手吗？', () => {
     myAIList.value = myAIList.value.filter(ai => ai.id !== aiId)
     if (selectedAIId.value === aiId) {
       selectedAIId.value = null
     }
     delete messages.value[aiId]
-  }
+  })
 }
 
 function closeCreateDialog() {
@@ -276,7 +307,7 @@ function closeCreateDialog() {
 
 function saveAI() {
   if (!aiForm.value.name.trim()) {
-    alert('请输入AI名称')
+    showAlert('请输入AI名称')
     return
   }
   
@@ -296,6 +327,42 @@ function saveAI() {
   }
   
   closeCreateDialog()
+}
+
+// 显示提示弹窗
+function showAlert(message, type = 'warning') {
+  alertMessage.value = message
+  alertType.value = type
+  showAlertDialog.value = true
+}
+
+// 关闭提示弹窗
+function closeAlertDialog() {
+  showAlertDialog.value = false
+  alertMessage.value = ''
+  alertType.value = 'warning'
+}
+
+// 显示确认弹窗
+function showConfirm(message, callback) {
+  confirmMessage.value = message
+  confirmCallback.value = callback
+  showConfirmDialog.value = true
+}
+
+// 关闭确认弹窗
+function closeConfirmDialog() {
+  showConfirmDialog.value = false
+  confirmMessage.value = ''
+  confirmCallback.value = null
+}
+
+// 处理确认弹窗的确认事件
+function handleConfirmDialogConfirm() {
+  if (confirmCallback.value) {
+    confirmCallback.value()
+  }
+  closeConfirmDialog()
 }
 
 function sendMessage() {

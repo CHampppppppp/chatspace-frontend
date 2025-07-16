@@ -11,11 +11,11 @@
             </div>
           </div>
           <input 
-            ref="avatarInput" 
-            type="file" 
-            accept="image/*" 
-            @change="handleAvatarChange" 
-            style="display: none"
+          ref="avatarInput" 
+          type="file" 
+          accept="image/*" 
+          @change="handleAvatarChange" 
+          style="display: none"
           />
         </div>
         <div class="user-basic">
@@ -55,7 +55,7 @@
             <div class="form-group">
               <label>用户名</label>
               <input 
-                v-model="userInfo.username" 
+                v-model="editableUserInfo.username" 
                 type="text" 
                 placeholder="请输入用户名"
                 class="form-input"
@@ -64,7 +64,7 @@
             <div class="form-group">
               <label>邮箱</label>
               <input 
-                v-model="userInfo.email" 
+                v-model="editableUserInfo.email" 
                 type="email" 
                 placeholder="请输入邮箱"
                 class="form-input"
@@ -73,7 +73,7 @@
             <div class="form-group">
               <label>手机号</label>
               <input 
-                v-model="userInfo.phone" 
+                v-model="editableUserInfo.phone" 
                 type="tel" 
                 placeholder="请输入手机号"
                 class="form-input"
@@ -82,7 +82,7 @@
             <div class="form-group">
               <label>生日</label>
               <input 
-                v-model="userInfo.birthday" 
+                v-model="editableUserInfo.birthday" 
                 type="date" 
                 class="form-input"
               />
@@ -132,11 +132,13 @@
         </div>
       </div>
     </div>
+    <button class="close-btn" @click="handleClose">×</button>
+
 
     <!-- 头像裁剪弹窗 -->
     <CustomDialog
       v-model:visible="showAvatarCrop"
-      title="裁剪头像"
+      title="确认头像"
       type="message"
       :show-actions="true"
       :show-cancel="true"
@@ -181,22 +183,34 @@
 </template>
 
 <script setup>
-import { ref, reactive, nextTick } from 'vue'
-import ToolBar from '../components/toolBar.vue'
+import { ref, reactive, nextTick, computed, onMounted } from 'vue'
 import CustomDialog from '../components/customDialog.vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '../store/user.js'
 import avatar from '../assets/images/gjj.jpg'
 
 const router = useRouter()
+const userStore = useUserStore()
 
-// 用户信息
-const userInfo = reactive({
-  username: 'GJJ',
-  email: 'user@example.com',
+// 用户信息 - 从userStore获取
+const userInfo = computed(() => {
+  return userStore.userInfo || {
+    username: '',
+    email: '',
+    phone: '',
+    birthday: '',
+    signature: '',
+    avatar: avatar
+  }
+})
+
+// 本地编辑的用户信息
+const editableUserInfo = reactive({
+  username: '',
+  email: '',
   phone: '',
   birthday: '',
-  signature: '寿司',
-  avatar: avatar
+  signature: ''
 })
 
 // 密码表单
@@ -265,18 +279,36 @@ function handleConfirmDialogConfirm() {
 // 编辑签名
 function editSignature() {
   editingSignature.value = true
-  tempSignature.value = userInfo.signature
+  tempSignature.value = userInfo.value.signature
   nextTick(() => {
     signatureInput.value?.focus()
   })
 }
 
+// 初始化编辑表单数据
+onMounted(() => {
+  if (userStore.userInfo) {
+    Object.assign(editableUserInfo, {
+      username: userStore.userInfo.username || '',
+      email: userStore.userInfo.email || '',
+      phone: userStore.userInfo.phone || '',
+      birthday: userStore.userInfo.birthday || '',
+      signature: userStore.userInfo.signature || ''
+    })
+  }
+})
+
 // 保存签名
 function saveSignature() {
-  userInfo.signature = tempSignature.value
+  editableUserInfo.signature = tempSignature.value
+  const updatedUserInfo = {
+    ...userStore.userInfo,
+    signature: tempSignature.value
+  }
+  userStore.setUserInfo(updatedUserInfo)
   editingSignature.value = false
   
-  console.log('签名已保存:', userInfo.signature)
+  console.log('签名已保存:', tempSignature.value)
 }
 
 // 取消编辑签名
@@ -317,38 +349,48 @@ function closeAvatarCrop() {
 
 // 确认头像
 function confirmAvatar() {
-  userInfo.avatar = cropImageSrc.value
+  const updatedUserInfo = {
+    ...userStore.userInfo,
+    avatar: cropImageSrc.value
+  }
+  userStore.setUserInfo(updatedUserInfo)
   closeAvatarCrop()
-  console.log('头像已更新')
 }
 
 // 更新用户信息
 function updateUserInfo() {
   // 基本验证
-  if (!userInfo.username.trim()) {
+  if (!editableUserInfo.username.trim()) {
     showAlert('用户名不能为空')
     return
   }
   
-  if (!userInfo.email.trim()) {
+  if (!editableUserInfo.email.trim()) {
     showAlert('邮箱不能为空')
     return
   }
   
   // 邮箱格式验证
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(userInfo.email)) {
+  if (!emailRegex.test(editableUserInfo.email)) {
     showAlert('请输入正确的邮箱格式')
     return
   }
   
   // 手机号验证（如果填写了）
-  if (userInfo.phone && !/^1[3-9]\d{9}$/.test(userInfo.phone)) {
+  if (editableUserInfo.phone && !/^1[3-9]\d{9}$/.test(editableUserInfo.phone)) {
     showAlert('请输入正确的手机号格式')
     return
   }
   
-  localStorage.setItem('userinfo', JSON.stringify(userInfo))
+  // 更新userStore中的用户信息
+  const updatedUserInfo = {
+    ...userStore.userInfo,
+    ...editableUserInfo
+  }
+  
+  userStore.setUserInfo(updatedUserInfo)
+  console.log('更新用户信息:', updatedUserInfo)
   showAlert('个人信息已保存', 'success')
 }
 
@@ -396,11 +438,17 @@ function changePassword() {
 function logout() {
   showConfirm('确定要退出登录吗？', () => {
     console.log('用户退出登录')
-    // 这里可以添加清除token、跳转到登录页等逻辑
-    localStorage.removeItem('isAuthenticated')
-    localStorage.removeItem('userinfo')
+    // 使用userStore的logout方法清除用户数据
+    userStore.logout()
+    // 清除记住我相关的数据
+    localStorage.removeItem('rememberMe')
+    localStorage.removeItem('savedAccount')
     router.push('/login')
   })
+}
+
+function handleClose(){
+  router.push('/home')
 }
 </script>
 
@@ -684,6 +732,29 @@ function logout() {
   max-height: 300px;
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  margin-top: 20px;
+  margin-left:-50px;
+  z-index: 1000;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
 }
 
 /* 响应式设计 */

@@ -24,7 +24,7 @@
       <!-- 底部用户区域 -->
       <div class="toolbar-footer">
         <div class="user-avatar" @click="goToProfile()">
-          <div class="avatar-icon">👤</div>
+          <img :src="userAvatar" alt="用户头像" class="avatar-image" />
         </div>
       </div>
     </div>
@@ -34,17 +34,27 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useUserStore } from '../store/user'
+import defualtAvatar from '../assets/images/youcai.jpg'
 
 // 路由相关
 const router = useRouter()
 const route = useRoute()
 
+// 用户store
+const userStore = useUserStore()
+
+// 用户头像
+const userAvatar = computed(() => {
+  return userStore.userAvatar
+})
+
 // 菜单项配置
 const menuItems = ref([
   { name: 'chat', label: '聊天', icon: '💬', path: '/chat' },
   { name: 'friends', label: '好友', icon: '👥', path: '/friends' },
+  { name: 'myAI', label: '我的AI', icon: '⭐', path: '/myai' },
   { name: 'AI', label: 'AI助手', icon: '🤖', path: '/ai' },
-  { name: 'myAI', label: '我的AI', icon: '⭐', path: '/myai' }
 ])
 
 // 根据当前路由计算活跃项
@@ -212,9 +222,18 @@ defineExpose({
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
 }
 
-.avatar-icon {
-  font-size: 20px;
-  color: white;
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover .avatar-image {
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: scale(1.05);
 }
 
 /* 响应式设计 */

@@ -6,14 +6,11 @@
     <div class="friends-list-container">
       <div class="friends-list-header">
         <h2>好友</h2>
-        <div class="search-box">
-          <input 
-            v-model="searchQuery" 
-            type="text" 
-            placeholder="搜索好友..."
-            class="search-input"
-          />
-        </div>
+        <SearchBox 
+          v-model="searchQuery" 
+          placeholder="搜索好友..." 
+          @search="handleSearch"
+        />
       </div>
       
       <div class="friends-list-content">
@@ -23,7 +20,8 @@
             v-for="friend in filteredFriends" 
             :key="friend.id"
             class="friend-item"
-            @click="startChatWithFriend(friend)"
+            :class="{ 'selected': selectedFriendId === friend.id }"
+            @click="selectFriend(friend)"
           >
             <div class="friend-avatar">
               <img :src="friend.avatar" :alt="friend.name" />
@@ -36,7 +34,16 @@
           </div>
         </div>
       </div>
+      
+      
     </div>
+    <friendArea 
+      :selectedFriendId="selectedFriendId"
+      :currentFriend="currentFriend"
+      @start-chat="startChatWithFriend"
+      @update-friend="updateFriendInfo"
+      @delete-friend="deleteFriend"
+    />
   </div>
 </template>
 
@@ -44,34 +51,45 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import ToolBar from '../../components/toolBar.vue'
-import avatar from '../../assets/images/youcai.jpg'
+import friendArea from '../../components/friendArea.vue'
+import SearchBox from '../../components/SearchBox.vue'
 
 const router = useRouter()
 
 // 响应式数据
 const searchQuery = ref('')
+const selectedFriendId = ref(null)
 
 const friendsList = ref([
   {
     id: 1,
-    name: '小明',
-    avatar: 'https://via.placeholder.com/40/43e97b/ffffff?text=明',
+    name: '女帝',
+    avatar: 'https://i.pinimg.com/736x/de/ea/8a/deea8a2d17215a61e5f1b8c0cb7cb01b.jpg',
     status: '在线',
-    online: true
+    online: true,
+    lastSeen: new Date(Date.now()),
+    nickname: '汉库克',
+    description: '王下七武海之一'
   },
   {
     id: 2,
-    name: '小红',
-    avatar: 'https://via.placeholder.com/40/fa709a/ffffff?text=红',
+    name: '罗宾',
+    avatar: 'https://i.pinimg.com/736x/97/a3/65/97a3653e287af621be9ede4d91628ed9.jpg',
     status: '忙碌',
-    online: true
+    online: true,
+    lastSeen: new Date(Date.now()),
+    nickname: '罗宾酱',
+    description: '来自新世界的罗宾'
   },
   {
     id: 3,
-    name: '小刚',
-    avatar: 'https://via.placeholder.com/40/38d9a9/ffffff?text=刚',
+    name: '索隆',
+    avatar: 'https://i.pinimg.com/736x/ad/45/97/ad4597f4acb6498d11063f1fd00e5cd5.jpg',
     status: '离线',
-    online: false
+    online: false,
+    lastSeen: new Date(Date.now() - 1000 * 60 * 30), // 30分钟前
+    nickname: '索小猫',
+    description: 'cute'
   }
 ])
 
@@ -83,10 +101,41 @@ const filteredFriends = computed(() => {
   )
 })
 
+// 计算属性 - 当前选中的朋友
+const currentFriend = computed(() => {
+  return friendsList.value.find(friend => friend.id === selectedFriendId.value)
+})
+
 // 方法
+function handleSearch() {
+  // 搜索功能可以在这里扩展
+  console.log('执行好友搜索:', searchQuery.value)
+}
+
+function selectFriend(friend) {
+  selectedFriendId.value = friend.id
+}
+
 function startChatWithFriend(friend) {
-  // 这里可以添加开始聊天的逻辑
-  console.log('Starting chat with:', friend.name)
+  // 跳转到聊天页面并开启与该用户的聊天
+  router.push({ name: 'home', query: { chatWith: friend.id } })
+}
+
+function updateFriendInfo(friendId, updates) {
+  const friendIndex = friendsList.value.findIndex(f => f.id === friendId)
+  if (friendIndex !== -1) {
+    friendsList.value[friendIndex] = { ...friendsList.value[friendIndex], ...updates }
+  }
+}
+
+function deleteFriend(friendId) {
+  const friendIndex = friendsList.value.findIndex(f => f.id === friendId)
+  if (friendIndex !== -1) {
+    friendsList.value.splice(friendIndex, 1)
+    if (selectedFriendId.value === friendId) {
+      selectedFriendId.value = null
+    }
+  }
 }
 </script>
 
@@ -123,25 +172,7 @@ function startChatWithFriend(friend) {
   font-weight: 600;
 }
 
-.search-box {
-  position: relative;
-}
 
-.search-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e1e5e9;
-  border-radius: 25px;
-  font-size: 14px;
-  outline: none;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.8);
-}
-
-.search-input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
 
 .friends-list-content {
   flex: 1;
@@ -166,6 +197,12 @@ function startChatWithFriend(friend) {
 
 .friend-item:hover {
   background: rgba(102, 126, 234, 0.1);
+  transform: translateX(5px);
+}
+
+.friend-item.selected {
+  background: rgba(102, 126, 234, 0.2);
+  border-left: 4px solid #667eea;
   transform: translateX(5px);
 }
 

@@ -7,17 +7,18 @@
     <div class="chat-list-container">
       <div class="chat-list-header">
         <h2>聊天</h2>
-        <div class="search-box">
-          <input v-model="searchQuery" type="text" placeholder="搜索聊天、联系人..." class="search-input" />
-          <div class="search-icon">🔍</div>
-        </div>
+        <SearchBox 
+          v-model="chatStore.searchQuery" 
+          placeholder="搜索聊天..." 
+          @search="handleSearch"
+        />
       </div>
 
       <div class="chat-list-content">
         <!-- 聊天列表 -->
         <div class="chat-items">
-          <div v-for="chat in filteredChats" :key="chat.id" class="chat-item"
-            :class="{ active: selectedChatId === chat.id }" @click="selectChat(chat.id)">
+          <div v-for="chat in chatStore.filteredChats" :key="chat.id" class="chat-item"
+            :class="{ active: chatStore.selectedChatId === chat.id }" @click="selectChat(chat.id)">
             <div class="chat-avatar">
               <img :src="chat.avatar" :alt="chat.name" />
               <div v-if="chat.online" class="online-indicator"></div>
@@ -34,116 +35,64 @@
         </div>
       </div>
     </div>
-    <ChatArea :selectedChatId="selectedChatId" :chatList="chatList" :messages="messages"
-      @update-messages="handleUpdateMessages" @update-chat-list="handleUpdateChatList" />
+
+    
+    <ChatArea ref="chatAreaRef" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { useChatStore } from '../store/chat'
+import { useUserStore } from '../store/user'
 import ToolBar from '../components/toolBar.vue'
-import avatar from '../assets/images/gjj.jpg'
 import ChatArea from '../components/chatArea.vue'
+import SearchBox from '../components/SearchBox.vue'
+
+const route = useRoute()
+const chatStore = useChatStore()
+const userStore = useUserStore()
 
 // 响应式数据
-const selectedChatId = ref(null)
-const searchQuery = ref('')
 const messagesContainer = ref(null)
 const toolBarRef = ref(null)
+const chatAreaRef = ref(null)
 
-// 模拟数据
-const chatList = ref([
-  {
+// 好友数据（模拟从friends页面获取）
+const friendsData = {
+  1: {
     id: 1,
-    name: 'Decker',
-    avatar: 'https://i.pinimg.com/1200x/f9/5c/ff/f95cffa065abffdd26ed81cd4ce5832e.jpg',
-    lastMessage: 'I just kill a man',
-    lastTime: new Date(Date.now() - 1000 * 60 * 5),
-    unreadCount: 2,
-    online: true
+    name: '女帝',
+    avatar: 'https://i.pinimg.com/736x/de/ea/8a/deea8a2d17215a61e5f1b8c0cb7cb01b.jpg',
+    nickname: '汉库克'
   },
-  {
+  2: {
     id: 2,
-    name: '王路飞',
-    avatar: 'https://i.pinimg.com/1200x/d9/21/60/d92160da86a546289978a4d589e434bf.jpg',
-    lastMessage: '我是要成为海贼王的男人！',
-    lastTime: new Date(Date.now() - 1000 * 60 * 30),
-    unreadCount: 0,
-    online: false
+    name: '罗宾',
+    avatar: 'https://i.pinimg.com/736x/97/a3/65/97a3653e287af621be9ede4d91628ed9.jpg',
+    nickname: '罗宾酱'
   },
-  {
+  3: {
     id: 3,
     name: '索隆',
-    avatar: 'https://i.pinimg.com/736x/89/60/56/896056ec3e9dbe88f0a1fdf9f0fdfc17.jpg',
-    lastMessage: '这里是哪？',
-    lastTime: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    unreadCount: 1,
-    online: true
+    avatar: 'https://i.pinimg.com/736x/ad/45/97/ad4597f4acb6498d11063f1fd00e5cd5.jpg',
+    nickname: '索小猫'
   }
-])
+}
 
-const userProfile = ref({
-  name: 'GJJ',
-  avatar: avatar
-})
-
-const messages = ref({
-  1: [
-    {
-      id: 1,
-      sender: 'Decker',
-      content: 'hello！',
-      time: new Date(Date.now() - 1000 * 60 * 10),
-      isOwn: false,
-      avatar: 'https://i.pinimg.com/1200x/f9/5c/ff/f95cffa065abffdd26ed81cd4ce5832e.jpg'
-    },
-    {
-      id: 2,
-      sender: '我',
-      content: "what's up?",
-      time: new Date(Date.now() - 1000 * 60 * 5),
-      isOwn: true,
-      avatar: avatar
-    }
-  ]
-})
-
-// 计算属性
-const filteredChats = computed(() => {
-  if (!searchQuery.value) return chatList.value
-  return chatList.value.filter(chat =>
-    chat.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    chat.lastMessage.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
-})
 
 // 方法
 function selectChat(chatId) {
-  selectedChatId.value = chatId
-  // 清除未读消息
-  const chat = chatList.value.find(c => c.id === chatId)
-  if (chat) {
-    chat.unreadCount = 0
-  }
+  chatStore.selectChat(chatId)
   scrollToBottom()
+  // 备用方案：手动聚焦输入框（chatArea组件内部已有自动聚焦）
+  // nextTick(() => {
+  //   chatAreaRef.value?.focusInput()
+  // })
 }
 
-function handleUpdateMessages(data) {
-  const { chatId, message } = data
-  if (!messages.value[chatId]) {
-    messages.value[chatId] = []
-  }
-  messages.value[chatId].push(message)
-}
-
-function handleUpdateChatList(data) {
-  const { chatId, lastMessage, lastTime } = data
-  const chat = chatList.value.find(c => c.id === chatId)
-  if (chat) {
-    chat.lastMessage = lastMessage
-    chat.lastTime = lastTime
-  }
-}
+// ChatArea组件现在直接使用store，不再需要这些处理函数
 
 function scrollToBottom() {
   nextTick(() => {
@@ -153,10 +102,16 @@ function scrollToBottom() {
   })
 }
 
+function handleSearch() {
+  // 搜索功能可以在这里扩展
+  console.log('执行搜索:', chatStore.searchQuery)
+  console.log("父组件handle")
+}
+
 function formatTime(time) {
   const now = new Date()
   const diff = now - time
-
+  
   if (diff < 1000 * 60) {
     return '刚刚'
   } else if (diff < 1000 * 60 * 60) {
@@ -168,11 +123,53 @@ function formatTime(time) {
   }
 }
 
+// 处理从好友页面跳转过来的聊天请求
+function handleChatWithFriend(friendId) {
+  const friend = friendsData[friendId]
+  if (!friend) return
+  
+  // 检查是否已存在该好友的聊天
+  const existingChat = chatStore.chatList.find(chat => chat.id === friendId)
+  
+  if (!existingChat) {
+    // 创建新的聊天项
+    const newChat = {
+      id: friendId,
+      name: friend.nickname || friend.name,
+      avatar: friend.avatar,
+      lastMessage: '开始聊天吧！',
+      lastTime: new Date(),
+      unreadCount: 0,
+      online: true
+    }
+    
+    // 添加到聊天列表
+    chatStore.addChat(newChat)
+  }
+  
+  // 选中该聊天
+  chatStore.selectChat(friendId)
+}
+
+// 监听路由参数变化
+watch(() => route.query.chatWith, (newChatWith) => {
+  if (newChatWith) {
+    const friendId = parseInt(newChatWith)
+    handleChatWithFriend(friendId)
+  }
+}, { immediate: true })
+
 // 生命周期
 onMounted(() => {
-  // 默认选择第一个聊天
-  if (chatList.value.length > 0) {
-    selectedChatId.value = chatList.value[0].id
+  // 初始化用户状态
+  userStore.initUserState()
+  // 初始化默认选中的聊天
+  chatStore.initializeDefaultChat()
+  
+  // 处理初始的chatWith参数
+  if (route.query.chatWith) {
+    const friendId = parseInt(route.query.chatWith)
+    handleChatWithFriend(friendId)
   }
 })
 </script>
@@ -212,35 +209,7 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.search-box {
-  position: relative;
-}
 
-.search-input {
-  width: 100%;
-  padding: 12px 40px 12px 15px;
-  border: 2px solid transparent;
-  border-radius: 25px;
-  background: rgba(240, 240, 240, 0.8);
-  font-size: 14px;
-  outline: none;
-  transition: all 0.3s ease;
-}
-
-.search-input:focus {
-  border-color: #667eea;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
-}
-
-.search-icon {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
-  font-size: 16px;
-}
 
 .chat-list-content {
   flex: 1;

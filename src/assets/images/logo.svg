@@ -1,0 +1,49 @@
+<svg width="200" height="80" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Chat bubble icon -->
+  <g transform="translate(10, 15)">
+    <!-- Main chat bubble -->
+    <path d="M5 15 Q5 5 15 5 L35 5 Q45 5 45 15 L45 25 Q45 35 35 35 L20 35 L10 45 L15 35 Q5 35 5 25 Z" 
+          fill="url(#logoGradient)" stroke="none"/>
+    
+    <!-- Smaller chat bubble -->
+    <path d="M25 25 Q25 20 30 20 L40 20 Q45 20 45 25 L45 30 Q45 35 40 35 L35 35 L30 40 L32 35 Q25 35 25 30 Z" 
+          fill="rgba(255,255,255,0.3)" stroke="none"/>
+    
+    <!-- Chat dots -->
+    <circle cx="20" cy="20" r="2" fill="white" opacity="0.8"/>
+    <circle cx="28" cy="20" r="2" fill="white" opacity="0.8"/>
+    <circle cx="36" cy="20" r="2" fill="white" opacity="0.8"/>
+  </g>
+  
+  <!-- ChatSpace text -->
+  <text x="65" y="35" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="url(#textGradient)">
+    ChatSpace
+  </text>
+  
+  <!-- Slogan -->
+  <text x="65" y="52" font-family="Arial, sans-serif" font-size="12" fill="#666" opacity="0.8">
+    Online Chatroom with AI
+  </text>
+  
+  <!-- Decorative elements -->
+  <circle cx="180" cy="20" r="3" fill="#667eea" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="185" cy="30" r="2" fill="#764ba2" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.8;0.4" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="175" cy="35" r="2.5" fill="#667eea" opacity="0.5">
+    <animate attributeName="opacity" values="0.5;0.9;0.5" dur="3s" repeatCount="indefinite"/>
+  </circle>
+</svg>

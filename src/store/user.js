@@ -7,6 +7,24 @@ export const useUserStore = defineStore('user', {
     lastSeen: null
   }),
   
+  getters: {
+    // 获取用户头像，提供默认值
+    userAvatar: (state) => {
+      return state.userInfo?.avatar || '/src/assets/images/gjj.jpg'
+    },
+    // 获取用户名
+    userName: (state) => {
+      return state.userInfo?.username || 'User'
+    },
+    // 获取用户完整信息
+    userProfile: (state) => {
+      return {
+        name: state.userInfo?.username || 'User',
+        avatar: state.userInfo?.avatar || '/src/assets/images/gjj.jpg'
+      }
+    }
+  },
+  
   actions: {
     //保存用户数据
     setUserInfo(userInfo) {
@@ -38,4 +56,4 @@ export const useUserStore = defineStore('user', {
       }
     }
   }
-}) 
+})

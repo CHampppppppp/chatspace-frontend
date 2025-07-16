@@ -11,6 +11,11 @@
                 fit="cover">
         <div slot="error" class="image-slot"></div>
       </el-image> -->
+      <!-- Logo区域 -->
+      <div class="logo-container">
+        <img src="../assets/images/logo.svg" alt="ChatSpace Logo" class="app-logo" />
+      </div>
+      
       <div class="in-up" id="loginAndRegist">
         <div class="form-container sign-up-container">
           <div class="myCenter">
@@ -19,7 +24,7 @@
             <input v-model="password" type="password" maxlength="30" placeholder="密码">
             <input v-model="email" type="email" placeholder="邮箱">
             <input v-model="code" type="text" placeholder="验证码" :disabled="!codeEnabled">
-            <a style="margin: 0" href="#" @click="getVerificationCode()" :class="{ disabled: codeBtnDisabled }">{{ codeBtnText }}</a>
+            <a style="margin: 10px" href="#" @click="getVerificationCode()" :class="{ disabled: codeBtnDisabled }">{{ codeBtnText }}</a>
             <customButton 
               text="注册" 
               loadingText="注册中..."
@@ -98,11 +103,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '../store/user.js'
 import customButton from '../components/customButton.vue'
 import CustomDialog from '../components/customDialog.vue'
+import defaultAvatar from '../assets/images/gjj.jpg'
 
-// 路由
+// 路由和store
 const router = useRouter()
+const userStore = useUserStore()
 
 // 响应式数据
 const username = ref('')
@@ -190,6 +198,22 @@ function regist() {
     // 结束加载状态
     isRegistLoading.value = false
     
+    // 模拟注册成功后的用户信息
+    const newUserInfo = {
+      id: Date.now(), // 使用时间戳作为临时ID
+      username: username.value,
+      email: email.value,
+      avatar: defaultAvatar,
+      nickname: username.value,
+      phone: '',
+      createTime: new Date().toISOString(),
+      lastLoginTime: new Date().toISOString()
+    }
+    
+    // 注册成功后自动保存用户信息到store
+    userStore.setUserInfo(newUserInfo)
+    console.log('注册成功，用户信息已保存到store:', newUserInfo)
+    
     // 清空表单
     username.value = ''
     password.value = ''
@@ -213,30 +237,39 @@ function login() {
   // 开始加载状态
   isLoginLoading.value = true
   
-  console.log('登录功能', { 
-    account: account.value, 
-    password: password.value,
-    rememberMe: rememberMe.value ,
-    isAuthenticated: isAuthenticated.value
-  })
-  
   // 模拟登录请求
   setTimeout(() => {
     // 结束加载状态
     isLoginLoading.value = false
     isAuthenticated.value = true
-    localStorage.setItem('isAuthenticated','true')
-
+    
+    // 模拟用户信息（实际项目中应该从后端API获取）
+    const mockUserInfo = {
+      id: 1,
+      name: account.value,
+      email: account.value.includes('@') ? account.value : `${account.value}@example.com`,
+      avatar: defaultAvatar,
+      nickname: account.value,
+      phone: '',
+      createTime: new Date().toISOString()
+    }
+    
+    // 使用userStore保存用户信息
+    userStore.setUserInfo(mockUserInfo)
+    
     // 如果选择了记住我，可以在这里保存登录状态到localStorage
     if (rememberMe.value) {
       localStorage.setItem('rememberMe', 'true')
       localStorage.setItem('savedAccount', account.value)
-      console.log('已保存登录信息')
+      console.log('remember me')
     } else {
       localStorage.removeItem('rememberMe')
       localStorage.removeItem('savedAccount')
     }
     
+    console.log('登录成功，用户信息已保存到store:', userStore.userInfo)
+    console.log('isAuthenticated:', isAuthenticated.value)
+    console.log('lastSeen:', userStore.lastSeen)
     router.push('/home')
     
   }, 1000)
@@ -343,8 +376,12 @@ function sendResetEmail(email) {
   // 切换到登录面板
 function goToLogin() {
   closeDialog()
-
-  signIn()
+  // 如果用户已经注册成功并且已登录，直接跳转到主页
+  if (userStore.isAuthenticated) {
+    router.push('/home')
+  } else {
+    signIn()
+  }
 }
 
 // 初始化记住我功能
@@ -366,8 +403,10 @@ onMounted(() => {
   position: relative;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  padding: 20px;
 }
 
 .in-up {
@@ -379,7 +418,7 @@ onMounted(() => {
   width: 800px;
   max-width: 90%;
   min-height: 500px;
-  margin: 20px;
+  margin: 10px;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
@@ -502,6 +541,7 @@ onMounted(() => {
 
 /* 记住我样式 */
 .remember-me {
+  margin-left: -30px;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -701,6 +741,50 @@ onMounted(() => {
   .in-up button {
     padding: 12px 30px;
     font-size: 14px;
+  }
+}
+
+/* Logo样式 */
+.logo-container {
+  margin-top: -120px;
+  margin-left:-40px;
+  margin-bottom: -10px;
+  text-align: center;
+  z-index: 10;
+  position: relative;
+}
+
+.app-logo {
+  width: 320px;
+  height: auto;
+  max-width: 100%;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
+  transition: all 0.3s ease;
+}
+
+.app-logo:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+}
+
+/* 响应式Logo */
+@media screen and (max-width: 920px) {
+  .logo-container {
+    margin-bottom: 30px;
+  }
+  
+  .app-logo {
+    width: 180px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .app-logo {
+    width: 160px;
+  }
+  
+  .logo-container {
+    margin-bottom: 25px;
   }
 }
 
