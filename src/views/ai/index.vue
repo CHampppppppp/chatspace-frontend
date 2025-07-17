@@ -9,9 +9,7 @@
         <h2>AI助手</h2>
         <searchBox v-model="searchQuery" placeholder="搜索AI助手..." @search="handleSearch" />
       </div>
-
       <div class="ai-list-content">
-        <!-- AI助手列表 -->
         <div class="ai-items">
           <div v-for="ai in filteredAIAssistants" :key="ai.id" class="ai-item" :class="{ active: aiStore.selectedAIId === ai.id }" @click="selectAI(ai.id)">
             <div class="ai-avatar">
@@ -26,6 +24,7 @@
       </div>
     </div>
 
+    <!-- Ai内容区 -->
     <AiArea />
     
   </div>

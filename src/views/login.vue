@@ -2,20 +2,11 @@
   <div>
     <!-- 登陆和注册 -->
     <div class="myCenter in-up-container my-animation-hideToShow">
-      <!-- 背景图片 -->
-      <!-- <el-image class="my-el-image"
-                style="position: absolute"
-                v-once
-                lazy
-                :src="$store.state.webInfo.randomCover[Math.floor(Math.random() * $store.state.webInfo.randomCover.length)]"
-                fit="cover">
-        <div slot="error" class="image-slot"></div>
-      </el-image> -->
       <!-- Logo区域 -->
       <div class="logo-container">
         <img src="../assets/images/logo.svg" alt="ChatSpace Logo" class="app-logo" />
       </div>
-      
+      <!-- 注册登录区域 -->
       <div class="in-up" id="loginAndRegist">
         <div class="form-container sign-up-container">
           <div class="myCenter">
@@ -24,13 +15,9 @@
             <input v-model="password" type="password" maxlength="30" placeholder="密码">
             <input v-model="email" type="email" placeholder="邮箱">
             <input v-model="code" type="text" placeholder="验证码" :disabled="!codeEnabled">
-            <a style="margin: 10px" href="#" @click="getVerificationCode()" :class="{ disabled: codeBtnDisabled }">{{ codeBtnText }}</a>
-            <customButton 
-              text="注册" 
-              loadingText="注册中..."
-              :isLoading="isRegistLoading"
-              @click="regist()"
-            />
+            <a style="margin: 10px" href="#" @click="getVerificationCode()" :class="{ disabled: codeBtnDisabled }">{{
+              codeBtnText }}</a>
+            <customButton text="注册" loadingText="注册中..." :isLoading="isRegistLoading" @click="regist()" />
           </div>
         </div>
         <div class="form-container sign-in-container">
@@ -38,18 +25,18 @@
             <h1>登录</h1>
             <input v-model="account" type="text" placeholder="用户名/邮箱/手机号">
             <input v-model="password" type="password" placeholder="密码">
-              <label class="remember-me">
-                <input v-model="rememberMe" type="checkbox">
-                <span class="checkmark"></span>
-                记住账号
-              </label>
-              <a href="#" @click="changeDialog('找回密码')">忘记密码？</a>
-            <customButton 
-              text="登录" 
-              loadingText="登录中..."
-              :isLoading="isLoginLoading"
-              @click="login()"
-            />
+            <label class="remember-me">
+              <input v-model="rememberMe" type="checkbox">
+              <span class="checkmark"></span>
+              记住账号
+            </label>
+            <label class="admin">
+              <input v-model="isAdmin" type="checkbox">
+              <span class="checkmark"></span>
+              管理员登录
+            </label>
+            <a href="#" @click="changeDialog('找回密码')">忘记密码？</a>
+            <customButton text="登录" loadingText="登录中..." :isLoading="isLoginLoading" @click="login()" />
           </div>
         </div>
         <div class="overlay-container">
@@ -71,33 +58,19 @@
   </div>
 
   <!-- 弹窗组件 -->
-  <CustomDialog
-    v-model:visible="showDialog"
-    :title="dialogType === '找回密码' ? '找回密码' : '注册成功'"
-    :type="dialogType === '找回密码' ? 'input' : 'success'"
-    :message="dialogType === '找回密码' ? '请输入您的邮箱地址，我们将发送重置密码链接到您的邮箱' : '恭喜您！账户注册成功'"
+  <CustomDialog v-model:visible="showDialog" :title="dialogType === '找回密码' ? '找回密码' : '注册成功' ? '注册成功' : '注册失败'"
+    :type="dialogType === '找回密码' ? 'input' : dialogType === '注册成功' ? 'success' : 'error'"
+    :message="dialogType === '找回密码' ? '请输入您的邮箱地址，我们将发送重置密码链接到您的邮箱' : dialogType === '注册成功' ? '恭喜您！账户注册成功' : '注册失败ohhh'"
     :input-type="'email'"
-    :placeholder="'请输入邮箱地址'"
-    :initial-value="resetEmail"
-    :show-cancel="dialogType === '找回密码'"
-    :confirm-text="dialogType === '找回密码' ? '发送重置链接' : '去登录'"
-    @confirm="handleDialogConfirm"
-    @cancel="closeDialog"
-    @close="closeDialog"
-    @input-change="resetEmail = $event"
-  />
+    :placeholder="'请输入邮箱地址'" :initial-value="resetEmail" :show-cancel="dialogType === '找回密码'"
+    :confirm-text="dialogType === '找回密码' ? '发送重置链接' : dialogTitle === '注册成功' ? '去登录' : '重视'" @confirm="handleDialogConfirm" @cancel="closeDialog"
+    @close="closeDialog" @input-change="resetEmail = $event" />
 
   <!-- 提示弹窗组件 -->
-  <CustomDialog
-    v-model:visible="showAlertDialog"
-    :title="alertType === 'success' ? '成功' : alertType === 'error' ? '错误' : '提示'"
-    :type="alertType"
-    :message="alertMessage"
-    :show-cancel="false"
-    confirm-text="确定"
-    @confirm="closeAlertDialog"
-    @close="closeAlertDialog"
-  />
+  <CustomDialog v-model:visible="showAlertDialog"
+    :title="alertType === 'success' ? '成功' : alertType === 'error' ? '错误' : '提示'" :type="alertType"
+    :message="alertMessage" :show-cancel="false" confirm-text="确定" @confirm="closeAlertDialog"
+    @close="closeAlertDialog" />
 </template>
 
 <script setup>
@@ -106,9 +79,9 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user.js'
 import customButton from '../components/customButton.vue'
 import CustomDialog from '../components/customDialog.vue'
-import defaultAvatar from '../assets/images/gjj.jpg'
+import { api } from '../utils/useApi.js'
 
-// 路由和store
+// 路由、store
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -120,6 +93,7 @@ const code = ref('')
 const account = ref('')
 const isAuthenticated = ref(false)
 const rememberMe = ref(false) // 记住我状态
+const isAdmin = ref(false)
 const isLoginLoading = ref(false) // 登录加载状态
 const isRegistLoading = ref(false) // 注册加载状态
 const codeEnabled = ref(false) // 验证码输入框是否启用
@@ -168,63 +142,50 @@ function regist() {
     showAlert('请填写完整的注册信息')
     return
   }
-  
   // 邮箱格式验证
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email.value)) {
     showAlert('请输入正确的邮箱格式')
     return
   }
-  
   // 密码长度验证
   if (password.value.length < 6) {
     showAlert('密码长度不能少于6位')
     return
   }
-  
   // 开始加载状态
   isRegistLoading.value = true
-  
-  console.log('注册信息:', {
-    username: username.value,
-    password: password.value,
-    email: email.value,
-    code: code.value
-  })
-  
-  // 模拟注册成功
-  // 这里可以添加实际的注册API调用
-  setTimeout(() => {
-    // 结束加载状态
+
+  // 后端注册
+  api.post("/register",{
+    username:username.value,
+    password:password.value,
+    email:email.value,
+    code:code.value
+  }).then((resp)=>{
+    //注册成功
+    if(resp){
+      // 结束加载状态
     isRegistLoading.value = false
-    
-    // 模拟注册成功后的用户信息
-    const newUserInfo = {
-      id: Date.now(), // 使用时间戳作为临时ID
-      username: username.value,
-      email: email.value,
-      avatar: defaultAvatar,
-      nickname: username.value,
-      phone: '',
-      createTime: new Date().toISOString(),
-      lastLoginTime: new Date().toISOString()
-    }
-    
-    // 注册成功后自动保存用户信息到store
-    userStore.setUserInfo(newUserInfo)
-    console.log('注册成功，用户信息已保存到store:', newUserInfo)
-    
-    // 清空表单
+      // 清空表单
     username.value = ''
     password.value = ''
     email.value = ''
     code.value = ''
     codeEnabled.value = false
-    
     // 显示注册成功弹窗
     changeDialog('注册成功')
-  }, 2000)
-}
+    }
+    //注册失败
+    else{
+      showAlert('注册失败')
+    }
+  })
+    
+    
+
+
+  }
 
 // 登录功能
 function login() {
@@ -233,46 +194,41 @@ function login() {
     showAlert('请填写完整的登录信息')
     return
   }
-  
+
   // 开始加载状态
   isLoginLoading.value = true
-  
-  // 模拟登录请求
-  setTimeout(() => {
-    // 结束加载状态
-    isLoginLoading.value = false
-    isAuthenticated.value = true
-    
-    // 模拟用户信息（实际项目中应该从后端API获取）
-    const mockUserInfo = {
-      id: 1,
-      name: account.value,
-      email: account.value.includes('@') ? account.value : `${account.value}@example.com`,
-      avatar: defaultAvatar,
-      nickname: account.value,
-      phone: '',
-      createTime: new Date().toISOString()
+
+  // 调用登录API
+  api.login('/login', {
+    username: account.value,
+    password: password.value
+  }).then(resp => {
+    setTimeout(() => {
+      // 结束加载状态
+      isLoginLoading.value = false
+      isAuthenticated.value = true
+    }, 1000);
+    //如果有response
+    if (resp) {
+      userStore.setUserInfo(resp.obj)
+
+      // 如果选择了记住我，可以在这里保存登录状态到localStorage
+      if (rememberMe.value) {
+        localStorage.setItem('rememberMe', 'true')
+        localStorage.setItem('savedAccount', account.value)
+      } else {
+        localStorage.removeItem('rememberMe')
+        localStorage.removeItem('savedAccount')
+      }
+
+      localStorage.setItem('isAdmin',isAdmin.value)
+      router.push('/home')
     }
-    
-    // 使用userStore保存用户信息
-    userStore.setUserInfo(mockUserInfo)
-    
-    // 如果选择了记住我，可以在这里保存登录状态到localStorage
-    if (rememberMe.value) {
-      localStorage.setItem('rememberMe', 'true')
-      localStorage.setItem('savedAccount', account.value)
-      console.log('remember me')
-    } else {
-      localStorage.removeItem('rememberMe')
-      localStorage.removeItem('savedAccount')
+    //如果没有response
+    else {
+      showAlert('账号/密码不正确')
     }
-    
-    console.log('登录成功，用户信息已保存到store:', userStore.userInfo)
-    console.log('isAuthenticated:', isAuthenticated.value)
-    console.log('lastSeen:', userStore.lastSeen)
-    router.push('/home')
-    
-  }, 1000)
+  })
 }
 
 // 获取验证码功能
@@ -282,26 +238,26 @@ function getVerificationCode() {
     showAlert('请先填写邮箱地址')
     return
   }
-  
+
   // 简单邮箱格式验证
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email.value)) {
     showAlert('请填写正确的邮箱格式')
     return
   }
-  
+
   if (codeBtnDisabled.value) {
     return
   }
-  
+
   // 启用验证码输入框
   codeEnabled.value = true
-  
+
   // 开始倒计时
   startCountdown()
-  
+
   // 这里可以添加发送验证码的API调用（springboot mail?)
-  showAlert('验证码已发送到您的邮箱，请查收', 'success') 
+  showAlert('验证码已发送到您的邮箱，请查收', 'success')
 }
 
 // 倒计时功能
@@ -309,7 +265,7 @@ function startCountdown() {
   let countdown = 60
   codeBtnDisabled.value = true
   codeBtnText.value = `${countdown}秒后重新获取`
-  
+
   const timer = setInterval(() => {
     countdown--
     if (countdown > 0) {
@@ -326,7 +282,7 @@ function startCountdown() {
 function changeDialog(type) {
   showDialog.value = true
   dialogType.value = type
-  
+
   if (type === '找回密码') {
     dialogTitle.value = '找回密码'
     resetEmail.value = ''
@@ -341,6 +297,8 @@ function closeDialog() {
   dialogType.value = ''
   dialogTitle.value = ''
   resetEmail.value = ''
+  isLoginLoading = false
+  isRegistLoading = false
 }
 
 // 处理弹窗确认事件
@@ -349,6 +307,9 @@ function handleDialogConfirm(value) {
     sendResetEmail(value)
   } else if (dialogType.value === '注册成功') {
     goToLogin()
+  }else if(dialogTitle.value === '注册失败')
+  {
+    closeDialog()
   }
 }
 
@@ -359,21 +320,21 @@ function sendResetEmail(email) {
     showAlert('请输入邮箱地址')
     return
   }
-  
+
   // 邮箱格式验证
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(emailToUse)) {
     showAlert('请输入正确的邮箱格式')
     return
   }
-  
+
   // 这里可以添加发送重置密码邮件的API调用
   console.log('发送重置密码邮件到:', emailToUse)
   showAlert('重置密码链接已发送到您的邮箱，请查收', 'success')
   closeDialog()
 }
 
-  // 切换到登录面板
+// 切换到登录面板
 function goToLogin() {
   closeDialog()
   // 如果用户已经注册成功并且已登录，直接跳转到主页
@@ -389,7 +350,7 @@ onMounted(() => {
   // 检查是否有保存的登录信息
   const savedRememberMe = localStorage.getItem('rememberMe')
   const savedAccount = localStorage.getItem('savedAccount')
-  
+
   if (savedRememberMe === 'true' && savedAccount) {
     rememberMe.value = true
     account.value = savedAccount
@@ -541,7 +502,7 @@ onMounted(() => {
 
 /* 记住我样式 */
 .remember-me {
-  margin-left: -30px;
+  margin-left: -150px;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -550,7 +511,19 @@ onMounted(() => {
   user-select: none;
 }
 
-.remember-me input[type="checkbox"] {
+.admin {
+  margin-right: -150px;
+  margin-top: -20px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  user-select: none;
+}
+
+.remember-me input[type="checkbox"],
+.admin input[type="checkbox"] {
   display: none;
 }
 
@@ -565,12 +538,14 @@ onMounted(() => {
   background: white;
 }
 
-.remember-me input[type="checkbox"]:checked + .checkmark {
+.remember-me input[type="checkbox"]:checked+.checkmark,
+.admin input[type="checkbox"]:checked+.checkmark {
   background: linear-gradient(45deg, #667eea, #764ba2);
   border-color: #667eea;
 }
 
-.remember-me input[type="checkbox"]:checked + .checkmark::after {
+.remember-me input[type="checkbox"]:checked+.checkmark::after,
+.admin input[type="checkbox"]:checked+.checkmark::after {
   content: '✓';
   position: absolute;
   top: 50%;
@@ -581,7 +556,8 @@ onMounted(() => {
   font-weight: bold;
 }
 
-.remember-me:hover .checkmark {
+.remember-me:hover .checkmark,
+.admin:hover .checkmark {
   border-color: #667eea;
   transform: scale(1.05);
 }
@@ -594,6 +570,10 @@ onMounted(() => {
   overflow: hidden;
   transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   border-radius: 0 20px 20px 0;
+}
+
+.in-up.right-panel-active .overlay-container {
+  border-radius: 20px 0 0 20px;
 }
 
 .overlay {
@@ -613,13 +593,20 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.1) 100%);
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(255, 255, 255, 0.1) 100%);
   animation: shimmer 3s ease-in-out infinite;
 }
 
 @keyframes shimmer {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 .overlay-panel {
@@ -633,11 +620,16 @@ onMounted(() => {
   text-align: center;
 }
 
+.overlay-panel h1,
+.overlay-panel p {
+  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
 .overlay-panel h1 {
   font-weight: 600;
   margin: 0 0 20px 0;
   font-size: 1.8rem;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .overlay-panel p {
@@ -646,7 +638,7 @@ onMounted(() => {
   line-height: 1.6;
   letter-spacing: 0.5px;
   margin: 20px 0 30px;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .overlay-right {
@@ -656,7 +648,7 @@ onMounted(() => {
 }
 
 .overlay-left {
-  transform: translateY(0%);
+  transform: translateX(-20%);
 }
 
 .in-up.right-panel-active .sign-in-container {
@@ -691,6 +683,7 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -708,16 +701,16 @@ onMounted(() => {
     min-height: 400px;
     flex-direction: column;
   }
-  
+
   .form-container {
     width: 100%;
     position: relative;
   }
-  
+
   .overlay-container {
     display: none;
   }
-  
+
   .sign-in-container,
   .sign-up-container {
     width: 100%;
@@ -729,15 +722,15 @@ onMounted(() => {
   .in-up-container {
     padding: 10px;
   }
-  
+
   .form-container div {
     padding: 0 20px;
   }
-  
+
   .form-container h1 {
     font-size: 1.5rem;
   }
-  
+
   .in-up button {
     padding: 12px 30px;
     font-size: 14px;
@@ -747,7 +740,7 @@ onMounted(() => {
 /* Logo样式 */
 .logo-container {
   margin-top: -120px;
-  margin-left:-40px;
+  margin-left: -40px;
   margin-bottom: -10px;
   text-align: center;
   z-index: 10;
@@ -772,7 +765,7 @@ onMounted(() => {
   .logo-container {
     margin-bottom: 30px;
   }
-  
+
   .app-logo {
     width: 180px;
   }
@@ -782,7 +775,7 @@ onMounted(() => {
   .app-logo {
     width: 160px;
   }
-  
+
   .logo-container {
     margin-bottom: 25px;
   }

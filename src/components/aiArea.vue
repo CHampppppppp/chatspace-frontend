@@ -45,6 +45,7 @@
                     </div>
                     <div class="message-content">
                         <div class="message-bubble" :class="{ 'ai-bubble': !message.isOwn }">
+                            <!-- 显示AI思考中的输入框 -->
                             <div v-if="message.isTyping" class="typing-indicator">
                                 <span></span><span></span><span></span>
                             </div>
@@ -529,7 +530,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 18.5px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
 }

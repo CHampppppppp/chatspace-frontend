@@ -9,33 +9,36 @@ export const useFriendStore = defineStore('friend', {
     friendList: [
       {
         id: 1,
-        name: 'Alice',
-        avatar: 'https://i.pinimg.com/1200x/f9/5c/ff/f95cffa065abffdd26ed81cd4ce5832e.jpg',
+        name: '女帝',
+        avatar: 'https://i.pinimg.com/736x/de/ea/8a/deea8a2d17215a61e5f1b8c0cb7cb01b.jpg',
         status: '在线',
-        lastSeen: new Date(),
         online: true,
-        bio: '热爱生活，喜欢旅行和摄影',
-        mutualFriends: 5
+        lastSeen: new Date(Date.now()),
+        nickname: '汉库克',
+        description: '王下七武海之一',
+        bio: '王下七武海之一',
       },
       {
         id: 2,
-        name: 'Bob',
-        avatar: 'https://i.pinimg.com/1200x/d9/21/60/d92160da86a546289978a4d589e434bf.jpg',
+        name: '罗宾',
+        avatar: 'https://i.pinimg.com/736x/97/a3/65/97a3653e287af621be9ede4d91628ed9.jpg',
         status: '忙碌',
-        lastSeen: new Date(Date.now() - 1000 * 60 * 30),
-        online: false,
-        bio: '程序员，技术爱好者',
-        mutualFriends: 3
+        online: true,
+        lastSeen: new Date(Date.now()),
+        nickname: '罗宾酱',
+        description: '来自新世界的罗宾',
+        bio: '来自新世界的罗宾',
       },
       {
         id: 3,
-        name: 'Charlie',
-        avatar: 'https://i.pinimg.com/736x/89/60/56/896056ec3e9dbe88f0a1fdf9f0fdfc17.jpg',
+        name: '索隆',
+        avatar: 'https://i.pinimg.com/736x/ad/45/97/ad4597f4acb6498d11063f1fd00e5cd5.jpg',
         status: '离线',
-        lastSeen: new Date(Date.now() - 1000 * 60 * 60 * 2),
         online: false,
-        bio: '音乐制作人，创意无限',
-        mutualFriends: 8
+        lastSeen: new Date(Date.now() - 1000 * 60 * 30), // 30分钟前
+        nickname: '索小猫',
+        description: 'cute',
+        bio: 'cute',
       }
     ],
     
@@ -44,14 +47,6 @@ export const useFriendStore = defineStore('friend', {
     
     // 朋友请求列表
     friendRequests: [
-      {
-        id: 1,
-        name: 'David',
-        avatar: 'https://via.placeholder.com/45/667eea/ffffff?text=D',
-        message: '你好，我们可以成为朋友吗？',
-        time: new Date(Date.now() - 1000 * 60 * 60),
-        mutualFriends: 2
-      }
     ],
     
     // 在线朋友列表
@@ -150,6 +145,14 @@ export const useFriendStore = defineStore('friend', {
       const friend = this.friendList.find(f => f.id === friendId)
       if (friend) {
         friend.status = status
+      }
+    },
+
+    // 更新朋友信息
+    updateFriendInfo(friendId, updates) {
+      const friendIndex = this.friendList.findIndex(f => f.id === friendId)
+      if (friendIndex !== -1) {
+        this.friendList[friendIndex] = { ...this.friendList[friendIndex], ...updates }
       }
     },
     

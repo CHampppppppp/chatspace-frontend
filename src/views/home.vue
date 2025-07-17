@@ -3,7 +3,7 @@
     <!-- 左侧工具栏 -->
     <ToolBar ref="toolBarRef" />
 
-    <!-- 中间聊天列表区域 -->
+    <!-- 聊天列表区域 -->
     <div class="chat-list-container">
       <div class="chat-list-header">
         <h2>聊天</h2>
@@ -13,9 +13,7 @@
           @search="handleSearch"
         />
       </div>
-
       <div class="chat-list-content">
-        <!-- 聊天列表 -->
         <div class="chat-items">
           <div v-for="chat in chatStore.filteredChats" :key="chat.id" class="chat-item"
             :class="{ active: chatStore.selectedChatId === chat.id }" @click="selectChat(chat.id)">
@@ -36,7 +34,7 @@
       </div>
     </div>
 
-    
+    <!-- 聊天内容区 -->
     <ChatArea ref="chatAreaRef" />
   </div>
 </template>
@@ -46,6 +44,7 @@ import { ref, onMounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useChatStore } from '../store/chat'
 import { useUserStore } from '../store/user'
+import { useFriendStore } from '../store/friend'
 import ToolBar from '../components/toolBar.vue'
 import ChatArea from '../components/chatArea.vue'
 import SearchBox from '../components/SearchBox.vue'
@@ -53,46 +52,21 @@ import SearchBox from '../components/SearchBox.vue'
 const route = useRoute()
 const chatStore = useChatStore()
 const userStore = useUserStore()
+const friendStore = useFriendStore()
 
 // 响应式数据
 const messagesContainer = ref(null)
 const toolBarRef = ref(null)
 const chatAreaRef = ref(null)
 
-// 好友数据（模拟从friends页面获取）
-const friendsData = {
-  1: {
-    id: 1,
-    name: '女帝',
-    avatar: 'https://i.pinimg.com/736x/de/ea/8a/deea8a2d17215a61e5f1b8c0cb7cb01b.jpg',
-    nickname: '汉库克'
-  },
-  2: {
-    id: 2,
-    name: '罗宾',
-    avatar: 'https://i.pinimg.com/736x/97/a3/65/97a3653e287af621be9ede4d91628ed9.jpg',
-    nickname: '罗宾酱'
-  },
-  3: {
-    id: 3,
-    name: '索隆',
-    avatar: 'https://i.pinimg.com/736x/ad/45/97/ad4597f4acb6498d11063f1fd00e5cd5.jpg',
-    nickname: '索小猫'
-  }
-}
+
 
 
 // 方法
 function selectChat(chatId) {
   chatStore.selectChat(chatId)
   scrollToBottom()
-  // 备用方案：手动聚焦输入框（chatArea组件内部已有自动聚焦）
-  // nextTick(() => {
-  //   chatAreaRef.value?.focusInput()
-  // })
 }
-
-// ChatArea组件现在直接使用store，不再需要这些处理函数
 
 function scrollToBottom() {
   nextTick(() => {
@@ -125,7 +99,7 @@ function formatTime(time) {
 
 // 处理从好友页面跳转过来的聊天请求
 function handleChatWithFriend(friendId) {
-  const friend = friendsData[friendId]
+  const friend = friendStore.friendList.find(f => f.id === friendId)
   if (!friend) return
   
   // 检查是否已存在该好友的聊天
@@ -140,7 +114,7 @@ function handleChatWithFriend(friendId) {
       lastMessage: '开始聊天吧！',
       lastTime: new Date(),
       unreadCount: 0,
-      online: true
+      online: friend.online
     }
     
     // 添加到聊天列表

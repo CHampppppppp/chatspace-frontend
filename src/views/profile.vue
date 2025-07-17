@@ -443,6 +443,7 @@ function logout() {
     // 清除记住我相关的数据
     localStorage.removeItem('rememberMe')
     localStorage.removeItem('savedAccount')
+    localStorage.removeItem('isAdmin')
     router.push('/login')
   })
 }

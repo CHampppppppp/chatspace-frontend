@@ -65,18 +65,18 @@ export const useAIStore = defineStore('ai', {
       this.selectedAIId = aiId
       
       // 如果是第一次选择这个AI，添加欢迎消息
-      if (!this.aiMessages[aiId]) {
-        const ai = this.aiAssistants.find(a => a.id === aiId)
-        this.aiMessages[aiId] = [
-          {
-            id: Date.now(),
-            sender: ai.name,
-            content: `你好！我是${ai.name}，${ai.description}。有什么可以帮助您的吗？`,
-            time: new Date(),
-            isOwn: false
-          }
-        ]
-      }
+      // if (!this.aiMessages[aiId]) {
+      //   const ai = this.aiAssistants.find(a => a.id === aiId)
+      //   this.aiMessages[aiId] = [
+      //     {
+      //       id: Date.now(),
+      //       sender: ai.name,
+      //       content: `你好！我是${ai.name}，${ai.description}。有什么可以帮助您的吗？`,
+      //       time: new Date(),
+      //       isOwn: false
+      //     }
+      //   ]
+      // }
     },
     
     // 添加用户消息
@@ -118,17 +118,17 @@ export const useAIStore = defineStore('ai', {
     clearAIConversation(aiId) {
       if (this.aiMessages[aiId]) {
         this.aiMessages[aiId] = []
-        // 重新添加欢迎消息
-        const ai = this.aiAssistants.find(a => a.id === aiId)
-        this.aiMessages[aiId] = [
-          {
-            id: Date.now(),
-            sender: ai.name,
-            content: `你好！我是${ai.name}，${ai.description}。有什么可以帮助您的吗？`,
-            time: new Date(),
-            isOwn: false
-          }
-        ]
+        // // 重新添加欢迎消息
+        // const ai = this.aiAssistants.find(a => a.id === aiId)
+        // this.aiMessages[aiId] = [
+        //   {
+        //     id: Date.now(),
+        //     sender: ai.name,
+        //     content: `你好！我是${ai.name}，${ai.description}。有什么可以帮助您的吗？`,
+        //     time: new Date(),
+        //     isOwn: false
+        //   }
+        // ]
       }
     },
     

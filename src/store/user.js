@@ -22,6 +22,10 @@ export const useUserStore = defineStore('user', {
         name: state.userInfo?.username || 'User',
         avatar: state.userInfo?.avatar || '/src/assets/images/gjj.jpg'
       }
+    },
+    // 获取用户角色
+    userRole: (state) => {
+      return state.userInfo?.role || 'user'
     }
   },
   

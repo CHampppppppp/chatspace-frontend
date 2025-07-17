@@ -50,12 +50,29 @@ const userAvatar = computed(() => {
 })
 
 // 菜单项配置
-const menuItems = ref([
+const baseMenuItems = [
   { name: 'chat', label: '聊天', icon: '💬', path: '/chat' },
   { name: 'friends', label: '好友', icon: '👥', path: '/friends' },
   { name: 'myAI', label: '我的AI', icon: '⭐', path: '/myai' },
   { name: 'AI', label: 'AI助手', icon: '🤖', path: '/ai' },
-])
+]
+
+// 管理员专用菜单项
+const adminMenuItems = [
+  { name: 'adminUsers', label: '用户管理', icon: '👤', path: '/admin/users' },
+]
+
+// 根据用户角色动态生成菜单项
+const menuItems = computed(() => {
+  const items = [...baseMenuItems]
+  
+  // 如果是管理员，添加管理员菜单
+  if (userStore.userRole === 'admin') {
+    items.push(...adminMenuItems)
+  }
+  
+  return items
+})
 
 // 根据当前路由计算活跃项
 const activeItem = computed(() => {

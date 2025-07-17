@@ -1,26 +1,26 @@
 <template>
     <!-- 右侧朋友界面 -->
     <div class="friend-interface-container">
-        <div v-if="selectedFriendId && currentFriend" class="friend-interface">
+        <div v-if="friendStore.selectedFriendId && friendStore.currentFriend" class="friend-interface">
             <!-- 朋友个人信息区域 -->
             <div class="friend-info-section">
                 <div class="friend-avatar-large">
-                    <img :src="currentFriend.avatar" :alt="currentFriend.name" />
-                    <div v-if="currentFriend.online" class="online-indicator-large"></div>
+                    <img :src="friendStore.currentFriend.avatar" :alt="friendStore.currentFriend.name" />
+                    <div v-if="friendStore.currentFriend.online" class="online-indicator-large"></div>
                 </div>
                 
                 <div class="friend-details">
                     <h2 class="friend-name">{{ displayName }}</h2>
                     <div class="friend-status">
-                        <span class="status-text" :class="{ 'online': currentFriend.online, 'offline': !currentFriend.online }">
-                            {{ currentFriend.online ? '在线' : '离线' }}
+                        <span class="status-text" :class="{ 'online': friendStore.currentFriend.online, 'offline': !friendStore.currentFriend.online }">
+                            {{ friendStore.currentFriend.online ? '在线' : '离线' }}
                         </span>
                         <span class="last-seen">
-                            最后在线：{{ formatLastSeen(currentFriend.lastSeen) }}
+                            最后在线：{{ formatLastSeen(friendStore.currentFriend.lastSeen) }}
                         </span>
                     </div>
-                    <div v-if="currentFriend.description" class="friend-description">
-                        描述: {{ currentFriend.description }}
+                    <div v-if="friendStore.currentFriend.description" class="friend-description">
+                        描述: {{ friendStore.currentFriend.description }}
                     </div>
                 </div>
             </div>
@@ -89,7 +89,7 @@
             <div class="confirm-dialog" @click.stop>
                 <div class="confirm-content">
                     <h3>确认删除</h3>
-                    <p>确定要删除好友 "{{ currentFriend.name }}" 吗？此操作无法撤销。</p>
+                    <p>确定要删除好友 "{{ friendStore.currentFriend?.name }}" 吗？此操作无法撤销。</p>
                 </div>
                 <div class="confirm-actions">
                     <button class="dialog-btn delete-btn" @click="deleteFriend">确认删除</button>
@@ -102,18 +102,10 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useFriendStore } from '../store/friend.js'
 
-// 定义props
-const props = defineProps({
-  selectedFriendId: {
-    type: Number,
-    default: null
-  },
-  currentFriend: {
-    type: Object,
-    default: null
-  }
-})
+// 使用store
+const friendStore = useFriendStore()
 
 // 定义emits
 const emit = defineEmits(['start-chat', 'update-friend', 'delete-friend'])
@@ -128,22 +120,22 @@ const editForm = ref({
 
 // 计算属性
 const displayName = computed(() => {
-  if (!props.currentFriend) return ''
-  return props.currentFriend.nickname || props.currentFriend.name
+  if (!friendStore.currentFriend) return ''
+  return friendStore.currentFriend.nickname || friendStore.currentFriend.name
 })
 
 // 方法
 function startChat() {
-  if (props.currentFriend) {
-    emit('start-chat', props.currentFriend)
+  if (friendStore.currentFriend) {
+    emit('start-chat', friendStore.currentFriend)
   }
 }
 
 function showOptionsDialog() {
-  if (props.currentFriend) {
+  if (friendStore.currentFriend) {
     editForm.value = {
-      nickname: props.currentFriend.nickname || '',
-      description: props.currentFriend.description || ''
+      nickname: friendStore.currentFriend.nickname || '',
+      description: friendStore.currentFriend.description || ''
     }
     showDialog.value = true
   }
@@ -158,8 +150,8 @@ function closeDialog() {
 }
 
 function saveFriendInfo() {
-  if (props.currentFriend) {
-    emit('update-friend', props.currentFriend.id, {
+  if (friendStore.currentFriend) {
+    friendStore.updateFriendInfo(friendStore.currentFriend.id, {
       nickname: editForm.value.nickname,
       description: editForm.value.description
     })
@@ -177,8 +169,8 @@ function cancelDelete() {
 }
 
 function deleteFriend() {
-  if (props.currentFriend) {
-    emit('delete-friend', props.currentFriend.id)
+  if (friendStore.currentFriend) {
+    friendStore.removeFriend(friendStore.currentFriend.id)
     showDeleteConfirm.value = false
   }
 }

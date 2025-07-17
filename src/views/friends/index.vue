@@ -20,7 +20,7 @@
             v-for="friend in filteredFriends" 
             :key="friend.id"
             class="friend-item"
-            :class="{ 'selected': selectedFriendId === friend.id }"
+            :class="{ 'selected': friendStore.selectedFriendId === friend.id }"
             @click="selectFriend(friend)"
           >
             <div class="friend-avatar">
@@ -38,11 +38,7 @@
       
     </div>
     <friendArea 
-      :selectedFriendId="selectedFriendId"
-      :currentFriend="currentFriend"
       @start-chat="startChatWithFriend"
-      @update-friend="updateFriendInfo"
-      @delete-friend="deleteFriend"
     />
   </div>
 </template>
@@ -50,70 +46,41 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useFriendStore } from '../../store/friend.js'
 import ToolBar from '../../components/toolBar.vue'
-import friendArea from '../../components/friendArea.vue'
+import FriendArea from '../../components/friendArea.vue'
 import SearchBox from '../../components/SearchBox.vue'
 
 const router = useRouter()
+const friendStore = useFriendStore()
 
 // 响应式数据
 const searchQuery = ref('')
-const selectedFriendId = ref(null)
-
-const friendsList = ref([
-  {
-    id: 1,
-    name: '女帝',
-    avatar: 'https://i.pinimg.com/736x/de/ea/8a/deea8a2d17215a61e5f1b8c0cb7cb01b.jpg',
-    status: '在线',
-    online: true,
-    lastSeen: new Date(Date.now()),
-    nickname: '汉库克',
-    description: '王下七武海之一'
-  },
-  {
-    id: 2,
-    name: '罗宾',
-    avatar: 'https://i.pinimg.com/736x/97/a3/65/97a3653e287af621be9ede4d91628ed9.jpg',
-    status: '忙碌',
-    online: true,
-    lastSeen: new Date(Date.now()),
-    nickname: '罗宾酱',
-    description: '来自新世界的罗宾'
-  },
-  {
-    id: 3,
-    name: '索隆',
-    avatar: 'https://i.pinimg.com/736x/ad/45/97/ad4597f4acb6498d11063f1fd00e5cd5.jpg',
-    status: '离线',
-    online: false,
-    lastSeen: new Date(Date.now() - 1000 * 60 * 30), // 30分钟前
-    nickname: '索小猫',
-    description: 'cute'
-  }
-])
 
 // 计算属性
 const filteredFriends = computed(() => {
-  if (!searchQuery.value) return friendsList.value
-  return friendsList.value.filter(friend => 
-    friend.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  if (!searchQuery.value) return friendStore.friendList
+  return friendStore.friendList.filter(friend => 
+    friend.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    friend.nickname?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    friend.description?.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 })
 
 // 计算属性 - 当前选中的朋友
 const currentFriend = computed(() => {
-  return friendsList.value.find(friend => friend.id === selectedFriendId.value)
+  return friendStore.currentFriend
 })
 
 // 方法
 function handleSearch() {
   // 搜索功能可以在这里扩展
   console.log('执行好友搜索:', searchQuery.value)
+  friendStore.setSearchQuery(searchQuery.value)
 }
 
 function selectFriend(friend) {
-  selectedFriendId.value = friend.id
+  friendStore.selectFriend(friend.id)
 }
 
 function startChatWithFriend(friend) {
@@ -121,22 +88,7 @@ function startChatWithFriend(friend) {
   router.push({ name: 'home', query: { chatWith: friend.id } })
 }
 
-function updateFriendInfo(friendId, updates) {
-  const friendIndex = friendsList.value.findIndex(f => f.id === friendId)
-  if (friendIndex !== -1) {
-    friendsList.value[friendIndex] = { ...friendsList.value[friendIndex], ...updates }
-  }
-}
 
-function deleteFriend(friendId) {
-  const friendIndex = friendsList.value.findIndex(f => f.id === friendId)
-  if (friendIndex !== -1) {
-    friendsList.value.splice(friendIndex, 1)
-    if (selectedFriendId.value === friendId) {
-      selectedFriendId.value = null
-    }
-  }
-}
 </script>
 
 <style scoped>

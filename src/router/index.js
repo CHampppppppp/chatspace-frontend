@@ -37,6 +37,11 @@ const routes = [
     name: 'Profile',
     component: () => import('../views/profile.vue')
   },
+  {
+    path: '/admin/users',
+    name: 'AdminUsers',
+    component: () => import('../views/admin/user.vue'),
+  },
   // 保留原有路由以兼容
   {
     path: '/home',
@@ -52,12 +57,16 @@ const router = createRouter({
 // 路由守卫，检查是否登录
 router.beforeEach((to, from, next) => {
   const isAuthenticated = localStorage.getItem('isAuthenticated')
+  const isAdmin = localStorage.getItem('isAdmin')
 
   if (to.path !== '/login' && !isAuthenticated) {
     next('/login')
   } else {
     next()
   }
+
+  if(TouchList.path === '/admin' && (!isAuthenticated || !isAdmin))
+    next('/login')
 })
 
 export default router
