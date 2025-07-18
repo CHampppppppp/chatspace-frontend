@@ -187,7 +187,9 @@ import { ref, reactive, nextTick, computed, onMounted } from 'vue'
 import CustomDialog from '../components/customDialog.vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user.js'
-import avatar from '../assets/images/gjj.jpg'
+import defaultAvatar from '../assets/images/gjj.jpg'
+import { api } from '../api/api.js'
+import CustomDialog from '../components/customDialog.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -200,7 +202,7 @@ const userInfo = computed(() => {
     phone: '',
     birthday: '',
     signature: '',
-    avatar: avatar
+    avatar: defaultAvatar
   }
 })
 
@@ -437,13 +439,25 @@ function changePassword() {
 // 退出登录
 function logout() {
   showConfirm('确定要退出登录吗？', () => {
-    console.log('用户退出登录')
     // 使用userStore的logout方法清除用户数据
     userStore.logout()
     // 清除记住我相关的数据
     localStorage.removeItem('rememberMe')
     localStorage.removeItem('savedAccount')
-    localStorage.removeItem('isAdmin')
+
+    // api.put('/logout', {
+    //   id: userStore.userInfo.id
+    // }).then(resp => {
+    //   if(resp.code === 200){
+    //     showAlert('退出登录成功', 'success')
+    //     router.push('/login')
+    //   }
+    //  else{
+    //    showAlert('退出登录失败', 'error')
+    //  }
+    // })
+
+    showAlert('退出登录成功', 'success')
     router.push('/login')
   })
 }

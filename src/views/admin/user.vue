@@ -68,21 +68,6 @@
                 <span class="user-status" :class="user.status">{{ getStatusText(user.status) }}</span>
               </div>
             </div>
-            <div class="user-actions">
-              <button class="action-btn edit-btn" @click.stop="editUser(user)" title="编辑">
-                ✏️
-              </button>
-              <button 
-                class="action-btn block-btn" 
-                @click.stop="toggleUserStatus(user)" 
-                :title="user.status === 'blocked' ? '解封' : '封禁'"
-              >
-                {{ user.status === 'blocked' ? '🔓' : '🔒' }}
-              </button>
-              <button class="action-btn delete-btn" @click.stop="deleteUser(user)" title="删除">
-                🗑️
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -178,12 +163,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import ToolBar from '../../components/toolBar.vue'
 import SearchBox from '../../components/SearchBox.vue'
 import UserDetailArea from '../../components/UserDetailArea.vue'
 
-const router = useRouter()
 
 // 响应式数据
 const searchQuery = ref('')
@@ -292,17 +275,6 @@ function showAddUserDialog() {
   showUserDialog.value = true
 }
 
-function editUser(user) {
-  editingUser.value = user
-  userForm.value = {
-    name: user.name,
-    email: user.email,
-    avatar: user.avatar,
-    role: user.role,
-    status: user.status
-  }
-  showUserDialog.value = true
-}
 
 function closeUserDialog() {
   showUserDialog.value = false
@@ -332,13 +304,6 @@ function saveUser() {
     users.value.push(newUser)
   }
   closeUserDialog()
-}
-
-function toggleUserStatus(user) {
-  const index = users.value.findIndex(u => u.id === user.id)
-  if (index !== -1) {
-    users.value[index].status = user.status === 'blocked' ? 'active' : 'blocked'
-  }
 }
 
 function deleteUser(user) {

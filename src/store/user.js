@@ -36,7 +36,7 @@ export const useUserStore = defineStore('user', {
       this.isAuthenticated = true
       this.lastSeen = null;
       
-      localStorage.setItem('isAuthenticated', 'true')
+      localStorage.setItem('isAuthenticated', this.isAuthenticated)
       localStorage.setItem('userInfo', JSON.stringify(userInfo))
     },
     
@@ -45,6 +45,7 @@ export const useUserStore = defineStore('user', {
       this.userInfo = null
       this.isAuthenticated = false
       this.lastSeen = new Date().toISOString()
+
       localStorage.removeItem('isAuthenticated')
       localStorage.removeItem('userInfo')
     },

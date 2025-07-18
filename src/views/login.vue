@@ -30,11 +30,11 @@
               <span class="checkmark"></span>
               记住账号
             </label>
-            <label class="admin">
+            <!-- <label class="admin">
               <input v-model="isAdmin" type="checkbox">
               <span class="checkmark"></span>
               管理员登录
-            </label>
+            </label> -->
             <a href="#" @click="changeDialog('找回密码')">忘记密码？</a>
             <customButton text="登录" loadingText="登录中..." :isLoading="isLoginLoading" @click="login()" />
           </div>
@@ -61,10 +61,9 @@
   <CustomDialog v-model:visible="showDialog" :title="dialogType === '找回密码' ? '找回密码' : '注册成功' ? '注册成功' : '注册失败'"
     :type="dialogType === '找回密码' ? 'input' : dialogType === '注册成功' ? 'success' : 'error'"
     :message="dialogType === '找回密码' ? '请输入您的邮箱地址，我们将发送重置密码链接到您的邮箱' : dialogType === '注册成功' ? '恭喜您！账户注册成功' : '注册失败ohhh'"
-    :input-type="'email'"
-    :placeholder="'请输入邮箱地址'" :initial-value="resetEmail" :show-cancel="dialogType === '找回密码'"
-    :confirm-text="dialogType === '找回密码' ? '发送重置链接' : dialogTitle === '注册成功' ? '去登录' : '重视'" @confirm="handleDialogConfirm" @cancel="closeDialog"
-    @close="closeDialog" @input-change="resetEmail = $event" />
+    :input-type="'email'" :placeholder="'请输入邮箱地址'" :initial-value="resetEmail" :show-cancel="dialogType === '找回密码'"
+    :confirm-text="dialogType === '找回密码' ? '发送重置链接' : dialogTitle === '注册成功' ? '去登录' : '重视'"
+    @confirm="handleDialogConfirm" @cancel="closeDialog" @close="closeDialog" @input-change="resetEmail = $event" />
 
   <!-- 提示弹窗组件 -->
   <CustomDialog v-model:visible="showAlertDialog"
@@ -79,7 +78,8 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user.js'
 import customButton from '../components/customButton.vue'
 import CustomDialog from '../components/customDialog.vue'
-import { api } from '../utils/useApi.js'
+import { api } from '../api/api.js'
+import defaultAvatar from '../assets/images/gjj.jpg'
 
 // 路由、store
 const router = useRouter()
@@ -93,7 +93,7 @@ const code = ref('')
 const account = ref('')
 const isAuthenticated = ref(false)
 const rememberMe = ref(false) // 记住我状态
-const isAdmin = ref(false)
+// const isAdmin = ref(false)
 const isLoginLoading = ref(false) // 登录加载状态
 const isRegistLoading = ref(false) // 注册加载状态
 const codeEnabled = ref(false) // 验证码输入框是否启用
@@ -157,35 +157,31 @@ function regist() {
   isRegistLoading.value = true
 
   // 后端注册
-  api.post("/register",{
-    username:username.value,
-    password:password.value,
-    email:email.value,
-    code:code.value
-  }).then((resp)=>{
+  api.post("/register", {
+    username: username.value,
+    password: password.value,
+    email: email.value,
+    code: code.value
+  }).then((resp) => {
     //注册成功
-    if(resp){
+    if (resp) {
       // 结束加载状态
-    isRegistLoading.value = false
+      isRegistLoading.value = false
       // 清空表单
-    username.value = ''
-    password.value = ''
-    email.value = ''
-    code.value = ''
-    codeEnabled.value = false
-    // 显示注册成功弹窗
-    changeDialog('注册成功')
+      username.value = ''
+      password.value = ''
+      email.value = ''
+      code.value = ''
+      codeEnabled.value = false
+      // 显示注册成功弹窗
+      changeDialog('注册成功')
     }
     //注册失败
-    else{
+    else {
       showAlert('注册失败')
     }
   })
-    
-    
-
-
-  }
+}
 
 // 登录功能
 function login() {
@@ -199,36 +195,63 @@ function login() {
   isLoginLoading.value = true
 
   // 调用登录API
-  api.login('/login', {
-    username: account.value,
-    password: password.value
-  }).then(resp => {
-    setTimeout(() => {
-      // 结束加载状态
-      isLoginLoading.value = false
-      isAuthenticated.value = true
-    }, 1000);
-    //如果有response
-    if (resp) {
-      userStore.setUserInfo(resp.obj)
+  // api.login('/login', {
+  //   username: account.value,
+  //   password: password.value
+  // }).then(resp => {
+  //   setTimeout(() => {
+  //     // 结束加载状态
+  //     isLoginLoading.value = false
+  //     isAuthenticated.value = true
+  //   }, 1000);
+  //   //如果有response
+  //   if (resp) {
+  //     userStore.setUserInfo(resp.obj)
 
-      // 如果选择了记住我，可以在这里保存登录状态到localStorage
-      if (rememberMe.value) {
-        localStorage.setItem('rememberMe', 'true')
-        localStorage.setItem('savedAccount', account.value)
-      } else {
-        localStorage.removeItem('rememberMe')
-        localStorage.removeItem('savedAccount')
-      }
+  //     // 如果选择了记住我，可以在这里保存登录状态到localStorage
+  //     if (rememberMe.value) {
+  //       localStorage.setItem('rememberMe', 'true')
+  //       localStorage.setItem('savedAccount', account.value)
+  //     } else {
+  //       localStorage.removeItem('rememberMe')
+  //       localStorage.removeItem('savedAccount')
+  //     }
 
-      localStorage.setItem('isAdmin',isAdmin.value)
-      router.push('/home')
+  //     router.push('/home')
+  //   }
+  //   //如果没有response
+  //   else {
+  //     showAlert('账号/密码不正确')
+  //   }
+  // })
+
+  //模拟登录
+  setTimeout(() => {
+    // 结束加载状态
+    isLoginLoading.value = false
+    isAuthenticated.value = true
+    // 登录成功后，更新用户信息
+    userStore.setUserInfo({
+      id: 1,
+      username: account.value,
+      password: password.value,
+      email: '2681158691@qq.com',
+      avatar: defaultAvatar,
+      role: 'admin',
+      sex: 'male',
+      age: '20'
+    })
+
+    // 如果选择了记住我，可以在这里保存登录状态到localStorage
+    if (rememberMe.value) {
+      localStorage.setItem('rememberMe', 'true')
+      localStorage.setItem('savedAccount', account.value)
+    } else {
+      localStorage.removeItem('rememberMe')
+      localStorage.removeItem('savedAccount')
     }
-    //如果没有response
-    else {
-      showAlert('账号/密码不正确')
-    }
-  })
+    router.push('/home')
+  }, 1500);
 }
 
 // 获取验证码功能
@@ -307,8 +330,7 @@ function handleDialogConfirm(value) {
     sendResetEmail(value)
   } else if (dialogType.value === '注册成功') {
     goToLogin()
-  }else if(dialogTitle.value === '注册失败')
-  {
+  } else if (dialogTitle.value === '注册失败') {
     closeDialog()
   }
 }

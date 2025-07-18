@@ -1,6 +1,6 @@
 # API 使用指南
 
-本项目提供了多种方式来调用API，您可以根据需要选择最适合的方式。
+本项目提供了多种方式来调用后端API，您可以根据具体需求选择最适合的方式。所有API功能现已整合到 `src/api/api.js` 文件中。
 
 ## 方式一：使用 useApi Composable（推荐）
 
@@ -8,7 +8,7 @@
 
 ```javascript
 <script setup>
-import { useApi } from '@/composables/useApi.js'
+import { useApi } from '@/api/api.js'
 
 // 获取API函数
 const { postKeyValueRequest, postRequest, getRequest, putRequest, deleteRequest } = useApi()
@@ -17,8 +17,8 @@ const { postKeyValueRequest, postRequest, getRequest, putRequest, deleteRequest 
 const login = async () => {
   try {
     const response = await postKeyValueRequest('/login', {
-      username: 'user',
-      password: 'password'
+      username: 'user@example.com',
+      password: 'password123'
     })
     console.log('登录成功:', response)
   } catch (error) {
@@ -38,7 +38,7 @@ const login = async () => {
 
 ```javascript
 <script setup>
-import { api } from '@/composables/useApi.js'
+import { api } from '@/api/api.js'
 
 // 直接使用
 const fetchData = async () => {
@@ -105,7 +105,7 @@ const login = () => {
 
 ```javascript
 <script setup>
-import { useApi } from '@/composables/useApi.js'
+import { useApi } from '@/api/api.js'
 import { ElMessage } from 'element-plus'
 
 const { postRequest } = useApi()

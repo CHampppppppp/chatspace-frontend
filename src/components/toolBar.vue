@@ -67,7 +67,7 @@ const menuItems = computed(() => {
   const items = [...baseMenuItems]
   
   // 如果是管理员，添加管理员菜单
-  if (userStore.userRole === 'admin') {
+  if (userStore.userInfo.role === 'admin') {
     items.push(...adminMenuItems)
   }
   
