@@ -378,7 +378,7 @@ onMounted(() => {
 }
 
 .users-list-container {
-  width: 400px;
+  width: 370px;
   margin-left: 120px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
@@ -407,6 +407,7 @@ onMounted(() => {
   display: flex;
   gap: 10px;
   align-items: center;
+  margin-left: auto;
 }
 
 .add-user-btn {
@@ -422,6 +423,7 @@ onMounted(() => {
   font-size: 12px;
   transition: all 0.3s ease;
   white-space: nowrap;
+  margin-left: auto;
 }
 
 .add-user-btn:hover {

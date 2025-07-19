@@ -189,8 +189,6 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user.js'
 import defaultAvatar from '../assets/images/gjj.jpg'
 import { api } from '../api/api.js'
-import CustomDialog from '../components/customDialog.vue'
-
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -439,23 +437,23 @@ function changePassword() {
 // 退出登录
 function logout() {
   showConfirm('确定要退出登录吗？', () => {
-    // 使用userStore的logout方法清除用户数据
-    userStore.logout()
-    // 清除记住我相关的数据
-    localStorage.removeItem('rememberMe')
-    localStorage.removeItem('savedAccount')
+    // // 使用userStore的logout方法清除用户数据
+    // userStore.logout()
+    // // 清除记住我相关的数据
+    // localStorage.removeItem('rememberMe')
+    // localStorage.removeItem('savedAccount')
 
-    // api.put('/logout', {
-    //   id: userStore.userInfo.id
-    // }).then(resp => {
-    //   if(resp.code === 200){
-    //     showAlert('退出登录成功', 'success')
-    //     router.push('/login')
-    //   }
-    //  else{
-    //    showAlert('退出登录失败', 'error')
-    //  }
-    // })
+    api.put('/logout', {
+      id: userStore.userInfo.id
+    }).then(resp => {
+      if(resp.code === 200){
+        showAlert('退出登录成功', 'success')
+        router.push('/login')
+      }
+     else{
+       showAlert('退出登录失败', 'error')
+     }
+    })
 
     showAlert('退出登录成功', 'success')
     router.push('/login')
@@ -736,7 +734,6 @@ function handleClose(){
   background: linear-gradient(45deg, #ee5a52, #ff6b6b);
 }
 
-/* 头像裁剪弹窗样式已移至 CustomDialog 组件 */
 .crop-preview {
   text-align: center;
   margin-bottom: 20px;

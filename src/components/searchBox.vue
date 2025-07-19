@@ -39,7 +39,8 @@ function handleSearch() {
 }
 
 .search-input {
-  width: 100%;
+  margin-left: -10px;
+  width: 108%;
   padding: 12px 40px 12px 15px;
   border: 2px solid transparent;
   border-radius: 25px;

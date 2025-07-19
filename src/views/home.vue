@@ -7,11 +7,17 @@
     <div class="chat-list-container">
       <div class="chat-list-header">
         <h2>聊天</h2>
+        <div class="header-actions">
         <SearchBox 
           v-model="chatStore.searchQuery" 
           placeholder="搜索聊天..." 
           @search="handleSearch"
         />
+        <button class="add-chat-btn" @click="showAddChatDialog">
+            <span class="btn-icon">➕</span>
+            <span class="btn-text">发起群聊</span>
+        </button>
+        </div>
       </div>
       <div class="chat-list-content">
         <div class="chat-items">
@@ -183,7 +189,11 @@ onMounted(() => {
   font-weight: 600;
 }
 
-
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
 
 .chat-list-content {
   flex: 1;
@@ -643,6 +653,34 @@ onMounted(() => {
 .chat-list-content::-webkit-scrollbar-thumb:hover,
 .messages-container::-webkit-scrollbar-thumb:hover {
   background: rgba(102, 126, 234, 0.5);
+}
+
+.add-chat-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.add-chat-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-icon {
+  font-size: 14px;
+}
+
+.btn-text {
+  font-weight: 500;
 }
 
 /* 响应式设计 */

@@ -195,63 +195,63 @@ function login() {
   isLoginLoading.value = true
 
   // 调用登录API
-  // api.login('/login', {
-  //   username: account.value,
-  //   password: password.value
-  // }).then(resp => {
-  //   setTimeout(() => {
-  //     // 结束加载状态
-  //     isLoginLoading.value = false
-  //     isAuthenticated.value = true
-  //   }, 1000);
-  //   //如果有response
-  //   if (resp) {
-  //     userStore.setUserInfo(resp.obj)
+  api.login('/login', {
+    username: account.value,
+    password: password.value
+  }).then(resp => {
+    setTimeout(() => {
+      // 结束加载状态
+      isLoginLoading.value = false
+      isAuthenticated.value = true
+    }, 1000);
+    //如果有response
+    if (resp) {
+      userStore.setUserInfo(resp.obj)
 
-  //     // 如果选择了记住我，可以在这里保存登录状态到localStorage
-  //     if (rememberMe.value) {
-  //       localStorage.setItem('rememberMe', 'true')
-  //       localStorage.setItem('savedAccount', account.value)
-  //     } else {
-  //       localStorage.removeItem('rememberMe')
-  //       localStorage.removeItem('savedAccount')
-  //     }
+      // 如果选择了记住我，可以在这里保存登录状态到localStorage
+      if (rememberMe.value) {
+        localStorage.setItem('rememberMe', 'true')
+        localStorage.setItem('savedAccount', account.value)
+      } else {
+        localStorage.removeItem('rememberMe')
+        localStorage.removeItem('savedAccount')
+      }
 
-  //     router.push('/home')
-  //   }
-  //   //如果没有response
-  //   else {
-  //     showAlert('账号/密码不正确')
-  //   }
-  // })
-
-  //模拟登录
-  setTimeout(() => {
-    // 结束加载状态
-    isLoginLoading.value = false
-    isAuthenticated.value = true
-    // 登录成功后，更新用户信息
-    userStore.setUserInfo({
-      id: 1,
-      username: account.value,
-      password: password.value,
-      email: '2681158691@qq.com',
-      avatar: defaultAvatar,
-      role: 'admin',
-      sex: 'male',
-      age: '20'
-    })
-
-    // 如果选择了记住我，可以在这里保存登录状态到localStorage
-    if (rememberMe.value) {
-      localStorage.setItem('rememberMe', 'true')
-      localStorage.setItem('savedAccount', account.value)
-    } else {
-      localStorage.removeItem('rememberMe')
-      localStorage.removeItem('savedAccount')
+      router.push('/home')
     }
-    router.push('/home')
-  }, 1500);
+    //如果没有response
+    else {
+      showAlert('账号/密码不正确')
+    }
+  })
+
+  // //模拟登录
+  // setTimeout(() => {
+  //   // 结束加载状态
+  //   isLoginLoading.value = false
+  //   isAuthenticated.value = true
+  //   // 登录成功后，更新用户信息
+  //   userStore.setUserInfo({
+  //     id: 1,
+  //     username: account.value,
+  //     password: password.value,
+  //     email: '2681158691@qq.com',
+  //     avatar: defaultAvatar,
+  //     role: 'admin',
+  //     sex: 'male',
+  //     age: '20'
+  //   })
+
+  //   // 如果选择了记住我，可以在这里保存登录状态到localStorage
+  //   if (rememberMe.value) {
+  //     localStorage.setItem('rememberMe', 'true')
+  //     localStorage.setItem('savedAccount', account.value)
+  //   } else {
+  //     localStorage.removeItem('rememberMe')
+  //     localStorage.removeItem('savedAccount')
+  //   }
+  //   router.push('/home')
+  // }, 1500);
 }
 
 // 获取验证码功能
