@@ -46,66 +46,12 @@
       </div>
     </div>
     
-    <!-- 右侧聊天区域 -->
-    <div class="chat-area" v-if="selectedAIId">
-      <div class="chat-header">
-        <div class="chat-ai-info">
-          <div class="chat-ai-avatar">
-            <div class="my-ai-icon">{{ currentAI?.icon }}</div>
-          </div>
-          <div class="chat-ai-details">
-            <h3>{{ currentAI?.name }}</h3>
-            <span class="ai-status">{{ currentAI?.type }} - {{ currentAI?.description }}</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="messages-container" ref="messagesContainer">
-        <div 
-          v-for="message in currentMessages" 
-          :key="message.id"
-          class="message"
-          :class="{ 'own-message': message.isOwn }"
-        >
-          <div class="message-avatar">
-            <div v-if="!message.isOwn" class="my-ai-icon">{{ currentAI?.icon }}</div>
-            <img v-else :src="message.avatar" :alt="message.sender" />
-          </div>
-          <div class="message-content">
-            <div class="message-header">
-              <span class="message-sender">{{ message.sender }}</span>
-              <span class="message-time">{{ formatTime(message.time) }}</span>
-            </div>
-            <div class="message-text">{{ message.content }}</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="message-input-container">
-        <div class="input-wrapper">
-          <textarea 
-            v-model="messageInput"
-            @keydown.enter.exact.prevent="sendMessage"
-            @keydown.enter.shift.exact="addNewLine"
-            placeholder="与您的AI助手对话... (Enter发送，Shift+Enter换行)"
-            class="message-input"
-            rows="1"
-          ></textarea>
-          <button @click="sendMessage" class="send-button" :disabled="!messageInput.trim()">
-            发送
-          </button>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 空状态 -->
-    <div v-else class="empty-chat">
-      <div class="empty-content">
-        <div class="empty-icon">⭐</div>
-        <h3>选择一个AI助手开始对话</h3>
-        <p>点击左侧列表中的AI助手开始对话，或创建一个新的AI助手</p>
-      </div>
-    </div>
+    <!-- 右侧AI详情区域 -->
+    <myaiArea 
+      :selectedAI="currentAI"
+      @add-friend="handleAddAIAsFriend"
+      @update-likes="handleUpdateLikes"
+    />
     
     <!-- 创建/编辑AI对话框 -->
     <div v-if="showCreateDialog" class="dialog-overlay" @click="closeCreateDialog">
@@ -137,13 +83,13 @@
           </div>
           
           <div class="form-group">
-            <label>描述</label>
+            <label>简短描述</label>
             <textarea v-model="aiForm.description" placeholder="请描述这个AI助手的功能和特点" rows="3"></textarea>
           </div>
           
           <div class="form-group">
-            <label>个性设定</label>
-            <textarea v-model="aiForm.personality" placeholder="请描述AI的个性特点，比如：友善、专业、幽默等" rows="3"></textarea>
+            <label>角色设定(prompt)</label>
+            <textarea v-model="aiForm.prompt" placeholder="prompt助手可以帮你的角色生成prompt哦~" rows="3"></textarea>
           </div>
         </div>
         
@@ -189,8 +135,8 @@ import { useUserStore } from '../../store/user'
 import CustomDialog from '../../components/customDialog.vue'
 import ToolBar from '../../components/toolBar.vue'
 import SearchBox from '../../components/SearchBox.vue'
-
-const router = useRouter()
+import myaiArea from '../../components/myaiArea.vue'
+import { api } from '../../api/api.js'
 
 // 响应式数据
 const selectedAIId = ref(null)
@@ -216,7 +162,7 @@ const aiForm = ref({
   name: '',
   icon: '⭐',
   description: '',
-  personality: ''
+  prompt: ''
 })
 
 const availableIcons = ['⭐', '🤖', '🎯', '💡', '🎨', '📚', '🔬', '🎵', '🏆', '🌟', '💎', '🚀', '🎭', '🔮', '🎪']
@@ -224,17 +170,23 @@ const availableIcons = ['⭐', '🤖', '🎯', '💡', '🎨', '📚', '🔬', '
 const myAIList = ref([
   {
     id: 1,
-    name: '我的专属助手',
+    name: '李白',
     icon: '⭐',
-    description: '专门为我定制的智能助手',
-    personality: '友善、耐心、专业'
+    description: '唐代诗仙',
+    prompt: '你是李白，你是一个专业的诗人',
+    creator: '张三',
+    createDate: '2024-01-15',
+    likes: 128
   },
   {
     id: 2,
-    name: '创意伙伴',
+    name: '路飞',
     icon: '🎨',
-    description: '帮助激发创意灵感的AI助手',
-    personality: '富有想象力、积极乐观'
+    description: '海贼王的男人',
+    prompt: '你是路飞,要成为海贼王的男人',
+    creator: '李四',
+    createDate: '2024-02-20',
+    likes: 95
   }
 ])
 
@@ -301,7 +253,7 @@ function closeCreateDialog() {
     name: '',
     icon: '⭐',
     description: '',
-    personality: ''
+    prompt: ''
   }
 }
 
@@ -311,17 +263,36 @@ function saveAI() {
     return
   }
   
+  if (!aiForm.value.description.trim()) {
+    showAlert('请输入AI描述')
+    return
+  }
+  
+  if (!aiForm.value.prompt.trim()) {
+    showAlert('请输入AI prompt')
+    return
+  }
+  
   if (editingAI.value) {
     // 编辑现有AI
     const index = myAIList.value.findIndex(ai => ai.id === editingAI.value.id)
     if (index !== -1) {
-      myAIList.value[index] = { ...aiForm.value, id: editingAI.value.id }
+      myAIList.value[index] = { 
+        ...aiForm.value, 
+        id: editingAI.value.id,
+        creator: editingAI.value.creator,
+        createDate: editingAI.value.createDate,
+        likes: editingAI.value.likes
+      }
     }
   } else {
     // 创建新AI
     const newAI = {
       ...aiForm.value,
-      id: Date.now()
+      id: Date.now(),
+      creator: userProfile.value.username || '当前用户',
+      createDate: new Date().toISOString().split('T')[0],
+      likes: 0
     }
     myAIList.value.push(newAI)
   }
@@ -365,58 +336,6 @@ function handleConfirmDialogConfirm() {
   closeConfirmDialog()
 }
 
-function sendMessage() {
-  if (!messageInput.value.trim() || !selectedAIId.value) return
-  
-  const userMessage = {
-    id: Date.now(),
-    sender: '我',
-    content: messageInput.value.trim(),
-    time: new Date(),
-    isOwn: true,
-    avatar: userProfile.value.avatar
-  }
-  
-  if (!messages.value[selectedAIId.value]) {
-    messages.value[selectedAIId.value] = []
-  }
-  
-  messages.value[selectedAIId.value].push(userMessage)
-  
-  const userInput = messageInput.value.trim()
-  messageInput.value = ''
-  
-  // 模拟AI回复
-  setTimeout(() => {
-    const aiResponse = generateAIResponse(userInput, selectedAIId.value)
-    const aiMessage = {
-      id: Date.now() + 1,
-      sender: currentAI.value.name,
-      content: aiResponse,
-      time: new Date(),
-      isOwn: false
-    }
-    
-    messages.value[selectedAIId.value].push(aiMessage)
-    scrollToBottom()
-  }, 1000)
-  
-  scrollToBottom()
-}
-
-function generateAIResponse(userInput, aiId) {
-  const ai = myAIList.value.find(a => a.id === aiId)
-  
-  const responses = [
-  ]
-  
-  const randomResponse = responses[Math.floor(Math.random() * responses.length)]
-  return randomResponse
-}
-
-function addNewLine() {
-  messageInput.value += '\n'
-}
 
 function scrollToBottom() {
   nextTick(() => {
@@ -426,18 +345,20 @@ function scrollToBottom() {
   })
 }
 
-function formatTime(time) {
-  const now = new Date()
-  const diff = now - time
+// 处理添加AI为好友
+function handleAddAIAsFriend(ai) {
+  // 模拟添加AI为好友的API调用
+  api.po
   
-  if (diff < 1000 * 60) {
-    return '刚刚'
-  } else if (diff < 1000 * 60 * 60) {
-    return `${Math.floor(diff / (1000 * 60))}分钟前`
-  } else if (diff < 1000 * 60 * 60 * 24) {
-    return `${Math.floor(diff / (1000 * 60 * 60))}小时前`
-  } else {
-    return time.toLocaleDateString()
+  console.log('添加AI为好友:', ai)
+  showAlert('已成功添加AI为好友！', 'success')
+}
+
+// 处理点赞数更新
+function handleUpdateLikes(aiId, newLikes) {
+  const ai = myAIList.value.find(a => a.id === aiId)
+  if (ai) {
+    ai.likes = newLikes
   }
 }
 </script>
@@ -761,11 +682,29 @@ function formatTime(time) {
   line-height: 1.4;
   max-height: 120px;
   transition: all 0.3s ease;
+  overflow: auto;
+  box-sizing: border-box;
 }
 
 .message-input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #e1e5e9;
+}
+
+.message-input::-webkit-scrollbar {
+  width: 4px;
+}
+
+.message-input::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-input::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 2px;
+}
+
+.message-input::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.5);
 }
 
 .send-button {
@@ -910,8 +849,7 @@ function formatTime(time) {
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #e1e5e9;
 }
 
 .icon-selector {

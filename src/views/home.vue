@@ -8,15 +8,11 @@
       <div class="chat-list-header">
         <h2>聊天</h2>
         <div class="header-actions">
-        <SearchBox 
-          v-model="chatStore.searchQuery" 
-          placeholder="搜索聊天..." 
-          @search="handleSearch"
-        />
-        <button class="add-chat-btn" @click="showAddChatDialog">
+          <SearchBox v-model="chatStore.searchQuery" placeholder="搜索聊天..." @search="handleSearch" />
+          <button class="add-chat-btn" @click="showAddChatDialog">
             <span class="btn-icon">➕</span>
             <span class="btn-text">发起群聊</span>
-        </button>
+          </button>
         </div>
       </div>
       <div class="chat-list-content">
@@ -91,7 +87,7 @@ function handleSearch() {
 function formatTime(time) {
   const now = new Date()
   const diff = now - time
-  
+
   if (diff < 1000 * 60) {
     return '刚刚'
   } else if (diff < 1000 * 60 * 60) {
@@ -107,10 +103,10 @@ function formatTime(time) {
 function handleChatWithFriend(friendId) {
   const friend = friendStore.friendList.find(f => f.id === friendId)
   if (!friend) return
-  
+
   // 检查是否已存在该好友的聊天
   const existingChat = chatStore.chatList.find(chat => chat.id === friendId)
-  
+
   if (!existingChat) {
     // 创建新的聊天项
     const newChat = {
@@ -122,11 +118,11 @@ function handleChatWithFriend(friendId) {
       unreadCount: 0,
       online: friend.online
     }
-    
+
     // 添加到聊天列表
     chatStore.addChat(newChat)
   }
-  
+
   // 选中该聊天
   chatStore.selectChat(friendId)
 }
@@ -145,7 +141,7 @@ onMounted(() => {
   userStore.initUserState()
   // 初始化默认选中的聊天
   chatStore.initializeDefaultChat()
-  
+
   // 处理初始的chatWith参数
   if (route.query.chatWith) {
     const friendId = parseInt(route.query.chatWith)
@@ -578,12 +574,29 @@ onMounted(() => {
   font-size: 14px;
   line-height: 1.4;
   transition: all 0.3s ease;
+  overflow: auto;
+  box-sizing: border-box;
 }
 
 .message-input:focus {
-  border-color: #667eea;
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+}
+
+.message-input::-webkit-scrollbar {
+  width: 4px;
+}
+
+.message-input::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-input::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 2px;
+}
+
+.message-input::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.5);
 }
 
 .send-btn {

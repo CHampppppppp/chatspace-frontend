@@ -3,8 +3,7 @@ import { defineStore } from 'pinia'
 export const useUserStore = defineStore('user', {
   state: () => ({
     userInfo: null,
-    isAuthenticated: false,
-    lastSeen: null
+    isAuthenticated: false
   }),
   
   getters: {
@@ -20,7 +19,16 @@ export const useUserStore = defineStore('user', {
     userProfile: (state) => {
       return {
         name: state.userInfo?.username || 'User',
-        avatar: state.userInfo?.avatar || '/src/assets/images/gjj.jpg'
+        avatar: state.userInfo?.avatar || '/src/assets/images/gjj.jpg',
+        email: state.userInfo?.email || '',
+        age: state.userInfo?.age || '',
+        gender: state.userInfo?.gender || '',
+        role: state.userInfo?.role || 'user',
+        user_id: state.userInfo?.user_id || state.userInfo?.id || null,
+        signature: state.userInfo?.signature || '',
+        status: state.userInfo?.status || '',
+        created_at: state.userInfo?.created_at || '',
+        lastseen: state.userInfo?.lastseen || ''
       }
     },
     // 获取用户角色
@@ -36,10 +44,16 @@ export const useUserStore = defineStore('user', {
       this.isAuthenticated = true
       this.lastSeen = null;
       
+      if(this.userInfo)
+        localStorage.removeItem('userInfo')
+      if(this.isAuthenticated)
+        localStorage.removeItem('isAuthenticated')
+      
       localStorage.setItem('isAuthenticated', this.isAuthenticated)
       localStorage.setItem('userInfo', JSON.stringify(userInfo))
+
+
     },
-    
     //删除用户数据
     logout() {
       this.userInfo = null

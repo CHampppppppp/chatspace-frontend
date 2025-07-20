@@ -10,13 +10,7 @@
               <span>更换头像</span>
             </div>
           </div>
-          <input 
-          ref="avatarInput" 
-          type="file" 
-          accept="image/*" 
-          @change="handleAvatarChange" 
-          style="display: none"
-          />
+          <input ref="avatarInput" type="file" accept="image/*" @change="handleAvatarChange" style="display: none" />
         </div>
         <div class="user-basic">
           <h2>{{ userInfo.username }}</h2>
@@ -24,19 +18,12 @@
           <div class="signature-section">
             <p style="margin-bottom:10px">个性签名</p>
             <div v-if="!editingSignature" class="signature-display" @click="editSignature">
-              <span>{{ userInfo.signature || '点击设置个性签名' }}</span>
+              <span>{{ userInfo.signature || '......' }}</span>
             </div>
             <div v-else class="signature-edit">
-              <input 
-                v-model="tempSignature" 
-                @blur="saveSignature" 
-                @keyup.enter="saveSignature"
-                @keyup.esc="cancelEditSignature"
-                placeholder="输入个性签名"
-                maxlength="50"
-                class="signature-input"
-                ref="signatureInput"
-              />
+              <input v-model="tempSignature" @blur="saveSignature" @keyup.enter="saveSignature"
+                @keyup.esc="cancelEditSignature" placeholder="输入个性签名" maxlength="50" class="signature-input"
+                ref="signatureInput" />
               <div class="signature-actions">
                 <button @click="saveSignature" class="btn-save">保存</button>
                 <button @click="cancelEditSignature" class="btn-cancel">取消</button>
@@ -54,38 +41,36 @@
           <div class="info-form">
             <div class="form-group">
               <label>用户名</label>
-              <input 
-                v-model="editableUserInfo.username" 
-                type="text" 
-                placeholder="请输入用户名"
-                class="form-input"
-              />
+              <input v-model="editableUserInfo.username" type="text" placeholder="请输入用户名" class="form-input" />
             </div>
             <div class="form-group">
               <label>邮箱</label>
-              <input 
-                v-model="editableUserInfo.email" 
-                type="email" 
-                placeholder="请输入邮箱"
-                class="form-input"
-              />
+              <input v-model="editableUserInfo.email" type="email" placeholder="请输入邮箱" class="form-input" />
             </div>
             <div class="form-group">
-              <label>手机号</label>
-              <input 
-                v-model="editableUserInfo.phone" 
-                type="tel" 
-                placeholder="请输入手机号"
-                class="form-input"
-              />
+              <label>年龄</label>
+              <input v-model="editableUserInfo.age" type="number" placeholder="请输入年龄" class="form-input" />
             </div>
             <div class="form-group">
-              <label>生日</label>
-              <input 
-                v-model="editableUserInfo.birthday" 
-                type="date" 
-                class="form-input"
-              />
+              <label>性别</label>
+              <select v-model="editableUserInfo.gender" class="form-input">
+                <option value="">请选择性别</option>
+                <option value="男">男</option>
+                <option value="女">女</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>角色</label>
+              <input v-model="editableUserInfo.role" type="text" placeholder="用户角色" class="form-input" readonly />
+            </div>
+            <div class="form-group">
+              <label>状态</label>
+              <input v-model="editableUserInfo.status" type="text" placeholder="用户状态" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label>注册时间</label>
+              <input v-model="editableUserInfo.created_at" type="text" placeholder="注册时间" class="form-input" readonly />
             </div>
             <button @click="updateUserInfo" class="btn-primary">保存个人信息</button>
           </div>
@@ -97,30 +82,15 @@
           <div class="password-form">
             <div class="form-group">
               <label>当前密码</label>
-              <input 
-                v-model="passwordForm.currentPassword" 
-                type="password" 
-                placeholder="请输入当前密码"
-                class="form-input"
-              />
+              <input v-model="passwordForm.currentPassword" type="password" placeholder="请输入当前密码" class="form-input" />
             </div>
             <div class="form-group">
               <label>新密码</label>
-              <input 
-                v-model="passwordForm.newPassword" 
-                type="password" 
-                placeholder="请输入新密码"
-                class="form-input"
-              />
+              <input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" class="form-input" />
             </div>
             <div class="form-group">
               <label>确认新密码</label>
-              <input 
-                v-model="passwordForm.confirmPassword" 
-                type="password" 
-                placeholder="请再次输入新密码"
-                class="form-input"
-              />
+              <input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" class="form-input" />
             </div>
             <button @click="changePassword" class="btn-primary">修改密码</button>
           </div>
@@ -136,49 +106,24 @@
 
 
     <!-- 头像裁剪弹窗 -->
-    <CustomDialog
-      v-model:visible="showAvatarCrop"
-      title="确认头像"
-      type="message"
-      :show-actions="true"
-      :show-cancel="true"
-      :show-confirm="true"
-      cancel-text="取消"
-      confirm-text="确认"
-      @confirm="confirmAvatar"
-      @cancel="closeAvatarCrop"
-      @close="closeAvatarCrop"
-    >
+    <CustomDialog v-model:visible="showAvatarCrop" title="确认头像" type="message" :show-actions="true" :show-cancel="true"
+      :show-confirm="true" cancel-text="取消" confirm-text="确认" @confirm="confirmAvatar" @cancel="closeAvatarCrop"
+      @close="closeAvatarCrop">
       <div class="crop-preview">
         <img :src="cropImageSrc" alt="预览" class="crop-image" />
       </div>
     </CustomDialog>
 
     <!-- 提示弹窗组件 -->
-    <CustomDialog
-      v-model:visible="showAlertDialog"
-      :title="alertType === 'success' ? '成功' : alertType === 'error' ? '错误' : '提示'"
-      :type="alertType"
-      :message="alertMessage"
-      :show-cancel="false"
-      confirm-text="确定"
-      @confirm="closeAlertDialog"
-      @close="closeAlertDialog"
-    />
+    <CustomDialog v-model:visible="showAlertDialog"
+      :title="alertType === 'success' ? '成功' : alertType === 'error' ? '错误' : '提示'" :type="alertType"
+      :message="alertMessage" :show-cancel="false" confirm-text="确定" @confirm="closeAlertDialog"
+      @close="closeAlertDialog" />
 
     <!-- 确认弹窗组件 -->
-    <CustomDialog
-      v-model:visible="showConfirmDialog"
-      title="确认"
-      type="confirm"
-      :message="confirmMessage"
-      :show-cancel="true"
-      cancel-text="取消"
-      confirm-text="确定"
-      @confirm="handleConfirmDialogConfirm"
-      @cancel="closeConfirmDialog"
-      @close="closeConfirmDialog"
-    />
+    <CustomDialog v-model:visible="showConfirmDialog" title="确认" type="confirm" :message="confirmMessage"
+      :show-cancel="true" cancel-text="取消" confirm-text="确定" @confirm="handleConfirmDialogConfirm"
+      @cancel="closeConfirmDialog" @close="closeConfirmDialog" />
   </div>
 </template>
 
@@ -197,10 +142,14 @@ const userInfo = computed(() => {
   return userStore.userInfo || {
     username: '',
     email: '',
-    phone: '',
-    birthday: '',
+    age: '',
+    gender: '',
+    role: 'user',
+    status: '',
     signature: '',
-    avatar: defaultAvatar
+    avatar: defaultAvatar,
+    created_at: '',
+    user_id: null
   }
 })
 
@@ -208,9 +157,12 @@ const userInfo = computed(() => {
 const editableUserInfo = reactive({
   username: '',
   email: '',
-  phone: '',
-  birthday: '',
-  signature: ''
+  age: '',
+  gender: '',
+  role: 'user',
+  status: '',
+  signature: '',
+  created_at: ''
 })
 
 // 密码表单
@@ -289,11 +241,14 @@ function editSignature() {
 onMounted(() => {
   if (userStore.userInfo) {
     Object.assign(editableUserInfo, {
-      username: userStore.userInfo.username || '',
-      email: userStore.userInfo.email || '',
-      phone: userStore.userInfo.phone || '',
-      birthday: userStore.userInfo.birthday || '',
-      signature: userStore.userInfo.signature || ''
+      username: userInfo.value.username || '',
+      email: userInfo.value.email || '',
+      age: userInfo.value.age || '',
+      gender: userInfo.value.gender || '',
+      role: userInfo.value.role || 'user',
+      status: userInfo.value.status || '',
+      signature: userInfo.value.signature || '',
+      created_at: userInfo.value.created_at || ''
     })
   }
 })
@@ -301,14 +256,14 @@ onMounted(() => {
 // 保存签名
 function saveSignature() {
   editableUserInfo.signature = tempSignature.value
+
+  //保存到前端本地
   const updatedUserInfo = {
-    ...userStore.userInfo,
+    ...userInfo.value,
     signature: tempSignature.value
   }
   userStore.setUserInfo(updatedUserInfo)
   editingSignature.value = false
-  
-  console.log('签名已保存:', tempSignature.value)
 }
 
 // 取消编辑签名
@@ -322,6 +277,7 @@ function changeAvatar() {
   avatarInput.value?.click()
 }
 
+
 // 处理头像文件选择
 function handleAvatarChange(event) {
   const file = event.target.files[0]
@@ -330,7 +286,7 @@ function handleAvatarChange(event) {
       showAlert('头像文件大小不能超过5MB')
       return
     }
-    
+
     const reader = new FileReader()
     reader.onload = (e) => {
       cropImageSrc.value = e.target.result
@@ -349,48 +305,72 @@ function closeAvatarCrop() {
 
 // 确认头像
 function confirmAvatar() {
+
+  //保存到前端本地
   const updatedUserInfo = {
-    ...userStore.userInfo,
+    ...userInfo.value,
     avatar: cropImageSrc.value
   }
   userStore.setUserInfo(updatedUserInfo)
   closeAvatarCrop()
 }
 
-// 更新用户信息
-function updateUserInfo() {
+// 表单验证函数
+function validateUserInfoForm(formData) {
   // 基本验证
-  if (!editableUserInfo.username.trim()) {
+  if (!formData.username.trim()) {
     showAlert('用户名不能为空')
-    return
+    return false
   }
-  
-  if (!editableUserInfo.email.trim()) {
-    showAlert('邮箱不能为空')
-    return
-  }
-  
+
   // 邮箱格式验证
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(editableUserInfo.email)) {
+  if (!emailRegex.test(formData.email) && formData.email) {
     showAlert('请输入正确的邮箱格式')
-    return
+    return false
   }
-  
-  // 手机号验证（如果填写了）
-  if (editableUserInfo.phone && !/^1[3-9]\d{9}$/.test(editableUserInfo.phone)) {
-    showAlert('请输入正确的手机号格式')
-    return
+
+  // 年龄验证（如果填写了）
+  if (formData.age && (isNaN(formData.age) || formData.age < 0 || formData.age > 150)) {
+    showAlert('请输入正确的年龄（0-150）')
+    return false
   }
-  
-  // 更新userStore中的用户信息
+
+  return true
+}
+
+// 更新用户信息
+function updateUserInfo() {
+  // 构建表单数据
   const updatedUserInfo = {
     ...userStore.userInfo,
     ...editableUserInfo
   }
-  
-  userStore.setUserInfo(updatedUserInfo)
-  console.log('更新用户信息:', updatedUserInfo)
+
+  // 验证表单数据
+  if (!validateUserInfoForm(updatedUserInfo)) {
+    return
+  }
+
+  // 调用提交表单函数
+  submitUserInfoForm(updatedUserInfo)
+}
+
+// 提交用户信息表单
+function submitUserInfoForm(formData) {
+  // 更新userStore中的用户信息
+  userStore.setUserInfo(formData)
+
+  //保存到后端
+  api.post('/update/userInfo', {
+    userInfo: formData
+  }).then(res => {
+    if (res.code === 200)
+      showAlert('个人信息已保存', 'success')
+    else
+      showAlert('个人信息保存失败', 'error')
+  })
+
   showAlert('个人信息已保存', 'success')
 }
 
@@ -400,38 +380,42 @@ function changePassword() {
     showAlert('请输入当前密码')
     return
   }
-  
+
   if (!passwordForm.newPassword) {
     showAlert('请输入新密码')
     return
   }
-  
+
   if (passwordForm.newPassword.length < 6) {
     showAlert('新密码长度不能少于6位')
     return
   }
-  
+
   if (passwordForm.newPassword !== passwordForm.confirmPassword) {
     showAlert('两次输入的新密码不一致')
     return
   }
-  
+
   if (passwordForm.currentPassword === passwordForm.newPassword) {
     showAlert('新密码不能与当前密码相同')
     return
   }
-  
-  console.log('修改密码:', {
+
+  api.post('/update/password', {
+    user_id: userStore.userInfo.id,
     currentPassword: passwordForm.currentPassword,
     newPassword: passwordForm.newPassword
+  }).then(res => {
+    if (res.code === 200) {
+      showAlert('密码修改成功', 'success')
+      // 清空表单
+      passwordForm.currentPassword = ''
+      passwordForm.newPassword = ''
+      passwordForm.confirmPassword = ''
+    }
+    else
+      showAlert('密码修改失败', 'error')
   })
-  
-  // 清空表单
-  passwordForm.currentPassword = ''
-  passwordForm.newPassword = ''
-  passwordForm.confirmPassword = ''
-  
-  showAlert('密码修改成功', 'success')
 }
 
 // 退出登录
@@ -446,13 +430,13 @@ function logout() {
     api.put('/logout', {
       id: userStore.userInfo.id
     }).then(resp => {
-      if(resp.code === 200){
+      if (resp) {
         showAlert('退出登录成功', 'success')
         router.push('/login')
       }
-     else{
-       showAlert('退出登录失败', 'error')
-     }
+      else {
+        showAlert('退出登录失败', 'error')
+      }
     })
 
     showAlert('退出登录成功', 'success')
@@ -460,7 +444,7 @@ function logout() {
   })
 }
 
-function handleClose(){
+function handleClose() {
   router.push('/home')
 }
 </script>
@@ -486,7 +470,8 @@ function handleClose(){
   max-width: 1600px;
   overflow: hidden;
   transition: all 0.3s ease;
-  transform: scale(0.95); /* 初始缩小到95% */
+  transform: scale(0.95);
+  /* 初始缩小到95% */
   animation: gentleScale 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
@@ -614,7 +599,8 @@ function handleClose(){
   gap: 10px;
 }
 
-.btn-save, .btn-cancel {
+.btn-save,
+.btn-cancel {
   padding: 5px 15px;
   border: none;
   border-radius: 15px;
@@ -637,11 +623,13 @@ function handleClose(){
   padding: 40px;
 }
 
-.info-section, .password-section {
+.info-section,
+.password-section {
   margin-bottom: 40px;
 }
 
-.info-section h3, .password-section h3 {
+.info-section h3,
+.password-section h3 {
   margin: 0 0 25px 0;
   font-size: 1.5rem;
   font-weight: 600;
@@ -650,7 +638,8 @@ function handleClose(){
   padding-bottom: 10px;
 }
 
-.info-form, .password-form {
+.info-form,
+.password-form {
   display: grid;
   gap: 20px;
 }
@@ -753,7 +742,7 @@ function handleClose(){
   font-size: 24px;
   cursor: pointer;
   margin-top: 20px;
-  margin-left:-50px;
+  margin-left: -50px;
   z-index: 1000;
   width: 30px;
   height: 30px;
@@ -776,15 +765,16 @@ function handleClose(){
     text-align: center;
     gap: 20px;
   }
-  
+
   .profile-content {
     padding: 20px;
   }
-  
-  .info-form, .password-form {
+
+  .info-form,
+  .password-form {
     gap: 15px;
   }
-  
+
   .signature-display,
   .signature-input {
     max-width: 100%;
@@ -795,24 +785,29 @@ function handleClose(){
   .profile-container {
     padding: 10px;
   }
-  
+
   .avatar-wrapper {
     width: 100px;
     height: 100px;
   }
-  
+
   .user-basic h2 {
     font-size: 1.5rem;
   }
-  
+
   .crop-image {
     max-height: 200px;
   }
 }
 
 @keyframes extend {
-  from { width: 150px; }
-  to { width: 250px; }
+  from {
+    width: 150px;
+  }
+
+  to {
+    width: 250px;
+  }
 }
 
 @keyframes gentleScale {
@@ -820,6 +815,7 @@ function handleClose(){
     transform: scale(0.95);
     opacity: 0.6;
   }
+
   to {
     transform: scale(1);
     opacity: 1;

@@ -205,9 +205,13 @@ function login() {
       isAuthenticated.value = true
     }, 1000);
     //如果有response
-    if (resp) {
-      userStore.setUserInfo(resp.obj)
+    if (resp.code === 200) {
+      const userInfo = resp.data
+      userStore.setUserInfo(userInfo)
 
+      console.log('userInfo: ',userInfo)
+      console.log('userStore.userInfo: ',userStore.userInfo)
+      // console.log('avatar: ',userStore.userInfo.avatar)
       // 如果选择了记住我，可以在这里保存登录状态到localStorage
       if (rememberMe.value) {
         localStorage.setItem('rememberMe', 'true')
@@ -320,8 +324,8 @@ function closeDialog() {
   dialogType.value = ''
   dialogTitle.value = ''
   resetEmail.value = ''
-  isLoginLoading = false
-  isRegistLoading = false
+  isLoginLoading.value = false
+  isRegistLoading.value = false
 }
 
 // 处理弹窗确认事件

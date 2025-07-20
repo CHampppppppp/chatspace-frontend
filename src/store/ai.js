@@ -25,6 +25,15 @@ export const useAIStore = defineStore('ai', {
         model: 'deepseek-chat',
         status: '在线',
         avatar: 'https://i.pinimg.com/736x/f1/7d/db/f17ddb244e3f2f6a720e61cd3f8161fb.jpg'
+      },
+      {
+        id: 3,
+        name: 'Prompt生成助手',
+        icon: '✨',
+        description: '根据用户描述生成高质量的AI角色扮演prompt',
+        model: 'deepseek-chat',
+        status: '在线',
+        avatar: 'https://i.pinimg.com/736x/f1/7d/db/f17ddb244e3f2f6a720e61cd3f8161fb.jpg'
       }
     ],
     
@@ -145,12 +154,55 @@ export const useAIStore = defineStore('ai', {
         // 获取历史消息用于上下文
         const historyMessages = this.aiMessages[aiId] || []
         
-        // 调用DeepSeek API
-        const response = await callDeepSeekAPI(
-          ai.name, // AI类型
-          historyMessages, // 历史消息
-          userMessage // 用户输入
-        )
+        let response
+        
+        // 如果是Prompt生成助手，使用特殊的prompt
+        if (aiId === 3) {
+          const promptGeneratorSystemMessage = `你是一个专业的AI角色扮演prompt生成助手。你的任务是根据用户描述的人物特征，生成高质量、详细的角色扮演prompt。
+
+请按照以下格式生成prompt：
+
+**角色设定：**
+[详细描述角色的身份、背景、性格特点]
+
+**对话风格：**
+[描述角色的说话方式、语气、用词习惯]
+
+**行为特征：**
+[描述角色的行为模式、习惯动作、反应方式]
+
+**知识背景：**
+[角色掌握的知识领域、专业技能]
+
+**互动指南：**
+[如何与用户互动，保持角色一致性的建议]
+
+请确保生成的prompt具有以下特点：
+1. 角色特征鲜明，个性突出
+2. 背景设定合理，符合逻辑
+3. 对话风格独特，易于识别
+4. 可操作性强，便于AI执行
+5. 内容丰富，细节充实
+
+现在请根据用户的描述生成相应的角色扮演prompt。`
+          
+          response = await callDeepSeekAPI(
+            'Prompt生成助手',
+            [{
+              sender: 'system',
+              content: promptGeneratorSystemMessage,
+              isOwn: false
+            }, ...historyMessages],
+            userMessage
+          )
+        } else {
+          // 其他AI助手使用默认处理
+          response = await callDeepSeekAPI(
+            ai.name, // AI类型
+            historyMessages, // 历史消息
+            userMessage // 用户输入
+          )
+        }
         
         this.addAIMessage(aiId, response)
         
@@ -173,15 +225,30 @@ export const useAIStore = defineStore('ai', {
         return
       }
       
-      const { aiId, message, action } = data
+      const { aiId, message, action, messageId } = data
       
       if (!this.aiMessages[aiId]) {
         this.aiMessages[aiId] = []
       }
       
-      // 去掉“思考中“样式
+      // 去掉"思考中"样式
       if (action === 'remove-typing') {
         this.aiMessages[aiId] = this.aiMessages[aiId].filter(msg => msg && !msg.isTyping)
+        return
+      }
+      
+      // 删除消息
+      if (action === 'delete-message' && messageId) {
+        this.aiMessages[aiId] = this.aiMessages[aiId].filter(msg => msg && msg.id !== messageId)
+        return
+      }
+      
+      // 更新消息内容（用于撤回等操作）
+      if (action === 'update-message' && message) {
+        const messageIndex = this.aiMessages[aiId].findIndex(msg => msg && msg.id === message.id)
+        if (messageIndex !== -1) {
+          this.aiMessages[aiId][messageIndex] = { ...this.aiMessages[aiId][messageIndex], ...message }
+        }
         return
       }
       

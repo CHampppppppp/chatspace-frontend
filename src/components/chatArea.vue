@@ -529,10 +529,14 @@ onUnmounted(() => {
 }
 
 .input-container {
-  height: 30%;
+  min-height: 120px;
+  max-height: 40%;
   padding: 30px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .input-tools {
@@ -592,9 +596,7 @@ onUnmounted(() => {
 }
 
 .message-input:focus {
-  border-color: #667eea;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+  background: rgba(224, 232, 235, 0.9);
 }
 
 .message-input::-webkit-scrollbar {

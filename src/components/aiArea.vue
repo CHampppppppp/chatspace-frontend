@@ -39,7 +39,8 @@
             <!-- AI消息区域 -->
             <div class="ai-messages-container" ref="messagesContainer">
                 <div v-for="message in currentMessages" :key="message.id" class="ai-message"
-                    :class="{ 'own-message': message.isOwn, 'ai-message-item': !message.isOwn }">
+                    :class="{ 'own-message': message.isOwn, 'ai-message-item': !message.isOwn }"
+                    @contextmenu="handleContextMenu($event, message)">
                     <div class="message-avatar">
                         <img :src="message.avatar" :alt="message.sender" />
                     </div>
@@ -56,11 +57,30 @@
                 </div>
             </div>
 
+            <!-- 右键菜单 -->
+            <div v-if="showContextMenu" class="context-menu" :style="contextMenuStyle" @click.stop>
+                <div class="context-menu-item" @click="copyMessage">
+                    <span class="menu-icon">📋</span>
+                    <span>一键复制</span>
+                </div>
+                <div v-if="selectedMessage && selectedMessage.isOwn" class="context-menu-item" @click="revokeMessage">
+                    <span class="menu-icon">↩️</span>
+                    <span>撤回</span>
+                </div>
+                <div class="context-menu-item" @click="deleteMessage">
+                    <span class="menu-icon">🗑️</span>
+                    <span>删除</span>
+                </div>
+                <div v-if="selectedMessage && !selectedMessage.isTyping" class="context-menu-item" @click="replyToMessage">
+                    <span class="menu-icon">💬</span>
+                    <span>回复</span>
+                </div>
+            </div>
+
             <!-- AI输入区域 -->
             <div class="ai-input-container">
                 <div class="input-tools">
                     <button class="tool-btn" title="上传文件" @click="uploadFile()">📎</button>
-                    <button class="tool-btn" title="快捷指令" @click="showPrompts()">⚡</button>
                 </div>
                 <div class="input-area">
                     <div class="input-wrapper">
@@ -108,6 +128,7 @@ import { useUserStore } from '../store/user'
 import { callDeepSeekAPI, callDeepSeekAPIStream } from '../api/deepseek.js'
 import { useAIStore } from '../store/ai.js'
 import CustomDialog from './customDialog.vue'
+import { api } from '../api/api.js'
 
 // 使用Store
 const aiStore = useAIStore()
@@ -125,6 +146,12 @@ const userProfile = computed(() => userStore.userProfile)
 const showConfirmDialog = ref(false)
 const confirmMessage = ref('')
 const confirmCallback = ref(null)
+
+// 右键菜单相关数据
+const showContextMenu = ref(false)
+const contextMenuStyle = ref({})
+const selectedMessage = ref(null)
+const replyToMessageId = ref(null)
 
 // AI助手默认头像
 const aiAvatar = 'https://i.pinimg.com/736x/f1/7d/db/f17ddb244e3f2f6a720e61cd3f8161fb.jpg'
@@ -419,6 +446,21 @@ watch(messageInput, () => {
   })
 })
 
+// 监听选中聊天变化，自动聚焦输入框
+watch(() => aiStore.selectedAIId, (newAIId) => {
+  if (newAIId) {
+    nextTick(() => {
+      focusInput()
+    })
+  }
+})
+
+// 聚焦输入框的方法
+function focusInput() {
+  if (messageTextarea.value) {
+    messageTextarea.value.focus()
+  }
+}
 // 菜单相关功能
 function showMore() {
   showMoreMenu.value = !showMoreMenu.value
@@ -466,20 +508,10 @@ function aiSettings() {
   showMoreMenu.value = false
 }
 
-// 工具栏功能
-function voiceInput() {
-  console.log('语音输入')
-  // TODO: 实现语音输入功能
-}
 
 function uploadFile() {
   console.log('上传文件')
   // TODO: 实现文件上传功能
-}
-
-function showPrompts() {
-  console.log('快捷指令')
-  // TODO: 实现快捷指令功能
 }
 
 // 点击其他地方关闭菜单
@@ -498,9 +530,139 @@ watch(showMoreMenu, (newVal) => {
   }
 })
 
+// 右键菜单相关功能
+function handleContextMenu(event, message) {
+  event.preventDefault()
+  selectedMessage.value = message
+  
+  contextMenuStyle.value = {
+    left: event.clientX + 'px',
+    top: event.clientY + 'px'
+  }
+  
+  showContextMenu.value = true
+  
+  // 添加全局点击事件监听，点击其他地方关闭菜单
+  nextTick(() => {
+    document.addEventListener('click', hideContextMenu)
+  })
+}
+
+function hideContextMenu() {
+  showContextMenu.value = false
+  selectedMessage.value = null
+  document.removeEventListener('click', hideContextMenu)
+}
+
+// 复制消息内容
+function copyMessage() {
+  if (selectedMessage.value && selectedMessage.value.content) {
+    // 移除HTML标签，获取纯文本
+    const textContent = selectedMessage.value.content.replace(/<[^>]*>/g, '')
+    
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(textContent).then(() => {
+        // 可以添加一个提示消息
+      }).catch(err => {
+        console.error('复制失败:', err)
+        fallbackCopyText(textContent)
+      })
+    } else {
+      fallbackCopyText(textContent)
+    }
+  }
+  hideContextMenu()
+}
+
+// 备用复制方法
+function fallbackCopyText(text) {
+  const textArea = document.createElement('textarea')
+  textArea.value = text
+  document.body.appendChild(textArea)
+  textArea.select()
+  try {
+    document.execCommand('copy')
+    console.log('消息已复制到剪贴板')
+  } catch (err) {
+    console.error('复制失败:', err)
+  }
+  document.body.removeChild(textArea)
+}
+
+// 撤回消息（仅限用户自己的消息）
+function revokeMessage() {
+  if (selectedMessage.value && selectedMessage.value.isOwn) {
+    const messageToRevoke = selectedMessage.value
+    showConfirm('确定要撤回这条消息吗？', () => {
+      if (messageToRevoke && messageToRevoke.id) {
+        aiStore.updateMessages({
+          aiId: aiStore.selectedAIId,
+          messageId: messageToRevoke.id,
+          action: 'delete-message'
+        })
+        
+        api.delete('/revokeMsg',{
+          messageId: messageToRevoke.id
+        }).then(resp=>{
+          if(resp.code === 200){
+            ElMessage.success('撤回成功')
+          }
+          else{
+            ElMessage.error('撤回失败')
+          }
+        }).catch(err=>{
+          console.error('撤回失败:', err)
+        })
+      }
+    })
+  }
+  hideContextMenu()
+}
+
+// 删除消息
+function deleteMessage() {
+  if (selectedMessage.value) {
+    const messageToDelete = selectedMessage.value
+    showConfirm('确定要删除这条消息吗？此操作不可恢复。', () => {
+      if (messageToDelete && messageToDelete.id) {
+        aiStore.updateMessages({
+          aiId: aiStore.selectedAIId,
+          messageId: messageToDelete.id,
+          action: 'delete-message'
+        })
+      }
+    })
+  }
+  hideContextMenu()
+}
+
+// 回复消息
+function replyToMessage() {
+  if (selectedMessage.value && !selectedMessage.value.isTyping) {
+    replyToMessageId.value = selectedMessage.value.id
+    
+    // 在输入框中添加回复提示
+    const replyText = selectedMessage.value.content.replace(/<[^>]*>/g, '').substring(0, 50)
+    const replyPrefix = `回复 ${selectedMessage.value.sender}: "${replyText}${replyText.length > 50 ? '...' : ''}"\n\n`
+    
+    messageInput.value = replyPrefix + messageInput.value
+    
+    // 聚焦到输入框
+    nextTick(() => {
+      if (messageTextarea.value) {
+        messageTextarea.value.focus()
+        // 将光标移到最后
+        messageTextarea.value.setSelectionRange(messageTextarea.value.value.length, messageTextarea.value.value.length)
+      }
+    })
+  }
+  hideContextMenu()
+}
+
 // 组件卸载时清理事件监听
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('click', hideContextMenu)
 })
 </script>
 
@@ -657,6 +819,50 @@ onUnmounted(() => {
   }
 }
 
+/* 右键菜单样式 */
+.context-menu {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  min-width: 140px;
+  padding: 6px 0;
+  z-index: 500;
+  animation: contextMenuShow 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+  color: #333;
+}
+
+.context-menu-item:hover {
+  background-color: rgba(102, 126, 234, 0.08);
+}
+
+.context-menu-item .menu-icon {
+  margin-right: 8px;
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+}
+
+@keyframes contextMenuShow {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 .ai-messages-container {
   flex: 1;
   overflow-y: auto;
@@ -756,11 +962,15 @@ onUnmounted(() => {
 }
 
 .ai-input-container {
-  height: 30%;
+  min-height: 120px;
+  max-height: 40%;
   padding: 30px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
   width: 100%;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.02), rgba(118, 75, 162, 0.02));
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .input-tools {
@@ -824,13 +1034,24 @@ onUnmounted(() => {
 }
 
 .message-input:focus {
-  border-color: #667eea;
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
 }
 
 .message-input::-webkit-scrollbar {
-  display: none;
+  width: 4px;
+}
+
+.message-input::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-input::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 2px;
+}
+
+.message-input::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.5);
 }
 
 .send-btn {

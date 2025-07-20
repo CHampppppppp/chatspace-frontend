@@ -6,11 +6,13 @@
     <div class="friends-list-container">
       <div class="friends-list-header">
         <h2>好友</h2>
-        <SearchBox 
-          v-model="searchQuery" 
-          placeholder="搜索好友..." 
-          @search="handleSearch"
-        />
+        <div class="header-actions">
+          <SearchBox v-model="userStore.searchQuery" placeholder="搜索好友..." @search="handleSearch" />
+          <button class="add-chat-btn" @click="showAddFriendDialog">
+            <span class="btn-icon">➕</span>
+            <span class="btn-text">添加好友</span>
+          </button>
+        </div>
       </div>
       
       <div class="friends-list-content">
@@ -41,21 +43,60 @@
       @start-chat="startChatWithFriend"
     />
   </div>
+  
+  <!-- 添加好友弹窗 -->
+  <CustomDialog 
+    v-model:visible="showAddDialog"
+    title="添加好友"
+    type="input"
+    message="请输入好友的用户名"
+    placeholder="用户名"
+    :initial-value="addFriendInput"
+    :show-cancel="true"
+    cancel-text="取消"
+    confirm-text="发送申请"
+    @confirm="handleAddFriendConfirm"
+    @cancel="closeAddFriendDialog"
+    @close="closeAddFriendDialog"
+    @input-change="addFriendInput = $event"
+  />
+  
+  <!-- 提示弹窗 -->
+  <CustomDialog 
+    v-model:visible="showAlertDialog"
+    :title="alertType === 'success' ? '成功' : alertType === 'error' ? '错误' : '提示'"
+    :type="alertType"
+    :message="alertMessage"
+    :show-cancel="false"
+    confirm-text="确定"
+    @confirm="closeAlertDialog"
+    @close="closeAlertDialog"
+  />
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFriendStore } from '../../store/friend.js'
+import { useUserStore } from '../../store/user.js'
 import ToolBar from '../../components/toolBar.vue'
 import FriendArea from '../../components/friendArea.vue'
 import SearchBox from '../../components/SearchBox.vue'
+import CustomDialog from '../../components/customDialog.vue'
 
 const router = useRouter()
 const friendStore = useFriendStore()
+const userStore = useUserStore()
 
 // 响应式数据
 const searchQuery = ref('')
+
+// 添加好友弹窗相关数据
+const showAddDialog = ref(false)
+const addFriendInput = ref('')
+const showAlertDialog = ref(false)
+const alertMessage = ref('')
+const alertType = ref('warning')
 
 // 计算属性
 const filteredFriends = computed(() => {
@@ -86,6 +127,59 @@ function selectFriend(friend) {
 function startChatWithFriend(friend) {
   // 跳转到聊天页面并开启与该用户的聊天
   router.push({ name: 'home', query: { chatWith: friend.id } })
+}
+
+// 显示添加好友弹窗
+function showAddFriendDialog() {
+  showAddDialog.value = true
+  addFriendInput.value = ''
+}
+
+// 处理添加好友确认
+function handleAddFriendConfirm(input) {
+  const receiverUsername = input.trim()
+  
+  if (!receiverUsername) {
+    showAlert('请输入好友的用户名', 'warning')
+    return
+  }
+  
+  // 这里可以调用API添加好友
+  api.post('/requestFriend', {
+    sender:userStore.user.username,
+    receiver: receiverUsername
+   }).then((resp)=>{
+    if(resp.code === 200){
+      showAlert('好友申请已发送，等待对方确认', 'success')
+    }else{
+      showAlert('好友申请发送失败', 'error')
+    }
+   })
+  
+  // 模拟添加好友成功
+  showAlert('好友申请已发送，等待对方确认', 'success')
+  showAddDialog.value = false
+  addFriendInput.value = ''
+}
+
+// 关闭添加好友弹窗
+function closeAddFriendDialog() {
+  showAddDialog.value = false
+  addFriendInput.value = ''
+}
+
+// 显示提示弹窗
+function showAlert(message, type = 'warning') {
+  alertMessage.value = message
+  alertType.value = type
+  showAlertDialog.value = true
+}
+
+// 关闭提示弹窗
+function closeAlertDialog() {
+  showAlertDialog.value = false
+  alertMessage.value = ''
+  alertType.value = 'warning'
 }
 
 
@@ -124,7 +218,39 @@ function startChatWithFriend(friend) {
   font-weight: 600;
 }
 
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
 
+.add-chat-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.add-chat-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-icon {
+  font-size: 14px;
+}
+
+.btn-text {
+  font-weight: 500;
+}
 
 .friends-list-content {
   flex: 1;
