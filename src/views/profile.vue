@@ -430,17 +430,13 @@ function logout() {
     api.put('/logout', {
       id: userStore.userInfo.id
     }).then(resp => {
-      if (resp) {
-        showAlert('退出登录成功', 'success')
+      if (resp.code === 200) {
         router.push('/login')
       }
       else {
         showAlert('退出登录失败', 'error')
       }
     })
-
-    showAlert('退出登录成功', 'success')
-    router.push('/login')
   })
 }
 

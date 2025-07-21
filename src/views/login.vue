@@ -14,7 +14,7 @@
             <input v-model="username" type="text" maxlength="30" placeholder="用户名">
             <input v-model="password" type="password" maxlength="30" placeholder="密码">
             <input v-model="email" type="email" placeholder="邮箱">
-            <input v-model="code" type="text" placeholder="验证码" :disabled="!codeEnabled">
+            <!-- <input v-model="code" type="text" placeholder="验证码" :disabled="!codeEnabled"> -->
             <a style="margin: 10px" href="#" @click="getVerificationCode()" :class="{ disabled: codeBtnDisabled }">{{
               codeBtnText }}</a>
             <customButton text="注册" loadingText="注册中..." :isLoading="isRegistLoading" @click="regist()" />
@@ -138,21 +138,21 @@ function signIn() {
 // 注册功能
 function regist() {
   // 基本验证
-  if (!username.value || !password.value || !email.value || !code.value) {
+  if (!username.value || !password.value || !email.value) {
     showAlert('请填写完整的注册信息')
     return
   }
-  // 邮箱格式验证
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email.value)) {
-    showAlert('请输入正确的邮箱格式')
-    return
-  }
+  // // 邮箱格式验证
+  // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  // if (!emailRegex.test(email.value)) {
+  //   showAlert('请输入正确的邮箱格式')
+  //   return
+  // }
   // 密码长度验证
-  if (password.value.length < 6) {
-    showAlert('密码长度不能少于6位')
-    return
-  }
+  // if (password.value.length < 6) {
+  //   showAlert('密码长度不能少于6位')
+  //   return
+  // }
   // 开始加载状态
   isRegistLoading.value = true
 
@@ -174,7 +174,7 @@ function regist() {
       code.value = ''
       codeEnabled.value = false
       // 显示注册成功弹窗
-      changeDialog('注册成功')
+      showAlert('注册成功','success')
     }
     //注册失败
     else {
@@ -220,10 +220,8 @@ function login() {
         localStorage.removeItem('rememberMe')
         localStorage.removeItem('savedAccount')
       }
-
       router.push('/home')
     }
-    //如果没有response
     else {
       showAlert('账号/密码不正确')
     }
@@ -267,11 +265,11 @@ function getVerificationCode() {
   }
 
   // 简单邮箱格式验证
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email.value)) {
-    showAlert('请填写正确的邮箱格式')
-    return
-  }
+  // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  // if (!emailRegex.test(email.value)) {
+  //   showAlert('请填写正确的邮箱格式')
+  //   return
+  // }
 
   if (codeBtnDisabled.value) {
     return
@@ -528,7 +526,7 @@ onMounted(() => {
 
 /* 记住我样式 */
 .remember-me {
-  margin-left: -150px;
+  margin-left: -20px;
   display: flex;
   align-items: center;
   cursor: pointer;

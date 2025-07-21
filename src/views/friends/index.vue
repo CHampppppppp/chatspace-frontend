@@ -45,21 +45,81 @@
   </div>
   
   <!-- 添加好友弹窗 -->
-  <CustomDialog 
-    v-model:visible="showAddDialog"
-    title="添加好友"
-    type="input"
-    message="请输入好友的用户名"
-    placeholder="用户名"
-    :initial-value="addFriendInput"
-    :show-cancel="true"
-    cancel-text="取消"
-    confirm-text="发送申请"
-    @confirm="handleAddFriendConfirm"
-    @cancel="closeAddFriendDialog"
-    @close="closeAddFriendDialog"
-    @input-change="addFriendInput = $event"
-  />
+  <div v-if="showAddDialog" class="add-friend-modal-overlay" @click="closeAddFriendDialog">
+    <div class="add-friend-modal" @click.stop>
+      <div class="modal-header">
+        <h3>添加好友</h3>
+        <button class="close-btn" @click="closeAddFriendDialog">×</button>
+      </div>
+      
+      <div class="modal-content">
+        <!-- 添加好友输入区域 -->
+        <div class="add-friend-section">
+          <div class="section-title">发送好友申请</div>
+          <div class="input-group">
+            <input 
+              v-model="addFriendInput" 
+              type="text" 
+              placeholder="请输入好友的用户名" 
+              class="friend-input"
+              @keyup.enter="handleAddFriendConfirm(addFriendInput)"
+            />
+            <button 
+              class="send-btn" 
+              @click="handleAddFriendConfirm(addFriendInput)"
+              :disabled="!addFriendInput.trim()"
+            >
+              发送申请
+            </button>
+          </div>
+        </div>
+        
+        <!-- 好友请求列表 -->
+        <div class="friend-requests-section">
+          <div class="section-title">
+            收到的好友申请 
+            <span class="request-count" v-if="friendRequests.length > 0">({{ friendRequests.length }})</span>
+          </div>
+          
+          <div class="requests-list" v-if="friendRequests.length > 0">
+            <div 
+              v-for="request in friendRequests" 
+              :key="request.id" 
+              class="request-item"
+            >
+              <div class="request-avatar">
+                <img :src="request.senderAvatar || '/default-avatar.png'" :alt="request.senderName" />
+              </div>
+              <div class="request-info">
+                <div class="request-name">{{ request.senderName }}</div>
+                <div class="request-message" v-if="request.message">{{ request.message }}</div>
+                <div class="request-time">{{ formatTime(request.createdAt) }}</div>
+              </div>
+              <div class="request-actions">
+                <button 
+                  class="accept-btn" 
+                  @click="handleFriendRequest(request.id, 'accept')"
+                >
+                  接受
+                </button>
+                <button 
+                  class="reject-btn" 
+                  @click="handleFriendRequest(request.id, 'reject')"
+                >
+                  拒绝
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="no-requests" v-else>
+            <div class="no-requests-icon">📭</div>
+            <div class="no-requests-text">暂无好友申请</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   
   <!-- 提示弹窗 -->
   <CustomDialog 
@@ -75,7 +135,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFriendStore } from '../../store/friend.js'
 import { useUserStore } from '../../store/user.js'
@@ -83,6 +143,7 @@ import ToolBar from '../../components/toolBar.vue'
 import FriendArea from '../../components/friendArea.vue'
 import SearchBox from '../../components/SearchBox.vue'
 import CustomDialog from '../../components/customDialog.vue'
+import { api } from '../../api/api.js'
 
 const router = useRouter()
 const friendStore = useFriendStore()
@@ -97,6 +158,9 @@ const addFriendInput = ref('')
 const showAlertDialog = ref(false)
 const alertMessage = ref('')
 const alertType = ref('warning')
+
+// 好友请求列表
+const friendRequests = ref([])
 
 // 计算属性
 const filteredFriends = computed(() => {
@@ -133,6 +197,8 @@ function startChatWithFriend(friend) {
 function showAddFriendDialog() {
   showAddDialog.value = true
   addFriendInput.value = ''
+  // 获取好友请求列表
+  fetchFriendRequests()
 }
 
 // 处理添加好友确认
@@ -145,21 +211,17 @@ function handleAddFriendConfirm(input) {
   }
   
   // 这里可以调用API添加好友
-  api.post('/requestFriend', {
-    sender:userStore.user.username,
+  api.post('/friend-request', {
+    sender:userStore.userInfo.id,
     receiver: receiverUsername
    }).then((resp)=>{
     if(resp.code === 200){
-      showAlert('好友申请已发送，等待对方确认', 'success')
+      showAlert(resp.message, 'success')
+      closeAddFriendDialog()
     }else{
-      showAlert('好友申请发送失败', 'error')
+      showAlert(resp.message, 'error')
     }
    })
-  
-  // 模拟添加好友成功
-  showAlert('好友申请已发送，等待对方确认', 'success')
-  showAddDialog.value = false
-  addFriendInput.value = ''
 }
 
 // 关闭添加好友弹窗
@@ -181,6 +243,72 @@ function closeAlertDialog() {
   alertMessage.value = ''
   alertType.value = 'warning'
 }
+
+// 获取好友请求列表
+function fetchFriendRequests() {
+  api.get('/friend-request/list', {
+    userId: userStore.userInfo.id
+  }).then((resp) => {
+    if (resp.code === 200) {
+      friendRequests.value = resp.data || []
+    } else {
+      console.error('获取好友请求失败:', resp.message)
+    }
+  }).catch((error) => {
+    console.error('获取好友请求失败:', error)
+  })
+}
+
+// 处理好友请求（接受或拒绝）
+function handleFriendRequest(requestId, action) {
+  api.post(`/friend-request/${action}`, {
+    requestId: requestId,
+    userId: userStore.userInfo.id
+  }).then((resp) => {
+    if (resp.code === 200) {
+      showAlert(resp.message, 'success')
+      // 重新获取好友请求列表
+      fetchFriendRequests()
+      // 如果是接受请求，可能需要刷新好友列表
+      if (action === 'accept') {
+        // 这里可以调用刷新好友列表的方法
+      }
+    } else {
+      showAlert(resp.message, 'error')
+    }
+  }).catch((error) => {
+    showAlert('操作失败', 'error')
+    console.error('处理好友请求失败:', error)
+  })
+}
+
+// 格式化时间
+function formatTime(timestamp) {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diff = now - date
+  
+  // 小于1分钟
+  if (diff < 60000) {
+    return '刚刚'
+  }
+  // 小于1小时
+  if (diff < 3600000) {
+    return `${Math.floor(diff / 60000)}分钟前`
+  }
+  // 小于1天
+  if (diff < 86400000) {
+    return `${Math.floor(diff / 3600000)}小时前`
+  }
+  // 大于1天
+  return date.toLocaleDateString()
+}
+
+// 组件挂载时获取好友请求
+onMounted(() => {
+  fetchFriendRequests()
+})
 
 
 </script>
@@ -340,6 +468,287 @@ function closeAlertDialog() {
 }
 
 .friends-list-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.7);
+}
+
+/* 添加好友弹窗样式 */
+.add-friend-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.add-friend-modal {
+  background: white;
+  border-radius: 20px;
+  width: 500px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-content {
+  padding: 25px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.add-friend-section {
+  margin-bottom: 30px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.request-count {
+  background: #667eea;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.friend-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.friend-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.send-btn {
+  padding: 12px 20px;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.send-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.friend-requests-section {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: 25px;
+}
+
+.requests-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.request-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  margin-bottom: 10px;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.request-item:hover {
+  background: rgba(102, 126, 234, 0.1);
+  transform: translateX(5px);
+}
+
+.request-avatar {
+  margin-right: 15px;
+}
+
+.request-avatar img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.request-info {
+  flex: 1;
+  margin-right: 15px;
+}
+
+.request-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+  font-size: 16px;
+}
+
+.request-message {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.request-time {
+  color: #999;
+  font-size: 12px;
+}
+
+.request-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.accept-btn, .reject-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.accept-btn {
+  background: #4ade80;
+  color: white;
+}
+
+.accept-btn:hover {
+  background: #22c55e;
+  transform: translateY(-1px);
+}
+
+.reject-btn {
+  background: #f87171;
+  color: white;
+}
+
+.reject-btn:hover {
+  background: #ef4444;
+  transform: translateY(-1px);
+}
+
+.no-requests {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+}
+
+.no-requests-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.no-requests-text {
+  font-size: 16px;
+}
+
+/* 滚动条样式 */
+.modal-content::-webkit-scrollbar,
+.requests-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track,
+.requests-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb,
+.requests-list::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.5);
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover,
+.requests-list::-webkit-scrollbar-thumb:hover {
   background: rgba(102, 126, 234, 0.7);
 }
 </style>
