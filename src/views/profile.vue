@@ -17,12 +17,12 @@
           <p class="user-email">{{ userInfo.email }}</p>
           <div class="signature-section">
             <p style="margin-bottom:10px">个性签名</p>
-            <div v-if="!editingSignature" class="signature-display" @click="editSignature">
+            <div v-if="!editingSignature" class="signature-display" @click="editSignature" :title="userInfo.signature || '......'">
               <span>{{ userInfo.signature || '......' }}</span>
             </div>
             <div v-else class="signature-edit">
               <input v-model="tempSignature" @blur="saveSignature" @keyup.enter="saveSignature"
-                @keyup.esc="cancelEditSignature" placeholder="输入个性签名" maxlength="50" class="signature-input"
+                @keyup.esc="cancelEditSignature" placeholder="输入个性签名" maxlength="100" class="signature-input"
                 ref="signatureInput" />
               <div class="signature-actions">
                 <button @click="saveSignature" class="btn-save">保存</button>
@@ -552,10 +552,10 @@ function handleClose() {
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
-  max-width: 150px;
+  max-width: 450px;
 }
 
 .signature-display:hover {
@@ -581,7 +581,7 @@ function handleClose() {
   font-size: 20px;
   outline: none;
   transition: all 0.3s ease;
-  max-width: 250px;
+  max-width: 450px;
 }
 
 .signature-input:focus {
@@ -802,7 +802,7 @@ function handleClose() {
   }
 
   to {
-    width: 250px;
+    width: 400px;
   }
 }
 
