@@ -132,7 +132,6 @@ import { ref, reactive, nextTick, computed, onMounted } from 'vue'
 import CustomDialog from '../components/customDialog.vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user.js'
-import defaultAvatar from '../assets/images/gjj.jpg'
 import { api } from '../api/api.js'
 const router = useRouter()
 const userStore = useUserStore()
@@ -147,9 +146,9 @@ const userInfo = computed(() => {
     role: 'user',
     status: '',
     signature: '',
-    avatar: defaultAvatar,
+    avatar: '',
     created_at: '',
-    user_id: null
+    user_id: ''
   }
 })
 
@@ -362,16 +361,16 @@ function submitUserInfoForm(formData) {
   userStore.setUserInfo(formData)
 
   //保存到后端
-  api.post('/update/userInfo', {
+  api.post('/user-info', {
     userInfo: formData
-  }).then(res => {
-    if (res.code === 200)
+  }).then(resp => {
+    if (resp.code === 200)
       showAlert('个人信息已保存', 'success')
     else
-      showAlert('个人信息保存失败', 'error')
+      showAlert(resp.message, 'error')
+  }).catch(err=>{
+    showAlert('服务器未响应，失败')
   })
-
-  showAlert('个人信息已保存', 'success')
 }
 
 // 修改密码
@@ -401,12 +400,12 @@ function changePassword() {
     return
   }
 
-  api.post('/update/password', {
+  api.post('/user/password', {
     user_id: userStore.userInfo.id,
     currentPassword: passwordForm.currentPassword,
     newPassword: passwordForm.newPassword
-  }).then(res => {
-    if (res.code === 200) {
+  }).then(resp => {
+    if (resp.code === 200) {
       showAlert('密码修改成功', 'success')
       // 清空表单
       passwordForm.currentPassword = ''
@@ -414,7 +413,9 @@ function changePassword() {
       passwordForm.confirmPassword = ''
     }
     else
-      showAlert('密码修改失败', 'error')
+      showAlert(resp.message, 'error')
+  }).catch(err=>{
+    showAlert('服务器未响应，失败')
   })
 }
 
@@ -434,8 +435,10 @@ function logout() {
         router.push('/login')
       }
       else {
-        showAlert('退出登录失败', 'error')
+        showAlert(resp.message, 'error')
       }
+    }).catch(err=>{
+      showAlert('服务器未响应，失败')
     })
   })
 }

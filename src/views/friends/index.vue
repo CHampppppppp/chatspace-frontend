@@ -172,11 +172,6 @@ const filteredFriends = computed(() => {
   )
 })
 
-// 计算属性 - 当前选中的朋友
-const currentFriend = computed(() => {
-  return friendStore.currentFriend
-})
-
 // 方法
 function handleSearch() {
   // 搜索功能可以在这里扩展
@@ -211,9 +206,10 @@ function handleAddFriendConfirm(input) {
   }
   
   // 这里可以调用API添加好友
-  api.post('/friend-request', {
-    sender:userStore.userInfo.id,
-    receiver: receiverUsername
+  api.post('/friend/request', {
+    sender_id:userStore.userInfo.user_id,
+    receiver_username: receiverUsername,
+    message:'hi,let us be friend!'
    }).then((resp)=>{
     if(resp.code === 200){
       showAlert(resp.message, 'success')
@@ -246,9 +242,8 @@ function closeAlertDialog() {
 
 // 获取好友请求列表
 function fetchFriendRequests() {
-  api.get('/friend-request/list', {
-    userId: userStore.userInfo.id
-  }).then((resp) => {
+  api.get(`/${userStore.userInfo.user_id}/friend-list`)
+  .then((resp) => {
     if (resp.code === 200) {
       friendRequests.value = resp.data || []
     } else {
@@ -261,24 +256,18 @@ function fetchFriendRequests() {
 
 // 处理好友请求（接受或拒绝）
 function handleFriendRequest(requestId, action) {
-  api.post(`/friend-request/${action}`, {
-    requestId: requestId,
-    userId: userStore.userInfo.id
+  api.post(`/friend-request/${requestId}`, {
+    action:action
   }).then((resp) => {
     if (resp.code === 200) {
       showAlert(resp.message, 'success')
       // 重新获取好友请求列表
       fetchFriendRequests()
-      // 如果是接受请求，可能需要刷新好友列表
-      if (action === 'accept') {
-        // 这里可以调用刷新好友列表的方法
-      }
     } else {
       showAlert(resp.message, 'error')
     }
   }).catch((error) => {
-    showAlert('操作失败', 'error')
-    console.error('处理好友请求失败:', error)
+    showAlert('服务器未响应')
   })
 }
 

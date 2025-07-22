@@ -37,7 +37,7 @@
               <div class="my-ai-type">{{ myAi.type }}</div>
               <div class="my-ai-description">{{ myAi.description }}</div>
             </div>
-            <div class="my-ai-actions">
+            <div class="my-ai-actions" v-if="userProfile.role === 'admin'">
               <button @click.stop="editAI(myAi)" class="edit-btn">✏️</button>
               <button @click.stop="deleteAI(myAi.id)" class="delete-btn">🗑️</button>
             </div>
@@ -230,19 +230,57 @@ function selectMyAI(aiId) {
   scrollToBottom()
 }
 
-function editAI(ai) {
-  editingAI.value = ai
-  aiForm.value = { ...ai }
+function editAI(myAi) {
+  // 检查是否为管理员
+  if (userProfile.value.role !== 'admin') {
+    showAlert('只有管理员才能编辑AI助手', 'error')
+    return
+  }
+  
+  editingAI.value = myAi
+  aiForm.value = { ...myAi }
   showCreateDialog.value = true
 }
 
 function deleteAI(aiId) {
-  showConfirm('确定要删除这个AI助手吗？', () => {
-    myAIList.value = myAIList.value.filter(ai => ai.id !== aiId)
-    if (selectedAIId.value === aiId) {
-      selectedAIId.value = null
-    }
-    delete messages.value[aiId]
+  // 检查是否为管理员
+  if (userProfile.value.role !== 'admin') {
+    showAlert('只有管理员才能删除AI助手', 'error')
+    return
+  }
+  
+  showConfirm('确定要删除这个角色吗？', () => {
+    // //前端视觉上删除（假删除）
+    // myAIList.value = myAIList.value.filter(ai => ai.id !== aiId)
+    // if (selectedAIId.value === aiId) {
+    //   selectedAIId.value = null
+    // }
+    // delete messages.value[aiId]
+    
+    api.delete(`/${aiId}`).then(resp => {
+      if(resp.code === 200){
+        showAlert('删除成功')
+      }
+      else{
+        showAlert(resp.message)
+      }
+    }).catch(err => {
+      showAlert('服务器未响应')
+    })
+
+    //更新ai列表
+    api.get(`/myai`)
+    .then(resp => {
+      if(resp.code === 200){
+        // myAIList.value = resp.data
+        console.log('AIList: '+ resp.data)
+      }
+      else{
+        showAlert(resp.message)
+      }
+    }).catch(err => {
+      showAlert('服务器未响应')
+    })
   })
 }
 
@@ -274,30 +312,60 @@ function saveAI() {
   }
   
   if (editingAI.value) {
-    // 编辑现有AI
-    const index = myAIList.value.findIndex(ai => ai.id === editingAI.value.id)
-    if (index !== -1) {
-      myAIList.value[index] = { 
-        ...aiForm.value, 
-        id: editingAI.value.id,
-        creator: editingAI.value.creator,
-        createDate: editingAI.value.createDate,
-        likes: editingAI.value.likes
+    // 编辑现有AI - 调用后端API
+    const aiData = {
+      name: aiForm.value.name,
+      icon: aiForm.value.icon,
+      description: aiForm.value.description,
+      prompt: aiForm.value.prompt,
+      user_id: userProfile.value.user_id
+    }
+    
+    api.post(`/${editingAI.value.id}`, aiData).then(resp => {
+      if (resp.code === 200) {
+        // 更新前端列表
+        const index = myAIList.value.findIndex(ai => ai.id === editingAI.value.id)
+        if (index !== -1) {
+          myAIList.value[index] = { 
+            ...aiForm.value, 
+            id: editingAI.value.id,
+            creator: editingAI.value.creator,
+            createDate: editingAI.value.createDate,
+            likes: editingAI.value.likes
+          }
+        }
+        showAlert('AI编辑成功', 'success')
+        closeCreateDialog()
+      } else {
+        showAlert(resp.message || 'AI编辑失败', 'error')
       }
-    }
+    }).catch(err => {
+      showAlert('服务器未响应', 'error')
+    })
+    return
   } else {
-    // 创建新AI
-    const newAI = {
-      ...aiForm.value,
-      id: Date.now(),
-      creator: userProfile.value.username || '当前用户',
-      createDate: new Date().toISOString().split('T')[0],
-      likes: 0
+    // 创建新AI - 调用后端API
+    const aiData = {
+      name: aiForm.value.name,
+      icon: aiForm.value.icon,
+      description: aiForm.value.description,
+      prompt: aiForm.value.prompt,
+      user_id: userProfile.value.user_id
     }
-    myAIList.value.push(newAI)
+    
+    api.post('/myai', aiData).then(resp => {
+      if (resp.code === 200) {
+        // 将后端返回的AI数据添加到前端列表
+        myAIList.value.push(resp.data)
+        showAlert('AI创建成功', 'success')
+        closeCreateDialog()
+      } else {
+        showAlert(resp.message || 'AI创建失败', 'error')
+      }
+    }).catch(err => {
+      showAlert('服务器未响应', 'error')
+    })
   }
-  
-  closeCreateDialog()
 }
 
 // 显示提示弹窗
@@ -347,11 +415,18 @@ function scrollToBottom() {
 
 // 处理添加AI为好友
 function handleAddAIAsFriend(ai) {
-  // 模拟添加AI为好友的API调用
-  api.po
-  
-  console.log('添加AI为好友:', ai)
-  showAlert('已成功添加AI为好友！', 'success')
+  api.post(`/friend/${ai.id}`,{
+  sender_id:userProfile.value.user_id
+}).then(resp => {
+  if(resp.code === 200){
+    showAlert('添加成功，去和他/她聊聊天吧')
+  }
+  else{
+    showAlert(resp.message)
+  }
+}).catch(err => {
+  showAlert('服务器未响应')
+})
 }
 
 // 处理点赞数更新
@@ -360,6 +435,18 @@ function handleUpdateLikes(aiId, newLikes) {
   if (ai) {
     ai.likes = newLikes
   }
+
+  api.post(`/like/${ai.id}`)
+  .then(resp => {
+    if(resp.code === 200){
+      showAlert('谢谢你的点赞')
+    }
+    else{
+      showAlert(resp.message)
+    }
+  }).catch(err => {
+    showAlert('服务器未响应')
+  })
 }
 </script>
 

@@ -19,10 +19,6 @@
                         <button class="action-btn" title="更多" @click="showMore()">⋯</button>
                         <transition name="menu-fade">
                             <div v-if="showMoreMenu" class="more-menu" @click.stop>
-                                <div class="menu-item" @click="editRemark">
-                                    <span class="menu-icon">✏️</span>
-                                    <span>修改备注</span>
-                                </div>
                                 <div class="menu-item" @click="deleteChatHistory">
                                     <span class="menu-icon">🗑️</span>
                                     <span>删除聊天记录</span>
@@ -58,7 +54,6 @@
                 <div class="input-tools">
                     <button class="tool-btn" title="表情" @click="showEmo()">😊</button>
                     <button class="tool-btn" title="文件" @click="showFile()">📎</button>
-                    <button class="tool-btn" title="图片" @click="showPic()">🖼️</button>
                 </div>
                 <div class="input-area">
                     <div class="input-wrapper">
@@ -102,6 +97,7 @@ import {ref, computed, nextTick, watch, onUnmounted} from 'vue'
 import { useChatStore } from '../store/chat'
 import { useUserStore } from '../store/user'
 import CustomDialog from './customDialog.vue'
+import { api } from '../api/api.js'
 
 // 使用Chat Store
 const chatStore = useChatStore()
@@ -131,17 +127,37 @@ function sendMessage() {
   if (!messageInput.value.trim() || !chatStore.selectedChatId) return
   
   const newMessage = {
-    id: Date.now(),
+    id: userProfile.value.user_id,
     sender: '我',
     content: messageInput.value.trim(),
     time: new Date(),
     isOwn: true,
     avatar: userProfile.value.avatar,
-    name: userProfile.value.name
+    name: userProfile.value.username
   }
   
   // 直接使用store方法添加消息
   chatStore.addMessage(chatStore.selectedChatId, newMessage)
+
+  //使用api发送消息
+  api.post('/private-messsage',{
+    sender_id:userProfile.value.user_id,
+    session_id:chatStore.selectedChatId,
+    content:messageInput.value.trim(),
+    content_type:'text'
+  }).then(resp => {
+    if(resp.code === 200){
+        showConfirmDialog.value = true
+        confirmMessage.value = '消息发送成功'
+      }
+      else{
+        showConfirmDialog.value = true
+        confirmMessage.value = resp.message
+      }
+  }).catch(err => {
+    showConfirmDialog.value = true
+    confirmMessage.value = '服务器未响应'
+  })
   
   // 直接使用store方法更新聊天列表
   chatStore.updateChatLastMessage(chatStore.selectedChatId, newMessage.content, newMessage.time)
@@ -228,33 +244,44 @@ defineExpose({
 })
 
 function showEmo(){
-    console.log("show Emo")
+  api.get('/emo').then(resp => {
+    if(resp.code === 200){
+      console.log(resp.data)
+    }
+    else{
+      console.log('getemo: ' + resp.message)
+    }
+  }).catch(err => {
+    console.log('服务器未响应')
+  })
 }
 
 function showFile(){
     console.log("show File")
 }
 
-function showPic(){
-    console.log("show Pic")
-}
-
 function showMore() {
     showMoreMenu.value = !showMoreMenu.value
 }
 
-function editRemark() {
-    console.log('修改备注')
-    // TODO: 实现修改备注功能
-    showMoreMenu.value = false
-}
-
 function deleteChatHistory() {
-    console.log('删除聊天记录')
     showConfirm('确定要删除所有聊天记录吗？此操作不可恢复。', () => {
         // 清空当前聊天的消息
         // TODO: 实现清空聊天记录功能
-        console.log('清空聊天记录')
+        api.delete(`/session/${chatStore.selectedChatId}`)
+        .then(resp => {
+          if(resp.code === 200){
+            showConfirmDialog.value = true
+            confirmMessage.value = '删除成功'
+          }
+          else{
+            showConfirmDialog.value = true
+            confirmMessage.value = resp.message
+          }
+        }).catch(err => {
+          showConfirmDialog.value = true
+          confirmMessage.value = '服务器未响应'
+        })
     })
     showMoreMenu.value = false
 }
@@ -264,7 +291,21 @@ function deleteFriend() {
     showConfirm('确定要删除该好友吗？删除后将无法恢复聊天记录。', () => {
         // 删除好友逻辑
         // TODO: 实现删除好友功能
-        console.log('删除好友')
+        api.delete(`/${friend_id}`,{
+          user_id:userProfile.value.user_id
+        }).then(resp => {
+          if(resp.code === 200){
+            showConfirmDialog.value = true
+            confirmMessage.value = '删除成功'
+          }
+          else{
+            showConfirmDialog.value = true
+            confirmMessage.value = resp.message
+          }
+        }).catch(err => {
+          showConfirmDialog.value = true
+          confirmMessage.value = '服务器未响应'
+        })
     })
     showMoreMenu.value = false
 }

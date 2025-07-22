@@ -79,7 +79,6 @@ import { useUserStore } from '../store/user.js'
 import customButton from '../components/customButton.vue'
 import CustomDialog from '../components/customDialog.vue'
 import { api } from '../api/api.js'
-import defaultAvatar from '../assets/images/gjj.jpg'
 
 // 路由、store
 const router = useRouter()
@@ -164,7 +163,7 @@ function regist() {
     code: code.value
   }).then((resp) => {
     //注册成功
-    if (resp) {
+    if (resp.code === 200) {
       // 结束加载状态
       isRegistLoading.value = false
       // 清空表单
@@ -174,12 +173,14 @@ function regist() {
       code.value = ''
       codeEnabled.value = false
       // 显示注册成功弹窗
-      showAlert('注册成功','success')
+      showAlert('注册成功', 'success')
     }
     //注册失败
     else {
-      showAlert('注册失败')
+      showAlert(resp.message)
     }
+  }).catch(err=>{
+    showAlert('服务器未响应，失败')
   })
 }
 
@@ -208,10 +209,6 @@ function login() {
     if (resp.code === 200) {
       const userInfo = resp.data
       userStore.setUserInfo(userInfo)
-
-      console.log('userInfo: ',userInfo)
-      console.log('userStore.userInfo: ',userStore.userInfo)
-      // console.log('avatar: ',userStore.userInfo.avatar)
       // 如果选择了记住我，可以在这里保存登录状态到localStorage
       if (rememberMe.value) {
         localStorage.setItem('rememberMe', 'true')
@@ -223,8 +220,10 @@ function login() {
       router.push('/home')
     }
     else {
-      showAlert('账号/密码不正确')
+      showAlert(resp.message)
     }
+  }).catch(err => {
+    showAlert('服务器未响应，失败')
   })
 
   // //模拟登录
@@ -265,11 +264,11 @@ function getVerificationCode() {
   }
 
   // 简单邮箱格式验证
-  // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  // if (!emailRegex.test(email.value)) {
-  //   showAlert('请填写正确的邮箱格式')
-  //   return
-  // }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email.value)) {
+    showAlert('请填写正确的邮箱格式')
+    return
+  }
 
   if (codeBtnDisabled.value) {
     return
@@ -282,7 +281,19 @@ function getVerificationCode() {
   startCountdown()
 
   // 这里可以添加发送验证码的API调用（springboot mail?)
-  showAlert('验证码已发送到您的邮箱，请查收', 'success')
+  api.post('/code', {
+    email: emailToUse,
+  }).then(resp => {
+    if (resp.code === 200) {
+      showAlert('验证码已发送到您的邮箱，请查收', 'success')
+      closeDialog()
+    }
+    else {
+      showAlert(resp.message)
+    }
+  }).catch(err => {
+    showAlert('服务器未响应，失败')
+  })
 }
 
 // 倒计时功能
@@ -353,9 +364,19 @@ function sendResetEmail(email) {
   }
 
   // 这里可以添加发送重置密码邮件的API调用
-  console.log('发送重置密码邮件到:', emailToUse)
-  showAlert('重置密码链接已发送到您的邮箱，请查收', 'success')
-  closeDialog()
+  api.post('/code', {
+    email: emailToUse,
+  }).then(resp => {
+    if (resp.code === 200) {
+      showAlert('重置密码链接已发送到您的邮箱，请查收', 'success')
+      closeDialog()
+    }
+    else {
+      showAlert(resp.message)
+    }
+  }).catch(err => {
+    showAlert('服务器未响应，失败')
+  })
 }
 
 // 切换到登录面板

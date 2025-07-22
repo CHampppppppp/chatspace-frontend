@@ -56,11 +56,6 @@ function selectAI(aiId) {
   aiStore.selectAI(aiId)
 }
 
-
-function handleSearch() {
-  // 搜索逻辑已通过store实现
-}
-
 </script>
 
 <style scoped>

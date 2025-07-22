@@ -7,18 +7,10 @@ export const useUserStore = defineStore('user', {
   }),
   
   getters: {
-    // 获取用户头像，提供默认值
-    userAvatar: (state) => {
-      return state.userInfo?.avatar || '/src/assets/images/gjj.jpg'
-    },
-    // 获取用户名
-    userName: (state) => {
-      return state.userInfo?.username || 'User'
-    },
     // 获取用户完整信息
     userProfile: (state) => {
       return {
-        name: state.userInfo?.username || 'User',
+        username: state.userInfo?.username || 'User',
         avatar: state.userInfo?.avatar || '/src/assets/images/gjj.jpg',
         email: state.userInfo?.email || '',
         age: state.userInfo?.age || '',
@@ -28,12 +20,9 @@ export const useUserStore = defineStore('user', {
         signature: state.userInfo?.signature || '',
         status: state.userInfo?.status || '',
         created_at: state.userInfo?.created_at || '',
-        lastseen: state.userInfo?.lastseen || ''
+        lastseen: state.userInfo?.lastseen || '',
+        is_blocked:state.userInfo?.is_blocked || false
       }
-    },
-    // 获取用户角色
-    userRole: (state) => {
-      return state.userInfo?.role || 'user'
     }
   },
   
