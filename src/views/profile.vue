@@ -401,7 +401,7 @@ function changePassword() {
   }
 
   api.post('/user/password', {
-    user_id: userStore.userInfo.id,
+    user_id: userStore.userInfo.user_id,
     currentPassword: passwordForm.currentPassword,
     newPassword: passwordForm.newPassword
   }).then(resp => {

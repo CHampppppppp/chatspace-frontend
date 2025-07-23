@@ -11,9 +11,9 @@
         <div class="form-container sign-up-container">
           <div class="myCenter">
             <h1>注册</h1>
-            <input v-model="username" type="text" maxlength="30" placeholder="用户名">
-            <input v-model="password" type="password" maxlength="30" placeholder="密码">
-            <input v-model="email" type="email" placeholder="邮箱">
+            <input v-model="username_regis" type="text" maxlength="30" placeholder="用户名">
+            <input v-model="password_regis" type="password" maxlength="30" placeholder="密码">
+            <input v-model="email_regis" type="email" placeholder="邮箱"> 
             <!-- <input v-model="code" type="text" placeholder="验证码" :disabled="!codeEnabled"> -->
             <a style="margin: 10px" href="#" @click="getVerificationCode()" :class="{ disabled: codeBtnDisabled }">{{
               codeBtnText }}</a>
@@ -23,7 +23,7 @@
         <div class="form-container sign-in-container">
           <div class="myCenter">
             <h1>登录</h1>
-            <input v-model="account" type="text" placeholder="用户名/邮箱/手机号">
+            <input v-model="username" type="text" placeholder="用户名">
             <input v-model="password" type="password" placeholder="密码">
             <label class="remember-me">
               <input v-model="rememberMe" type="checkbox">
@@ -137,7 +137,7 @@ function signIn() {
 // 注册功能
 function regist() {
   // 基本验证
-  if (!username.value || !password.value || !email.value) {
+  if (!username_regis.value || !password_regis.value || !email_regis.value) {
     showAlert('请填写完整的注册信息')
     return
   }
@@ -157,9 +157,9 @@ function regist() {
 
   // 后端注册
   api.post("/register", {
-    username: username.value,
-    password: password.value,
-    email: email.value,
+    username: username_regis.value,
+    password: password_regis.value,
+    email: email_regis.value,
     code: code.value
   }).then((resp) => {
     //注册成功
@@ -167,9 +167,9 @@ function regist() {
       // 结束加载状态
       isRegistLoading.value = false
       // 清空表单
-      username.value = ''
-      password.value = ''
-      email.value = ''
+      username_regis.value = ''
+      password_regis.value = ''
+      email_regis.value = ''
       code.value = ''
       codeEnabled.value = false
       // 显示注册成功弹窗
@@ -187,7 +187,7 @@ function regist() {
 // 登录功能
 function login() {
   // 基本验证
-  if (!account.value || !password.value) {
+  if (!username.value || !password.value) {
     showAlert('请填写完整的登录信息')
     return
   }
@@ -197,7 +197,7 @@ function login() {
 
   // 调用登录API
   api.login('/login', {
-    username: account.value,
+    username: username.value, 
     password: password.value
   }).then(resp => {
     setTimeout(() => {
@@ -213,7 +213,7 @@ function login() {
       // 如果选择了记住我，可以在这里保存登录状态到localStorage
       if (rememberMe.value) {
         localStorage.setItem('rememberMe', 'true')
-        localStorage.setItem('savedAccount', account.value)
+        localStorage.setItem('savedAccount', username.value)
       } else {
         localStorage.removeItem('rememberMe')
         localStorage.removeItem('savedAccount')
