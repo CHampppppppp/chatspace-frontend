@@ -9,7 +9,7 @@ export default defineConfig({
     proxy: {
       // 代理所有以 /api 开头的请求到后端服务器
       '/api': {
-        target: 'localhost:8082', // 后端服务器地址
+        target: 'http://localhost:8080', // 后端服务器地址
         changeOrigin: true,
         secure: false,
         // 如果后端API路径不包含/api前缀，可以重写路径

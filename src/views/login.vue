@@ -13,7 +13,7 @@
             <h1>注册</h1>
             <input v-model="username_regis" type="text" maxlength="30" placeholder="用户名">
             <input v-model="password_regis" type="password" maxlength="30" placeholder="密码">
-            <input v-model="email_regis" type="email" placeholder="邮箱"> 
+            <input v-model="email_regis" type="email" placeholder="邮箱">
             <!-- <input v-model="code" type="text" placeholder="验证码" :disabled="!codeEnabled"> -->
             <a style="margin: 10px" href="#" @click="getVerificationCode()" :class="{ disabled: codeBtnDisabled }">{{
               codeBtnText }}</a>
@@ -85,11 +85,12 @@ const router = useRouter()
 const userStore = useUserStore()
 
 // 响应式数据
+const username_regis = ref('')
+const password_regis = ref('')
+const email_regis = ref('')
 const username = ref('')
 const password = ref('')
-const email = ref('')
 const code = ref('')
-const account = ref('')
 const isAuthenticated = ref(false)
 const rememberMe = ref(false) // 记住我状态
 // const isAdmin = ref(false)
@@ -155,17 +156,17 @@ function regist() {
   // 开始加载状态
   isRegistLoading.value = true
 
-  // 后端注册
-  api.post("/register", {
+  // 后端注册 - 使用form-data格式
+  api.login("/register", {
     username: username_regis.value,
     password: password_regis.value,
     email: email_regis.value,
-    code: code.value
+    // code: code.value
   }).then((resp) => {
+    // 结束加载状态
+    isRegistLoading.value = false
     //注册成功
     if (resp.code === 200) {
-      // 结束加载状态
-      isRegistLoading.value = false
       // 清空表单
       username_regis.value = ''
       password_regis.value = ''
@@ -179,7 +180,10 @@ function regist() {
     else {
       showAlert(resp.msg)
     }
-  }).catch(err=>{
+
+  }).catch(err => {
+    // 结束加载状态
+    isRegistLoading.value = false
     showAlert('服务器未响应，失败')
   })
 }
@@ -197,7 +201,7 @@ function login() {
 
   // 调用登录API
   api.login('/login', {
-    username: username.value, 
+    username: username.value,
     password: password.value
   }).then(resp => {
     setTimeout(() => {
@@ -259,14 +263,14 @@ function login() {
 // 获取验证码功能
 function getVerificationCode() {
   // 检查邮箱是否填写
-  if (!email.value) {
+  if (!email_regis.value) {
     showAlert('请先填写邮箱地址')
     return
   }
 
   // 简单邮箱格式验证
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email.value)) {
+  if (!emailRegex.test(email_regis.value)) {
     showAlert('请填写正确的邮箱格式')
     return
   }
@@ -283,7 +287,7 @@ function getVerificationCode() {
 
   // 这里可以添加发送验证码的API调用（springboot mail?)
   api.post('/code', {
-    email: emailToUse,
+    email: email_regis.value,
   }).then(resp => {
     if (resp.code === 200) {
       showAlert('验证码已发送到您的邮箱，请查收', 'success')
@@ -399,7 +403,7 @@ onMounted(() => {
 
   if (savedRememberMe === 'true' && savedAccount) {
     rememberMe.value = true
-    account.value = savedAccount
+    username.value = savedAccount
   }
 })
 </script>
