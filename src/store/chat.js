@@ -154,11 +154,72 @@ export const useChatStore = defineStore('chat', {
         chat.unreadCount++
       }
     },
+
+    // 模拟接收群聊消息（用于演示未读消息功能）
+    simulateGroupMessage(groupId, message) {
+      const chat = this.chatList.find(c => c.id === groupId && c.isGroup)
+      if (chat) {
+        // 更新最后消息
+        chat.lastMessage = message.content
+        chat.lastTime = message.time
+        
+        // 如果不是当前选中的聊天，增加未读计数
+        if (this.selectedChatId !== groupId) {
+          chat.unreadCount++
+        }
+        
+        // 添加消息到消息列表
+        this.addMessage(groupId, message)
+      }
+    },
     
     // 初始化默认选中的聊天
     initializeDefaultChat() {
       if (this.chatList.length > 0 && !this.selectedChatId) {
         this.selectedChatId = this.chatList[0].id
+      }
+    },
+
+    // 启动群聊消息模拟（用于演示）
+    startGroupMessageSimulation() {
+      // 立即发送一条消息用于演示
+      setTimeout(() => {
+        this.triggerGroupMessage()
+      }, 3000) // 3秒后发送第一条消息
+      
+      // 每30秒模拟接收一条群聊消息
+      setInterval(() => {
+        this.triggerGroupMessage()
+      }, 30000) // 30秒
+    },
+
+    // 触发群聊消息
+    triggerGroupMessage() {
+      const groupChats = this.chatList.filter(chat => chat.isGroup)
+      if (groupChats.length > 0) {
+        const randomGroup = groupChats[Math.floor(Math.random() * groupChats.length)]
+        const messages = [
+          '大家好！',
+          '有人在吗？',
+          '今天天气不错',
+          '晚上一起吃饭吧',
+          '工作进展如何？',
+          '周末有什么计划？',
+          '刚才的会议讨论得怎么样？',
+          '明天的活动准备好了吗？'
+        ]
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)]
+        
+        const newMessage = {
+          id: Date.now(),
+          sender: '群成员',
+          content: randomMessage,
+          time: new Date(),
+          isOwn: false,
+          avatar: 'https://i.pinimg.com/736x/89/60/56/896056ec3e9dbe88f0a1fdf9f0fdfc17.jpg'
+        }
+        
+        this.simulateGroupMessage(randomGroup.id, newMessage)
       }
     }
   }

@@ -177,7 +177,7 @@ function regist() {
     }
     //注册失败
     else {
-      showAlert(resp.message)
+      showAlert(resp.msg)
     }
   }).catch(err=>{
     showAlert('服务器未响应，失败')
@@ -207,6 +207,7 @@ function login() {
     }, 1000);
     //如果有response
     if (resp.code === 200) {
+      console.log(resp)
       const userInfo = resp.data
       userStore.setUserInfo(userInfo)
       // 如果选择了记住我，可以在这里保存登录状态到localStorage
@@ -220,7 +221,7 @@ function login() {
       router.push('/home')
     }
     else {
-      showAlert(resp.message)
+      showAlert(resp.msg)
     }
   }).catch(err => {
     showAlert('服务器未响应，失败')
@@ -289,7 +290,7 @@ function getVerificationCode() {
       closeDialog()
     }
     else {
-      showAlert(resp.message)
+      showAlert(resp.msg)
     }
   }).catch(err => {
     showAlert('服务器未响应，失败')
@@ -372,7 +373,7 @@ function sendResetEmail(email) {
       closeDialog()
     }
     else {
-      showAlert(resp.message)
+      showAlert(resp.msg)
     }
   }).catch(err => {
     showAlert('服务器未响应，失败')

@@ -167,7 +167,6 @@ const filteredFriends = computed(() => {
   if (!searchQuery.value) return friendStore.friendList
   return friendStore.friendList.filter(friend => 
     friend.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    friend.nickname?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
     friend.description?.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 })
@@ -212,12 +211,14 @@ function handleAddFriendConfirm(input) {
     message:'hi,let us be friend!'
    }).then((resp)=>{
     if(resp.code === 200){
-      showAlert(resp.message, 'success')
+      showAlert(resp.msg, 'success')
       closeAddFriendDialog()
     }else{
-      showAlert(resp.message, 'error')
+      showAlert(resp.msg, 'error')
     }
-   })
+   }).catch((error) => {
+    showAlert('服务器未响应')
+  })
 }
 
 // 关闭添加好友弹窗
@@ -247,10 +248,10 @@ function fetchFriendRequests() {
     if (resp.code === 200) {
       friendRequests.value = resp.data || []
     } else {
-      console.error('获取好友请求失败:', resp.message)
+      console.error(resp.msg)
     }
   }).catch((error) => {
-    console.error('获取好友请求失败:', error)
+    console.error('服务器未响应')
   })
 }
 
@@ -260,11 +261,11 @@ function handleFriendRequest(requestId, action) {
     action:action
   }).then((resp) => {
     if (resp.code === 200) {
-      showAlert(resp.message, 'success')
+      showAlert(resp.msg, 'success')
       // 重新获取好友请求列表
       fetchFriendRequests()
     } else {
-      showAlert(resp.message, 'error')
+      showAlert(resp.msg, 'error')
     }
   }).catch((error) => {
     showAlert('服务器未响应')

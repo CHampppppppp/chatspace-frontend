@@ -46,7 +46,7 @@ const userStore = useUserStore()
 
 // 用户头像
 const userAvatar = computed(() => {
-  return userStore.userAvatar
+  return userStore.userInfo.avatar
 })
 
 // 菜单项配置

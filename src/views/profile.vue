@@ -367,7 +367,7 @@ function submitUserInfoForm(formData) {
     if (resp.code === 200)
       showAlert('个人信息已保存', 'success')
     else
-      showAlert(resp.message, 'error')
+      showAlert(resp.msg, 'error')
   }).catch(err=>{
     showAlert('服务器未响应，失败')
   })
@@ -413,7 +413,7 @@ function changePassword() {
       passwordForm.confirmPassword = ''
     }
     else
-      showAlert(resp.message, 'error')
+      showAlert(resp.msg, 'error')
   }).catch(err=>{
     showAlert('服务器未响应，失败')
   })
@@ -422,20 +422,20 @@ function changePassword() {
 // 退出登录
 function logout() {
   showConfirm('确定要退出登录吗？', () => {
-    // // 使用userStore的logout方法清除用户数据
-    // userStore.logout()
-    // // 清除记住我相关的数据
-    // localStorage.removeItem('rememberMe')
-    // localStorage.removeItem('savedAccount')
+    // 使用userStore的logout方法清除用户数据
+    userStore.logout()
+    // 清除记住我相关的数据
+    localStorage.removeItem('rememberMe')
+    localStorage.removeItem('savedAccount')
 
-    api.put('/logout', {
+    api.post('/logout', {
       id: userStore.userInfo.id
     }).then(resp => {
       if (resp.code === 200) {
         router.push('/login')
       }
       else {
-        showAlert(resp.message, 'error')
+        showAlert(resp.msg, 'error')
       }
     }).catch(err=>{
       showAlert('服务器未响应，失败')

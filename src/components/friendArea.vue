@@ -55,15 +55,7 @@
                 </div>
                 
                 <div class="dialog-content">
-                    <div class="form-group">
-                        <label>备注名：</label>
-                        <input 
-                            v-model="editForm.nickname" 
-                            type="text" 
-                            placeholder="输入备注名"
-                            class="form-input"
-                        />
-                    </div>
+
                     
                     <div class="form-group">
                         <label>描述：</label>
@@ -114,14 +106,13 @@ const emit = defineEmits(['start-chat', 'update-friend', 'delete-friend'])
 const showDialog = ref(false)
 const showDeleteConfirm = ref(false)
 const editForm = ref({
-  nickname: '',
   description: ''
 })
 
 // 计算属性
 const displayName = computed(() => {
   if (!friendStore.currentFriend) return ''
-  return friendStore.currentFriend.nickname || friendStore.currentFriend.name
+  return friendStore.currentFriend.name
 })
 
 // 方法
@@ -134,7 +125,6 @@ function startChat() {
 function showOptionsDialog() {
   if (friendStore.currentFriend) {
     editForm.value = {
-      nickname: friendStore.currentFriend.nickname || '',
       description: friendStore.currentFriend.description || ''
     }
     showDialog.value = true
@@ -144,7 +134,6 @@ function showOptionsDialog() {
 function closeDialog() {
   showDialog.value = false
   editForm.value = {
-    nickname: '',
     description: ''
   }
 }
@@ -152,7 +141,6 @@ function closeDialog() {
 function saveFriendInfo() {
   if (friendStore.currentFriend) {
     friendStore.updateFriendInfo(friendStore.currentFriend.id, {
-      nickname: editForm.value.nickname,
       description: editForm.value.description
     })
     closeDialog()

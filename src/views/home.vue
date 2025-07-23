@@ -38,11 +38,140 @@
 
     <!-- 聊天内容区 -->
     <ChatArea ref="chatAreaRef" />
+    
+    <!-- 创建群聊弹窗 -->
+    <CustomDialog 
+      v-model:visible="showGroupChatDialog"
+      title="创建群聊"
+      :show-actions="false"
+      :close-on-overlay="false"
+    >
+      <div class="group-chat-form">
+        <!-- 群聊名称输入 -->
+        <div class="form-group">
+          <label class="form-label">群聊名称</label>
+          <input 
+            v-model="groupChatForm.name"
+            type="text"
+            placeholder="请输入群聊名称"
+            class="form-input"
+            maxlength="20"
+          />
+        </div>
+        
+        <!-- 群聊头像选择 -->
+        <div class="form-group">
+          <label class="form-label">群聊头像</label>
+          <div class="avatar-upload-section">
+            <div class="avatar-preview" @click="triggerAvatarUpload">
+              <img v-if="groupChatForm.avatar" :src="groupChatForm.avatar" alt="群聊头像" class="preview-image" />
+              <div v-else class="avatar-placeholder">
+                <span class="upload-icon">📷</span>
+                <span class="upload-text">点击上传头像</span>
+              </div>
+            </div>
+            <input 
+              ref="avatarInput"
+              type="file"
+              accept="image/*"
+              @change="handleAvatarUpload"
+              class="avatar-input"
+              style="display: none;"
+            />
+            <div class="avatar-actions">
+              <button v-if="groupChatForm.avatar" @click="removeAvatar" class="remove-avatar-btn" type="button">移除头像</button>
+              <span class="avatar-tip">支持 JPG、PNG 格式，建议尺寸 200x200</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 群聊描述输入 -->
+        <div class="form-group">
+          <label class="form-label">群聊描述</label>
+          <textarea 
+            v-model="groupChatForm.description"
+            placeholder="请输入群聊描述（可选）"
+            class="form-textarea"
+            maxlength="100"
+            rows="3"
+          ></textarea>
+        </div>
+        
+        <!-- 选择群成员 -->
+        <div class="form-group">
+          <label class="form-label">选择群成员</label>
+          <div class="friend-search">
+            <input 
+              v-model="friendSearchQuery"
+              type="text"
+              placeholder="搜索好友..."
+              class="search-input"
+            />
+          </div>
+          <div class="friend-list">
+            <div 
+              v-for="friend in filteredFriends" 
+              :key="friend.id" 
+              class="friend-item"
+              :class="{ selected: selectedFriends.includes(friend.id) }"
+              @click="toggleFriendSelection(friend.id)"
+            >
+              <div class="friend-avatar">
+                <img :src="friend.avatar" :alt="friend.name" />
+              </div>
+              <div class="friend-info">
+                <div class="friend-name">{{ friend.name }}</div>
+                <div class="friend-status">{{ friend.online ? '在线' : '离线' }}</div>
+              </div>
+              <div class="selection-indicator">
+                <span v-if="selectedFriends.includes(friend.id)" class="selected-icon">✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 已选择的成员显示 -->
+        <div v-if="selectedFriends.length > 0" class="selected-members">
+          <label class="form-label">已选择成员 ({{ selectedFriends.length }})</label>
+          <div class="selected-list">
+            <div 
+              v-for="friendId in selectedFriends" 
+              :key="friendId" 
+              class="selected-member"
+            >
+              <span>{{ getFriendName(friendId) }}</span>
+              <button @click="removeFriend(friendId)" class="remove-btn">×</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="form-actions">
+          <button @click="closeGroupChatDialog" class="btn-cancel">取消</button>
+          <button 
+            @click="createGroupChat" 
+            class="btn-confirm"
+            :disabled="!canCreateGroup"
+          >
+            创建群聊
+          </button>
+        </div>
+      </div>
+    </CustomDialog>
+    
+    <!-- 提示弹窗 -->
+    <CustomDialog 
+      v-model:visible="showAlertDialog"
+      :title="alertTitle"
+      :type="alertType"
+      :message="alertMessage"
+      :show-cancel="false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, onMounted, nextTick, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useChatStore } from '../store/chat'
 import { useUserStore } from '../store/user'
@@ -50,6 +179,8 @@ import { useFriendStore } from '../store/friend'
 import ToolBar from '../components/toolBar.vue'
 import ChatArea from '../components/chatArea.vue'
 import SearchBox from '../components/SearchBox.vue'
+import CustomDialog from '../components/customDialog.vue'
+import { api } from '../api/api.js'
 
 const route = useRoute()
 const chatStore = useChatStore()
@@ -60,6 +191,37 @@ const friendStore = useFriendStore()
 const messagesContainer = ref(null)
 const toolBarRef = ref(null)
 const chatAreaRef = ref(null)
+
+// 群聊相关数据
+const showGroupChatDialog = ref(false)
+const groupChatForm = ref({
+  name: '',
+  description: '',
+  avatar: ''
+})
+const selectedFriends = ref([])
+const friendSearchQuery = ref('')
+const avatarInput = ref(null)
+
+// 提示弹窗数据
+const showAlertDialog = ref(false)
+const alertTitle = ref('提示')
+const alertType = ref('message')
+const alertMessage = ref('')
+
+// 计算属性
+const filteredFriends = computed(() => {
+  if (!friendSearchQuery.value) {
+    return friendStore.friendList
+  }
+  return friendStore.friendList.filter(friend => 
+    friend.name.toLowerCase().includes(friendSearchQuery.value.toLowerCase())
+  )
+})
+
+const canCreateGroup = computed(() => {
+  return groupChatForm.value.name.trim() && selectedFriends.value.length >= 1
+})
 
 
 
@@ -111,7 +273,7 @@ function handleChatWithFriend(friendId) {
     // 创建新的聊天项
     const newChat = {
       id: friendId,
-      name: friend.nickname || friend.name,
+      name: friend.name,
       avatar: friend.avatar,
       lastMessage: '开始聊天吧！',
       lastTime: new Date(),
@@ -125,6 +287,131 @@ function handleChatWithFriend(friendId) {
 
   // 选中该聊天
   chatStore.selectChat(friendId)
+}
+
+// 群聊相关方法
+function showAddChatDialog() {
+  showGroupChatDialog.value = true
+  // 重置表单
+  groupChatForm.value = {
+    name: '',
+    description: '',
+    avatar: ''
+  }
+  selectedFriends.value = []
+  friendSearchQuery.value = ''
+}
+
+function closeGroupChatDialog() {
+  showGroupChatDialog.value = false
+}
+
+function toggleFriendSelection(friendId) {
+  const index = selectedFriends.value.indexOf(friendId)
+  if (index > -1) {
+    selectedFriends.value.splice(index, 1)
+  } else {
+    selectedFriends.value.push(friendId)
+  }
+}
+
+function removeFriend(friendId) {
+  const index = selectedFriends.value.indexOf(friendId)
+  if (index > -1) {
+    selectedFriends.value.splice(index, 1)
+  }
+}
+
+function getFriendName(friendId) {
+  const friend = friendStore.friendList.find(f => f.id === friendId)
+  return friend ? friend.name : '未知用户'
+}
+
+// 头像上传相关方法
+function triggerAvatarUpload() {
+  avatarInput.value?.click()
+}
+
+function handleAvatarUpload(event) {
+  const file = event.target.files[0]
+  if (!file) return
+  
+  // 验证文件类型
+  if (!file.type.startsWith('image/')) {
+    showAlert('请选择图片文件', 'warning')
+    return
+  }
+  
+  // 验证文件大小（限制为2MB）
+  if (file.size > 2 * 1024 * 1024) {
+    showAlert('图片大小不能超过2MB', 'warning')
+    return
+  }
+  
+  // 创建FileReader读取文件
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    groupChatForm.value.avatar = e.target.result
+  }
+  reader.readAsDataURL(file)
+}
+
+function removeAvatar() {
+  groupChatForm.value.avatar = ''
+  if (avatarInput.value) {
+    avatarInput.value.value = ''
+  }
+}
+
+function createGroupChat() {
+  if (!canCreateGroup.value) {
+    showAlert('请填写群聊名称并选择至少一个好友', 'warning')
+    return
+  }
+  
+  const groupData = {
+    group_name: groupChatForm.value.name.trim(),
+    description: groupChatForm.value.description.trim(),
+    avatar: groupChatForm.value.avatar || '/images/group-default.png',
+    members: selectedFriends.value,
+    owner_id : userStore.userProfile.user_id
+  }
+  
+  api.post('/group', groupData)
+  .then(resp => {
+    if (resp.code === 200) {
+      // 创建成功，添加到聊天列表
+      const newGroupChat = {
+        id: resp.data.group_id,
+        name: resp.data.group_name,
+        avatar: resp.data.avatar || '/images/group-default.png',
+        lastMessage: '群聊已创建',
+        lastTime: new Date(),
+        unreadCount: 0,
+        online: true,
+        isGroup: true,
+        memberCount: resp.data.member_count
+      }
+      console.log(resp.data)
+      
+      chatStore.addChat(newGroupChat)
+      chatStore.selectChat(newGroupChat.id)
+      
+      showAlert('群聊创建成功！', 'success')
+      closeGroupChatDialog()
+    } else {
+      showAlert(resp.msg)
+    }
+  }).catch(err => {
+    showAlert('服务器未响应', 'error')
+  })
+}
+
+function showAlert(message, type = 'message', title = '提示') {
+  alertMessage.value = message
+  alertType.value = type
+  alertTitle.value = title
+  showAlertDialog.value = true
 }
 
 // 监听路由参数变化
@@ -141,6 +428,8 @@ onMounted(() => {
   userStore.initUserState()
   // 初始化默认选中的聊天
   chatStore.initializeDefaultChat()
+  // 启动群聊消息模拟（用于演示未读消息功能）
+  chatStore.startGroupMessageSimulation()
 
   // 处理初始的chatWith参数
   if (route.query.chatWith) {
@@ -703,6 +992,329 @@ onMounted(() => {
   }
 }
 
+/* 群聊创建弹窗样式 */
+.group-chat-form {
+  padding: 20px;
+  max-width: 500px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+/* 头像上传样式 */
+.avatar-upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.avatar-preview {
+  width: 80px;
+  height: 80px;
+  border: 2px dashed #e1e5e9;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.avatar-preview:hover {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 12px;
+  text-align: center;
+}
+
+.upload-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.upload-text {
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.avatar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.remove-avatar-btn {
+  padding: 6px 12px;
+  background: #ff4757;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  align-self: flex-start;
+}
+
+.remove-avatar-btn:hover {
+  background: #ff3742;
+  transform: translateY(-1px);
+}
+
+.avatar-tip {
+  font-size: 11px;
+  color: #999;
+  line-height: 1.3;
+}
+
+.friend-search {
+  margin-bottom: 12px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  border-color: #667eea;
+}
+
+.friend-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.friend-list .friend-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid #eee;
+}
+
+.friend-list .friend-item:last-child {
+  border-bottom: none;
+}
+
+.friend-list .friend-item:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.friend-list .friend-item.selected {
+  background: rgba(102, 126, 234, 0.2);
+  border-left: 4px solid #667eea;
+}
+
+.friend-list .friend-avatar {
+  margin-right: 12px;
+}
+
+.friend-list .friend-avatar img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.friend-list .friend-info {
+  flex: 1;
+}
+
+.friend-list .friend-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.friend-list .friend-status {
+  font-size: 12px;
+  color: #666;
+}
+
+.selection-indicator {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.selected-icon {
+  color: #667eea;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.selected-members {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 8px;
+}
+
+.selected-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.selected-member {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #667eea;
+  color: white;
+  border-radius: 16px;
+  font-size: 13px;
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.remove-btn:hover {
+  opacity: 0.8;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.btn-cancel,
+.btn-confirm {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.btn-cancel:hover {
+  background: #e9e9e9;
+}
+
+.btn-confirm {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+}
+
+.btn-confirm:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 滚动条样式 */
+.group-chat-form::-webkit-scrollbar,
+.friend-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.group-chat-form::-webkit-scrollbar-track,
+.friend-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.group-chat-form::-webkit-scrollbar-thumb,
+.friend-list::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 3px;
+}
+
+.group-chat-form::-webkit-scrollbar-thumb:hover,
+.friend-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.5);
+}
+
 @media (max-width: 768px) {
   .home-container {
     flex-direction: column;
@@ -718,6 +1330,20 @@ onMounted(() => {
   .chat-interface-container {
     border-radius: 0;
     margin: 0;
+  }
+  
+  .group-chat-form {
+    padding: 16px;
+    max-height: 80vh;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .btn-cancel,
+  .btn-confirm {
+    width: 100%;
   }
 }
 </style>

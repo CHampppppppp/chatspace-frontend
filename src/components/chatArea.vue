@@ -140,19 +140,18 @@ function sendMessage() {
   chatStore.addMessage(chatStore.selectedChatId, newMessage)
 
   //使用api发送消息
-  api.post('/private-messsage',{
+  api.post('/private-message',{
     sender_id:userProfile.value.user_id,
     session_id:chatStore.selectedChatId,
     content:messageInput.value.trim(),
     content_type:'text'
   }).then(resp => {
     if(resp.code === 200){
-        showConfirmDialog.value = true
-        confirmMessage.value = '消息发送成功'
+        console.log('发送消息： ' + messageInput.value.trim())
       }
       else{
         showConfirmDialog.value = true
-        confirmMessage.value = resp.message
+        confirmMessage.value = resp.msg
       }
   }).catch(err => {
     showConfirmDialog.value = true
@@ -249,7 +248,7 @@ function showEmo(){
       console.log(resp.data)
     }
     else{
-      console.log('getemo: ' + resp.message)
+      console.log('getemo: ' + resp.msg)
     }
   }).catch(err => {
     console.log('服务器未响应')
@@ -276,7 +275,7 @@ function deleteChatHistory() {
           }
           else{
             showConfirmDialog.value = true
-            confirmMessage.value = resp.message
+            confirmMessage.value = resp.msg
           }
         }).catch(err => {
           showConfirmDialog.value = true
@@ -300,7 +299,7 @@ function deleteFriend() {
           }
           else{
             showConfirmDialog.value = true
-            confirmMessage.value = resp.message
+            confirmMessage.value = resp.msg
           }
         }).catch(err => {
           showConfirmDialog.value = true

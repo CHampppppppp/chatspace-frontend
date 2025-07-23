@@ -262,7 +262,7 @@ function deleteAI(aiId) {
         showAlert('删除成功')
       }
       else{
-        showAlert(resp.message)
+        showAlert(resp.msg)
       }
     }).catch(err => {
       showAlert('服务器未响应')
@@ -276,7 +276,7 @@ function deleteAI(aiId) {
         console.log('AIList: '+ resp.data)
       }
       else{
-        showAlert(resp.message)
+        showAlert(resp.msg)
       }
     }).catch(err => {
       showAlert('服务器未响应')
@@ -337,7 +337,7 @@ function saveAI() {
         showAlert('AI编辑成功', 'success')
         closeCreateDialog()
       } else {
-        showAlert(resp.message || 'AI编辑失败', 'error')
+        showAlert(resp.msg || 'AI编辑失败', 'error')
       }
     }).catch(err => {
       showAlert('服务器未响应', 'error')
@@ -360,7 +360,7 @@ function saveAI() {
         showAlert('AI创建成功', 'success')
         closeCreateDialog()
       } else {
-        showAlert(resp.message || 'AI创建失败', 'error')
+        showAlert(resp.msg || 'AI创建失败', 'error')
       }
     }).catch(err => {
       showAlert('服务器未响应', 'error')
@@ -422,7 +422,7 @@ function handleAddAIAsFriend(ai) {
     showAlert('添加成功，去和他/她聊聊天吧')
   }
   else{
-    showAlert(resp.message)
+    showAlert(resp.msg)
   }
 }).catch(err => {
   showAlert('服务器未响应')
@@ -442,7 +442,7 @@ function handleUpdateLikes(aiId, newLikes) {
       showAlert('谢谢你的点赞')
     }
     else{
-      showAlert(resp.message)
+      showAlert(resp.msg)
     }
   }).catch(err => {
     showAlert('服务器未响应')

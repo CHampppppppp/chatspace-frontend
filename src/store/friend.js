@@ -14,7 +14,6 @@ export const useFriendStore = defineStore('friend', {
         status: '在线',
         online: true,
         lastSeen: new Date(Date.now()),
-        nickname: '汉库克',
         description: '王下七武海之一',
         bio: '王下七武海之一',
       },
@@ -25,7 +24,6 @@ export const useFriendStore = defineStore('friend', {
         status: '忙碌',
         online: true,
         lastSeen: new Date(Date.now()),
-        nickname: '罗宾酱',
         description: '来自新世界的罗宾',
         bio: '来自新世界的罗宾',
       },
@@ -36,7 +34,6 @@ export const useFriendStore = defineStore('friend', {
         status: '离线',
         online: false,
         lastSeen: new Date(Date.now() - 1000 * 60 * 30), // 30分钟前
-        nickname: '索小猫',
         description: 'cute',
         bio: 'cute',
       }
