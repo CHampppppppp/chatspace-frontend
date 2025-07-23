@@ -370,11 +370,11 @@ function createGroupChat() {
   }
   
   const groupData = {
-    group_name: groupChatForm.value.name.trim(),
+    groupName: groupChatForm.value.name.trim(),
     description: groupChatForm.value.description.trim(),
     avatar: groupChatForm.value.avatar || '/images/group-default.png',
     members: selectedFriends.value,
-    owner_id : userStore.userProfile.user_id
+    ownerId : userStore.userProfile.userId
   }
   
   api.post('/group', groupData)
@@ -382,15 +382,15 @@ function createGroupChat() {
     if (resp.code === 200) {
       // 创建成功，添加到聊天列表
       const newGroupChat = {
-        id: resp.data.group_id,
-        name: resp.data.group_name,
+        id: resp.data.groupId,
+        name: resp.data.groupName,
         avatar: resp.data.avatar || '/images/group-default.png',
         lastMessage: '群聊已创建',
         lastTime: new Date(),
         unreadCount: 0,
         online: true,
         isGroup: true,
-        memberCount: resp.data.member_count
+        memberCount: resp.data.memberCount
       }
       console.log(resp.data)
       

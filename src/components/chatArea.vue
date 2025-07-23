@@ -127,7 +127,7 @@ function sendMessage() {
   if (!messageInput.value.trim() || !chatStore.selectedChatId) return
   
   const newMessage = {
-    id: userProfile.value.user_id,
+    id: userProfile.value.userId,
     sender: '我',
     content: messageInput.value.trim(),
     time: new Date(),
@@ -141,10 +141,10 @@ function sendMessage() {
 
   //使用api发送消息
   api.post('/private-message',{
-    sender_id:userProfile.value.user_id,
-    session_id:chatStore.selectedChatId,
-    content:messageInput.value.trim(),
-    content_type:'text'
+    senderId:userProfile.value.userId,
+    sessionId:chatStore.selectedChatId,
+      content:messageInput.value.trim(),
+      contentType:'text'
   }).then(resp => {
     if(resp.code === 200){
         console.log('发送消息： ' + messageInput.value.trim())
@@ -290,8 +290,8 @@ function deleteFriend() {
     showConfirm('确定要删除该好友吗？删除后将无法恢复聊天记录。', () => {
         // 删除好友逻辑
         // TODO: 实现删除好友功能
-        api.delete(`/${friend_id}`,{
-          user_id:userProfile.value.user_id
+        api.delete(`/${friendId}`,{
+        userId:userProfile.value.userId
         }).then(resp => {
           if(resp.code === 200){
             showConfirmDialog.value = true

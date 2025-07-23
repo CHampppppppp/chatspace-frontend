@@ -16,12 +16,12 @@ export const useUserStore = defineStore('user', {
         age: state.userInfo?.age || '',
         gender: state.userInfo?.gender || '',
         role: state.userInfo?.role || 'user',
-        user_id: state.userInfo?.user_id || state.userInfo?.id || null,
+        userId: state.userInfo?.userId || state.userInfo?.id || null,
         signature: state.userInfo?.signature || '',
         status: state.userInfo?.status || '',
-        created_at: state.userInfo?.created_at || '',
+        createdAt: state.userInfo?.createdAt || '',
         lastseen: state.userInfo?.lastseen || '',
-        is_blocked:state.userInfo?.is_blocked || false
+        isBlocked:state.userInfo?.isBlocked || false
       }
     }
   },
@@ -30,9 +30,8 @@ export const useUserStore = defineStore('user', {
     //保存用户数据
     setUserInfo(userInfo) {
       this.userInfo = userInfo
-      this.isAuthenticated = true
-      this.lastSeen = null;
-      
+      this.isAuthenticated = true      
+
       if(this.userInfo)
         localStorage.removeItem('userInfo')
       if(this.isAuthenticated)
@@ -41,14 +40,12 @@ export const useUserStore = defineStore('user', {
       localStorage.setItem('isAuthenticated', this.isAuthenticated)
       localStorage.setItem('userInfo', JSON.stringify(userInfo))
 
-
     },
     //删除用户数据
     logout() {
       this.userInfo = null
       this.isAuthenticated = false
-      this.lastSeen = new Date().toISOString()
-
+      
       localStorage.removeItem('isAuthenticated')
       localStorage.removeItem('userInfo')
     },

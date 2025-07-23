@@ -70,7 +70,7 @@
             </div>
             <div class="form-group">
               <label>注册时间</label>
-              <input v-model="editableUserInfo.created_at" type="text" placeholder="注册时间" class="form-input" readonly />
+              <input v-model="editableUserInfo.createdAt" type="text" placeholder="注册时间" class="form-input" readonly />
             </div>
             <button @click="updateUserInfo" class="btn-primary">保存个人信息</button>
           </div>
@@ -147,8 +147,8 @@ const userInfo = computed(() => {
     status: '',
     signature: '',
     avatar: '',
-    created_at: '',
-    user_id: ''
+    createdAt: '',
+  userId: ''
   }
 })
 
@@ -161,7 +161,7 @@ const editableUserInfo = reactive({
   role: 'user',
   status: '',
   signature: '',
-  created_at: ''
+  createdAt: ''
 })
 
 // 密码表单
@@ -247,7 +247,7 @@ onMounted(() => {
       role: userInfo.value.role || 'user',
       status: userInfo.value.status || '',
       signature: userInfo.value.signature || '',
-      created_at: userInfo.value.created_at || ''
+      createdAt: userInfo.value.createdAt || ''
     })
   }
 })
@@ -359,10 +359,18 @@ function updateUserInfo() {
 function submitUserInfoForm(formData) {
   // 更新userStore中的用户信息
   userStore.setUserInfo(formData)
+  console.log('更新信息： ')
+  console.log(formData)
 
   //保存到后端
-  api.post('/user-info', {
-    userInfo: formData
+  api.post('/user/info', {
+    userId: userInfo.value.userId,
+    username: formData.username,
+    email: formData.email,
+    avatar:formData.avatar,
+    age: formData.age,
+    gender: formData.gender,
+    signature: formData.signature
   }).then(resp => {
     if (resp.code === 200)
       showAlert('个人信息已保存', 'success')
@@ -401,7 +409,7 @@ function changePassword() {
   }
 
   api.post('/user/password', {
-    user_id: userStore.userInfo.user_id,
+    userId: userInfo.value.userId,
     currentPassword: passwordForm.currentPassword,
     newPassword: passwordForm.newPassword
   }).then(resp => {
@@ -429,7 +437,7 @@ function logout() {
     localStorage.removeItem('savedAccount')
 
     api.post('/logout', {
-      id: userStore.userInfo.id
+      userId: userInfo.value.userId
     }).then(resp => {
       if (resp.code === 200) {
         router.push('/login')

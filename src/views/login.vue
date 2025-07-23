@@ -157,7 +157,7 @@ function regist() {
   isRegistLoading.value = true
 
   // 后端注册 - 使用form-data格式
-  api.login("/register", {
+  api.post("/register", {
     username: username_regis.value,
     password: password_regis.value,
     email: email_regis.value,
@@ -200,7 +200,7 @@ function login() {
   isLoginLoading.value = true
 
   // 调用登录API
-  api.login('/login', {
+  api.post('/login', {
     username: username.value,
     password: password.value
   }).then(resp => {

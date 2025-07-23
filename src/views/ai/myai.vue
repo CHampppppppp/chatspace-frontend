@@ -318,7 +318,7 @@ function saveAI() {
       icon: aiForm.value.icon,
       description: aiForm.value.description,
       prompt: aiForm.value.prompt,
-      user_id: userProfile.value.user_id
+      userId: userProfile.value.userId
     }
     
     api.post(`/${editingAI.value.id}`, aiData).then(resp => {
@@ -350,7 +350,7 @@ function saveAI() {
       icon: aiForm.value.icon,
       description: aiForm.value.description,
       prompt: aiForm.value.prompt,
-      user_id: userProfile.value.user_id
+      userId: userProfile.value.userId
     }
     
     api.post('/myai', aiData).then(resp => {
@@ -416,7 +416,7 @@ function scrollToBottom() {
 // 处理添加AI为好友
 function handleAddAIAsFriend(ai) {
   api.post(`/friend/${ai.id}`,{
-  sender_id:userProfile.value.user_id
+  senderId:userProfile.value.userId
 }).then(resp => {
   if(resp.code === 200){
     showAlert('添加成功，去和他/她聊聊天吧')

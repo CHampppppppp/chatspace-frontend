@@ -206,8 +206,8 @@ function handleAddFriendConfirm(input) {
   
   // 这里可以调用API添加好友
   api.post('/friend/request', {
-    sender_id:userStore.userInfo.user_id,
-    receiver_username: receiverUsername,
+    senderId:userStore.userInfo.userId,
+    receiverUsername: receiverUsername,
     message:'hi,let us be friend!'
    }).then((resp)=>{
     if(resp.code === 200){
@@ -243,7 +243,7 @@ function closeAlertDialog() {
 
 // 获取好友请求列表
 function fetchFriendRequests() {
-  api.get(`/${userStore.userInfo.user_id}/friend-list`)
+  api.get(`/${userStore.userInfo.userId}/friend-list`)
   .then((resp) => {
     if (resp.code === 200) {
       friendRequests.value = resp.data || []
