@@ -100,6 +100,7 @@
         <!-- 操作按钮 -->
         <div class="action-section">
           <button @click="logout" class="btn-logout">退出登录</button>
+          <button @click="deleteAccount" class="btn-delete-account">注销账号</button>
         </div>
       </div>
     </div>
@@ -372,9 +373,6 @@ function submitUserInfoForm(formData) {
     if (resp.code === 200) {
       showAlert('个人信息已保存', 'success')
       userStore.setUserInfo({ ...userInfo.value, ...formData })
-      // 更新userStore中的用户信息
-      console.log('更新formData： ')
-      console.log(formData)
     }
     else
       showAlert(resp.msg, 'error')
@@ -438,6 +436,12 @@ function logout() {
       userId: userInfo.value.userId
     }).then(resp => {
       if (resp.code === 200) {
+
+        // 使用userStore的logout方法清除用户数据
+        userStore.logout()
+        // 清除记住我相关的数据
+        localStorage.removeItem('rememberMe')
+        localStorage.removeItem('savedAccount')
         router.push('/login')
       }
       else {
@@ -448,11 +452,31 @@ function logout() {
     })
   })
 
-    // 使用userStore的logout方法清除用户数据
-    userStore.logout()
-    // 清除记住我相关的数据
-    localStorage.removeItem('rememberMe')
-    localStorage.removeItem('savedAccount')
+}
+
+// 注销账号
+function deleteAccount() {
+  showConfirm('警告：注销账号将永久删除您的所有数据，此操作不可恢复！确定要注销账号吗？', () => {
+    api.delete(`/${userInfo.value.userId}`)
+      .then(resp => {
+        if (resp.code === 200) {
+          showAlert('账号已成功注销', 'success')
+          // 清除所有用户数据
+          userStore.logout()
+          localStorage.removeItem('rememberMe')
+          localStorage.removeItem('savedAccount')
+          // 跳转到登录页
+          setTimeout(() => {
+            router.push('/login')
+          }, 1000)
+        }
+        else {
+          showAlert(resp.msg, 'error')
+        }
+      }).catch(err => {
+        showAlert('服务器未响应，注销失败', 'error')
+      })
+  })
 }
 
 function handleClose() {
@@ -711,6 +735,10 @@ function handleClose() {
   text-align: center;
   padding-top: 20px;
   border-top: 1px solid #eee;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .btn-logout {
@@ -732,6 +760,44 @@ function handleClose() {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
   background: linear-gradient(45deg, #ee5a52, #ff6b6b);
+}
+
+.btn-delete-account {
+  background: linear-gradient(45deg, #dc3545, #c82333);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 15px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-delete-account:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
+  background: linear-gradient(45deg, #c82333, #dc3545);
+}
+
+.btn-delete-account:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-delete-account:hover:before {
+  left: 100%;
 }
 
 .crop-preview {
