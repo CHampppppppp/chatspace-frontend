@@ -115,8 +115,7 @@ watch(() => props.selectedAI, async (newAI) => {
         likedAIs.value.delete(newAI.aiId)
       }
     } catch (error) {
-      console.error('获取点赞状态失败:', error)
-      // 如果获取失败，保持当前状态不变
+      // 全局拦截器已处理错误
     }
   }
 }, { immediate: true })
@@ -180,7 +179,7 @@ async function handleLike() {
       console.error(wasLiked ? '取消点赞失败:' : '点赞失败:', response.message)
     }
   } catch (error) {
-    console.error('点赞请求失败:', error)
+    // 全局拦截器已处理错误
   } finally {
     likeLoading.value = false
   }

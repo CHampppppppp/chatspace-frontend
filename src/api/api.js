@@ -1,40 +1,81 @@
 import axios from 'axios';
-import { ElMessage } from "element-plus";
 import router from '../router'
 
 
+/*axios全局请求拦截*/
+axios.interceptors.request.use(config => {
+  console.log('发送请求:', config.method?.toUpperCase(), config.url);
+  return config;
+}, error => {
+  console.error('请求配置错误:', error);
+  return Promise.reject(error);
+});
+
 /*axios全局响应拦截*/
 axios.interceptors.response.use(success=>{
-  if (success.status&&success.status==200&&success.data.status==500){//请求成功，但处理出现其他错误
-    ElMessage.error({message:success.data.msg})
-    return;
-  }
-  //请求成功且服务器处理无错误
-  if (success.data.msg){
-    ElMessage.success({message:success.data.msg});
-  }
-  return success.data;
-},error => {
-  if (error.response.status==504) {//	充当网关或代理的服务器，未及时从远端服务器获取请求
-    ElMessage.error({message:'找不到服务器'})
-  }else if(error.response.status==403){	//服务器理解请求客户端的请求，但是拒绝执行此请求
-    ElMessage.error({message:'权限不足，请联系管理员'})
-  }else if (error.response.status==401){//请求要求用户的身份认证
-    ElMessage.error({message:'尚未登录，请登录'});
-    router.replace("/");//跳转到登陆页
-  }else if (error.response.status==404){
-    ElMessage.error({message:'服务器无法根据客户端的请求找到资源'})
-  } else if (error.response.status==500){
-    ElMessage.error({message:'服务器内部错误，无法完成请求'})
-  } else {
-    if (error.response.data){
-      ElMessage.error({message:error.response.data.msg})
+  // 请求成功，检查业务状态码
+  if (success.status && success.status == 200) {
+    if (success.data.status == 500) {
+      // 请求成功，但业务处理出现错误
+      console.error('业务处理错误:', success.data.msg || '服务器内部错误');
+      return Promise.reject(new Error(success.data.msg || '服务器内部错误'));
     }
-    else {
-      ElMessage.error({message:'未知错误!'})
+    
+    // 请求成功且服务器处理无错误
+    if (success.data.code && success.data.code !== 200) {
+      console.error('业务状态码错误:', success.data.code, success.data.msg);
+      return Promise.reject(new Error(success.data.msg || '请求失败'));
     }
+    
+    console.log('请求成功:', success.config.url, success.data);
+    return success.data;
   }
-  return;
+  
+  console.error('HTTP状态码异常:', success.status);
+  return Promise.reject(new Error('HTTP状态码异常'));
+}, error => {
+  // 网络错误或HTTP状态码错误
+  if (!error.response) {
+    // 网络错误，没有响应
+    console.error('网络错误，无法连接到服务器:', error.message);
+    return Promise.reject(error);
+  }
+  
+  const status = error.response.status;
+  let errorMessage = '';
+  
+  switch (status) {
+    case 400:
+      errorMessage = '请求参数错误';
+      break;
+    case 401:
+      errorMessage = '未授权，请重新登录';
+      router.replace("/"); // 跳转到登录页
+      break;
+    case 403:
+      errorMessage = '权限不足，拒绝访问';
+      break;
+    case 404:
+      errorMessage = '请求的资源不存在';
+      break;
+    case 500:
+      errorMessage = '服务器内部错误';
+      break;
+    case 502:
+      errorMessage = '网关错误';
+      break;
+    case 503:
+      errorMessage = '服务不可用';
+      break;
+    case 504:
+      errorMessage = '网关超时';
+      break;
+    default:
+      errorMessage = error.response.data?.msg || error.message || '未知错误';
+  }
+  
+  console.error(`HTTP ${status} 错误:`, errorMessage, error.response.data);
+  return Promise.reject(error);
 })
 
 // 根据环境变量设置API基础路径

@@ -187,6 +187,7 @@ export const apiStatus = {
       this.setOnline(isHealthy)
       return isHealthy
     } catch (error) {
+      // 全局拦截器已处理错误
       this.setOnline(false)
       return false
     }
@@ -207,7 +208,7 @@ export function initializeAPI() {
   
   // 异步检查API健康状态
   apiStatus.checkHealth().catch(error => {
-    console.warn('DeepSeek API健康检查失败:', error.message)
+    // 全局拦截器已处理错误
   })
   
   return true

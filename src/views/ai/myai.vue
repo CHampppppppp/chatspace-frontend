@@ -418,12 +418,7 @@ async function fetchMyAIList() {
   try {
     await aiStore.fetchMyAIList()
   } catch (error) {
-    console.error('获取AI列表失败:', error)
-    if (error.response) {
-      showAlert(`获取AI列表失败: ${error.response.data.message || error.message}`, 'error')
-    } else {
-      showAlert('服务器未响应，获取AI列表失败', 'error')
-    }
+    // 全局拦截器已处理错误
   }
 }
 

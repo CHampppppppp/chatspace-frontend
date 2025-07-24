@@ -258,29 +258,11 @@ async function simulateAiResponse(userInput) {
       lastTime: aiMessage.time
     })
     
-  } catch (error) {
-    console.error('AI回复失败:', error)
-    
+  } catch (error) {    
     // 移除打字指示器
     aiStore.updateMessages({
       aiId: aiStore.selectedAIId,
       action: 'remove-typing'
-    })
-    
-    // 显示错误消息
-    const errorMessage = {
-      id: Date.now() + 2,
-      sender: currentAi.value.name,
-      content: `抱歉，我遇到了一些问题：${error.message}。请稍后再试或检查网络连接。`,
-      time: new Date(),
-      isOwn: false,
-      avatar: currentAi.value.avatar,
-      isError: true
-    }
-    
-    aiStore.updateMessages({
-      aiId: aiStore.selectedAIId,
-      message: errorMessage
     })
   } finally {
     isAiTyping.value = false
@@ -350,24 +332,7 @@ async function streamAiResponse(userInput) {
     })
     
   } catch (error) {
-    console.error('流式AI回复失败:', error)
-    
-    // 显示错误消息
-    const errorMessage = {
-      id: Date.now() + 2,
-      sender: currentAi.value.name,
-      content: `抱歉，我遇到了一些问题：${error.message}。请稍后再试或检查网络连接。`,
-      time: new Date(),
-      isOwn: false,
-      avatar: currentAi.value.avatar,
-      isError: true
-    }
-    
-    aiStore.updateMessages({
-      aiId: aiStore.selectedAIId,
-      message: errorMessage,
-      action: 'replace-stream'
-    })
+    // 全局拦截器已处理错误
   } finally {
     isAiTyping.value = false
     scrollToBottom()

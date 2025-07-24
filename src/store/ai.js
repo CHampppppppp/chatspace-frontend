@@ -223,11 +223,7 @@ export const useAIStore = defineStore('ai', {
         this.addAIMessage(aiId, response)
         
       } catch (error) {
-        console.error('AI回复失败:', error)
-        
-        // 显示错误消息
-        const errorResponse = `抱歉，我遇到了一些问题：${error.message}。请稍后再试或检查网络连接。`
-        this.addAIMessage(aiId, errorResponse)
+        // 全局拦截器已处理错误
       } finally {
         this.setAIResponding(false)
       }
@@ -324,7 +320,7 @@ export const useAIStore = defineStore('ai', {
           throw new Error(response.message || '获取我的AI列表失败')
         }
       } catch (error) {
-        console.error('获取我的AI列表失败:', error)
+        // 全局拦截器已处理错误
         throw error
       }
     },
@@ -344,7 +340,7 @@ export const useAIStore = defineStore('ai', {
           throw new Error(response.message || '获取我的AI详情失败')
         }
       } catch (error) {
-        console.error('获取我的AI详情失败:', error)
+        // 全局拦截器已处理错误
         throw error
       }
     },

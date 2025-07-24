@@ -217,7 +217,7 @@ function handleAddFriendConfirm(input) {
       showAlert(resp.msg, 'error')
     }
    }).catch((error) => {
-    showAlert('服务器未响应')
+    // 全局拦截器已处理错误
   })
 }
 
@@ -251,7 +251,7 @@ function fetchFriendRequests() {
       console.error(resp.msg)
     }
   }).catch((error) => {
-    console.error('服务器未响应')
+    // 全局拦截器已处理错误
   })
 }
 
@@ -268,7 +268,7 @@ function handleFriendRequest(requestId, action) {
       showAlert(resp.msg, 'error')
     }
   }).catch((error) => {
-    showAlert('服务器未响应')
+    // 全局拦截器已处理错误
   })
 }
 

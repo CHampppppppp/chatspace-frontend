@@ -277,7 +277,7 @@ export async function callDeepSeekAPIStream(aiType, messages = [], userMessage, 
     })
     
   } catch (error) {
-    console.error('DeepSeek 流式API调用失败:', error)
+    // 全局拦截器已处理错误
     throw error
   }
 }
@@ -299,7 +299,7 @@ export async function validateAPIKey() {
     
     return response.status === 200
   } catch (error) {
-    console.error('API密钥验证失败:', error)
+    // 全局拦截器已处理错误
     return false
   }
 }
@@ -313,7 +313,7 @@ export async function getAvailableModels() {
     const response = await deepseekApi.get('/models')
     return response.data.data || []
   } catch (error) {
-    console.error('获取模型列表失败:', error)
+    // 全局拦截器已处理错误
     return []
   }
 }
