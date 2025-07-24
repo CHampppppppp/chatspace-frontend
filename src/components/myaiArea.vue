@@ -5,7 +5,15 @@
       <!-- AI个人信息区域 -->
       <div class="ai-info-section">
         <div class="ai-avatar-large">
-          <div class="ai-icon-large">{{ selectedAI.icon }}</div>
+          <div class="ai-icon-large">
+            <img 
+              v-if="selectedAI.avatar" 
+              :src="selectedAI.avatar" 
+              :alt="selectedAI.name + '的头像'"
+              class="avatar-image"
+            />
+            <span v-else class="default-avatar">🤖</span>
+          </div>
         </div>
         
         <div class="ai-details">
@@ -16,17 +24,20 @@
               {{ truncateText(selectedAI.description, 100) }}
             </span>
           </div>
+
           <div class="ai-creator">
             <span class="creator-label">创建者：</span>
-            <span class="creator-text">{{ selectedAI.creator }}</span>
+            <span class="creator-text">{{ selectedAI.createdBy }}</span>
           </div>
-          <div class="ai-create-date">
-            <span class="date-label">创建日期：</span>
-            <span class="date-text">{{ formatDate(selectedAI.createDate) }}</span>
+
+          <div class="ai-created-date">
+            <span class="date-label">创建时间：</span>
+            <span class="date-text">{{ formatDate(selectedAI.createdAt) }}</span>
           </div>
+
           <div class="ai-likes">
             <span class="likes-label">点赞数：</span>
-            <span class="likes-count">{{ selectedAI.likes }}</span>
+            <span class="likes-count">{{ likeCount }}</span>
             <button 
               @click="handleLike" 
               class="like-btn"
@@ -61,8 +72,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import customButton from './customButton.vue'
+import { useUserStore } from '../store/user.js'
+
+const userStore = useUserStore()
 
 // 定义props
 const props = defineProps({
@@ -79,11 +93,33 @@ const emit = defineEmits(['add-friend', 'update-likes'])
 const isAddingFriend = ref(false)
 const likedAIs = ref(new Set()) // 存储已点赞的AI ID
 const likeLoading = ref(false)
+const likeCount = ref(0) // 本地点赞计数
 
 // 计算当前AI是否被点赞
 const isLiked = computed(() => {
-  return props.selectedAI ? likedAIs.value.has(props.selectedAI.id) : false
+  return props.selectedAI ? likedAIs.value.has(props.selectedAI.aiId) : false
 })
+
+// 监听selectedAI变化，初始化点赞计数和点赞状态
+watch(() => props.selectedAI, async (newAI) => {
+  if (newAI) {
+    likeCount.value = newAI.likes || 0 // 从API数据中获取likes字段
+    
+    // 获取用户对当前AI的点赞状态
+    try {
+      const { api } = await import('../api/api.js')
+      const response = await api.get(`/like/status/${newAI.aiId}/${userStore.userInfo.userId}`)
+      if (response.code === 200 && response.data && response.data.isLiked) {
+        likedAIs.value.add(newAI.aiId)
+      } else {
+        likedAIs.value.delete(newAI.aiId)
+      }
+    } catch (error) {
+      console.error('获取点赞状态失败:', error)
+      // 如果获取失败，保持当前状态不变
+    }
+  }
+}, { immediate: true })
 
 // 方法
 function addAIAsFriend() {
@@ -110,26 +146,44 @@ function formatDate(dateString) {
 }
 
 // 处理点赞
-function handleLike() {
+async function handleLike() {
   if (likeLoading.value || !props.selectedAI) return
   
   likeLoading.value = true
   
-  // 模拟API调用延迟
-  setTimeout(() => {
-    const aiId = props.selectedAI.id
+  try {
+    const { api } = await import('../api/api.js')
+    const aiId = props.selectedAI.aiId
     const wasLiked = likedAIs.value.has(aiId)
     
+    let response
     if (wasLiked) {
-      likedAIs.value.delete(aiId)
+      // 取消点赞 - 使用DELETE方法
+      response = await api.delete(`/like/${aiId}/${userStore.userInfo.userId}`)
     } else {
-      likedAIs.value.add(aiId)
+      // 点赞 - 使用POST方法
+      response = await api.post(`/like/${aiId}/${userStore.userInfo.userId}`)
     }
     
-    const newLikes = wasLiked ? props.selectedAI.likes - 1 : props.selectedAI.likes + 1
-    emit('update-likes', aiId, newLikes)
+    if (response.code === 200) {
+      if (wasLiked) {
+        likedAIs.value.delete(aiId)
+        likeCount.value = likeCount.value - 1
+        console.log('点赞失败')
+      } else {
+        likedAIs.value.add(aiId)
+        likeCount.value = likeCount.value + 1
+        console.log('点赞成功')
+      }
+      emit('update-likes', aiId, likeCount.value)
+    } else {
+      console.error(wasLiked ? '取消点赞失败:' : '点赞失败:', response.message)
+    }
+  } catch (error) {
+    console.error('点赞请求失败:', error)
+  } finally {
     likeLoading.value = false
-  }, 0)
+  }
 }
 
 // 文本截断函数
@@ -188,6 +242,19 @@ function truncateText(text, maxLength) {
   color: white;
   box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
   border: 4px solid rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.default-avatar {
+  font-size: 60px;
+  color: white;
 }
 
 .ai-details {
@@ -208,7 +275,7 @@ function truncateText(text, maxLength) {
 
 .ai-description,
 .ai-creator,
-.ai-create-date,
+.ai-created-date,
 .ai-likes {
   display: flex;
   justify-content: space-between;
@@ -249,7 +316,9 @@ function truncateText(text, maxLength) {
   line-height: 1.5;
 }
 
-.description-text:hover {
+.description-text:hover,
+.creator-text:hover,
+.date-text:hover {
   color: #333;
 }
 
@@ -353,6 +422,10 @@ function truncateText(text, maxLength) {
   .ai-icon-large {
     width: 80px;
     height: 80px;
+    font-size: 40px;
+  }
+  
+  .default-avatar {
     font-size: 40px;
   }
   

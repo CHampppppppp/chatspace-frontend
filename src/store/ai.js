@@ -6,6 +6,12 @@ export const useAIStore = defineStore('ai', {
     // 当前选中的AI助手ID
     selectedAIId: null,
     
+    // 我的AI列表（从/myai/list获取）
+    myAIList: [],
+    
+    // 当前选中的我的AI详情（从/myai/{aiId}获取）
+    selectedMyAIDetail: null,
+    
     // AI助手列表
     aiAssistants: [
       {
@@ -65,6 +71,16 @@ export const useAIStore = defineStore('ai', {
         ai.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
         ai.description.toLowerCase().includes(state.searchQuery.toLowerCase())
       )
+    },
+    
+    // 获取我的AI列表
+    getMyAIList: (state) => {
+      return state.myAIList
+    },
+    
+    // 获取当前选中的我的AI详情
+    getSelectedMyAIDetail: (state) => {
+      return state.selectedMyAIDetail
     }
   },
   
@@ -292,6 +308,60 @@ export const useAIStore = defineStore('ai', {
       } else {
         console.warn(`AI with id ${aiId} not found in aiAssistants`)
       }
+    },
+
+    // 获取我的AI列表
+    async fetchMyAIList() {
+      try {
+        const { api } = await import('../api/api.js')
+        const response = await api.get('/myai/list')
+        
+        if (response.code === 200) {
+          this.myAIList = response.data
+          return response.data
+        } else {
+          console.error('获取我的AI列表失败:', response.message)
+          throw new Error(response.message || '获取我的AI列表失败')
+        }
+      } catch (error) {
+        console.error('获取我的AI列表失败:', error)
+        throw error
+      }
+    },
+
+    // 获取我的AI详情
+    async fetchMyAIDetail(aiId) {
+      try {
+        const { api } = await import('../api/api.js')
+        const response = await api.get(`/myai/${aiId}`)
+        
+        if (response.code === 200) {
+          this.selectedMyAIDetail = response.data
+          console.log('获取我的AI详情成功')
+          return response.data
+        } else {
+          console.error('获取我的AI详情失败:', response.message)
+          throw new Error(response.message || '获取我的AI详情失败')
+        }
+      } catch (error) {
+        console.error('获取我的AI详情失败:', error)
+        throw error
+      }
+    },
+
+    // 设置我的AI列表
+    setMyAIList(list) {
+      this.myAIList = list
+    },
+
+    // 设置选中的我的AI详情
+    setSelectedMyAIDetail(detail) {
+      this.selectedMyAIDetail = detail
+    },
+
+    // 清除选中的我的AI详情
+    clearSelectedMyAIDetail() {
+      this.selectedMyAIDetail = null
     }
   }
 })

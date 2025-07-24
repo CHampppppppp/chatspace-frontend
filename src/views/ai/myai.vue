@@ -25,12 +25,21 @@
         <div class="my-ai-items">
           <div 
             v-for="myAi in filteredMyAIList" 
-            :key="myAi.id"
+            :key="myAi.aiId"
             class="my-ai-item"
-            @click="selectMyAI(myAi.id)"
+            :class="{ 'selected': selectedAIId === myAi.aiId }"
+            @click="selectMyAI(myAi.aiId)"
           >
             <div class="my-ai-avatar">
-              <div class="my-ai-icon">{{ myAi.icon }}</div>
+              <div class="my-ai-icon">
+                <img 
+                  v-if="myAi.avatar" 
+                  :src="myAi.avatar" 
+                  :alt="myAi.name + '的头像'"
+                  class="avatar-image"
+                />
+                <span v-else class="default-avatar">🤖</span>
+              </div>
             </div>
             <div class="my-ai-info">
               <div class="my-ai-name">{{ myAi.name }}</div>
@@ -39,7 +48,7 @@
             </div>
             <div class="my-ai-actions" v-if="userProfile.role === 'admin'">
               <button @click.stop="editAI(myAi)" class="edit-btn">✏️</button>
-              <button @click.stop="deleteAI(myAi.id)" class="delete-btn">🗑️</button>
+              <button @click.stop="deleteAI(myAi.aiId)" class="delete-btn">🗑️</button>
             </div>
           </div>
         </div>
@@ -129,14 +138,18 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { useUserStore } from '../../store/user'
+import { useAIStore } from '../../store/ai'
 import CustomDialog from '../../components/customDialog.vue'
 import ToolBar from '../../components/toolBar.vue'
 import SearchBox from '../../components/SearchBox.vue'
 import myaiArea from '../../components/myaiArea.vue'
 import { api } from '../../api/api.js'
+
+// Store实例
+const userStore = useUserStore()
+const aiStore = useAIStore()
 
 // 响应式数据
 const selectedAIId = ref(null)
@@ -155,7 +168,6 @@ const showConfirmDialog = ref(false)
 const confirmMessage = ref('')
 const confirmCallback = ref(null)
 
-const userStore = useUserStore()
 const userProfile = computed(() => userStore.userProfile)
 
 const aiForm = ref({
@@ -167,64 +179,33 @@ const aiForm = ref({
 
 const availableIcons = ['⭐', '🤖', '🎯', '💡', '🎨', '📚', '🔬', '🎵', '🏆', '🌟', '💎', '🚀', '🎭', '🔮', '🎪']
 
-const myAIList = ref([
-  {
-    id: 1,
-    name: '李白',
-    icon: '⭐',
-    description: '唐代诗仙',
-    prompt: '你是李白，你是一个专业的诗人',
-    creator: '张三',
-    createDate: '2024-01-15',
-    likes: 128
-  },
-  {
-    id: 2,
-    name: '路飞',
-    icon: '🎨',
-    description: '海贼王的男人',
-    prompt: '你是路飞,要成为海贼王的男人',
-    creator: '李四',
-    createDate: '2024-02-20',
-    likes: 95
-  }
-])
+const myAIList = ref([])
 
 const messages = ref({})
 
 // 计算属性
 const filteredMyAIList = computed(() => {
-  if (!searchQuery.value) return myAIList.value
-  return myAIList.value.filter(ai => 
+  if (!searchQuery.value) return aiStore.getMyAIList
+  return aiStore.getMyAIList.filter(ai => 
     ai.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
     ai.description.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 })
 
 const currentAI = computed(() => {
-  return myAIList.value.find(ai => ai.id === selectedAIId.value)
-})
-
-const currentMessages = computed(() => {
-  return messages.value[selectedAIId.value] || []
+  return aiStore.getSelectedMyAIDetail
 })
 
 // 方法
 function selectMyAI(aiId) {
-  selectedAIId.value = aiId
-  
-  // 如果是第一次选择这个AI，添加欢迎消息
-  if (!messages.value[aiId]) {
-    const ai = myAIList.value.find(a => a.id === aiId)
-    messages.value[aiId] = [
-      {
-        id: Date.now(),
-        sender: ai.name,
-        content: `你好！我是${ai.name}，${ai.description}。我的个性特点是${ai.personality}。有什么可以帮助您的吗？`,
-        time: new Date(),
-        isOwn: false
-      }
-    ]
+  // 确保类型一致性
+  const targetAI = aiStore.getMyAIList.find(ai => ai.aiId == aiId)
+  if (targetAI) {
+    selectedAIId.value = targetAI.aiId
+    // 获取AI详情
+    aiStore.fetchMyAIDetail(aiId)
+  } else {
+    selectedAIId.value = aiId
   }
   
   scrollToBottom()
@@ -251,35 +232,30 @@ function deleteAI(aiId) {
   
   showConfirm('确定要删除这个角色吗？', () => {
     // //前端视觉上删除（假删除）
-    // myAIList.value = myAIList.value.filter(ai => ai.id !== aiId)
+    // myAIList.value = myAIList.value.filter(ai => ai.aiId !== aiId)
     // if (selectedAIId.value === aiId) {
     //   selectedAIId.value = null
     // }
     // delete messages.value[aiId]
     
-    api.delete(`/${aiId}`).then(resp => {
+    api.delete(`/myai/${aiId}`).then(resp => {
       if(resp.code === 200){
-        showAlert('删除成功')
+        showAlert('删除成功', 'success')
+        // 删除成功后重新获取AI列表
+        fetchMyAIList()
+        // 如果删除的是当前选中的AI，清除选中状态
+        if (selectedAIId.value === aiId) {
+          selectedAIId.value = null
+          aiStore.clearSelectedMyAIDetail()
+        }
+        // 清除该AI的消息记录
+        delete messages.value[aiId]
       }
       else{
-        showAlert(resp.msg)
+        showAlert(resp.msg, 'error')
       }
     }).catch(err => {
-      showAlert('服务器未响应')
-    })
-
-    //更新ai列表
-    api.get(`/myai`)
-    .then(resp => {
-      if(resp.code === 200){
-        // myAIList.value = resp.data
-        console.log('AIList: '+ resp.data)
-      }
-      else{
-        showAlert(resp.msg)
-      }
-    }).catch(err => {
-      showAlert('服务器未响应')
+      showAlert('服务器未响应', 'error')
     })
   })
 }
@@ -321,21 +297,12 @@ function saveAI() {
       userId: userProfile.value.userId
     }
     
-    api.post(`/${editingAI.value.id}`, aiData).then(resp => {
+    api.post(`/myai/${editingAI.value.aiId}`, aiData).then(resp => {
       if (resp.code === 200) {
-        // 更新前端列表
-        const index = myAIList.value.findIndex(ai => ai.id === editingAI.value.id)
-        if (index !== -1) {
-          myAIList.value[index] = { 
-            ...aiForm.value, 
-            id: editingAI.value.id,
-            creator: editingAI.value.creator,
-            createDate: editingAI.value.createDate,
-            likes: editingAI.value.likes
-          }
-        }
         showAlert('AI编辑成功', 'success')
         closeCreateDialog()
+        // 重新获取AI列表
+        fetchMyAIList()
       } else {
         showAlert(resp.msg || 'AI编辑失败', 'error')
       }
@@ -355,10 +322,10 @@ function saveAI() {
     
     api.post('/myai', aiData).then(resp => {
       if (resp.code === 200) {
-        // 将后端返回的AI数据添加到前端列表
-        myAIList.value.push(resp.data)
         showAlert('AI创建成功', 'success')
         closeCreateDialog()
+        // 重新获取AI列表
+        fetchMyAIList()
       } else {
         showAlert(resp.msg || 'AI创建失败', 'error')
       }
@@ -415,7 +382,14 @@ function scrollToBottom() {
 
 // 处理添加AI为好友
 function handleAddAIAsFriend(ai) {
-  api.post(`/friend/${ai.id}`,{
+  // 检查是否已经是好友
+  const existingFriend = aiStore.getMyAIList.find(friend => friend.aiId === ai.aiId)
+  if (existingFriend) {
+    showAlert('该AI已经是您的好友了', 'info')
+    return
+  }
+  
+  api.post(`/friend/${ai.aiId}`,{
   senderId:userProfile.value.userId
 }).then(resp => {
   if(resp.code === 200){
@@ -431,23 +405,32 @@ function handleAddAIAsFriend(ai) {
 
 // 处理点赞数更新
 function handleUpdateLikes(aiId, newLikes) {
-  const ai = myAIList.value.find(a => a.id === aiId)
+  // 只更新本地状态，不重复调用API
+  // API调用已经在myaiArea组件中完成
+  const ai = aiStore.getMyAIList.find(a => a.aiId === aiId)
   if (ai) {
     ai.likes = newLikes
   }
-
-  api.post(`/like/${ai.id}`)
-  .then(resp => {
-    if(resp.code === 200){
-      showAlert('谢谢你的点赞')
-    }
-    else{
-      showAlert(resp.msg)
-    }
-  }).catch(err => {
-    showAlert('服务器未响应')
-  })
 }
+
+// 从后端获取AI列表
+async function fetchMyAIList() {
+  try {
+    await aiStore.fetchMyAIList()
+  } catch (error) {
+    console.error('获取AI列表失败:', error)
+    if (error.response) {
+      showAlert(`获取AI列表失败: ${error.response.data.message || error.message}`, 'error')
+    } else {
+      showAlert('服务器未响应，获取AI列表失败', 'error')
+    }
+  }
+}
+
+// 组件挂载时获取数据
+onMounted(() => {
+  fetchMyAIList()
+})
 </script>
 
 <style scoped>
@@ -553,6 +536,17 @@ function handleUpdateLikes(aiId, newLikes) {
   transform: translateX(5px);
 }
 
+.my-ai-item.selected {
+  background: rgba(102, 126, 234, 0.2);
+  border: 2px solid #667eea;
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.my-ai-item.selected:hover {
+  background: rgba(102, 126, 234, 0.25);
+}
+
 .my-ai-avatar {
   margin-right: 12px;
 }
@@ -568,6 +562,19 @@ function handleUpdateLikes(aiId, newLikes) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: 2px solid rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+}
+
+.my-ai-icon .avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.my-ai-icon .default-avatar {
+  font-size: 20px;
+  color: white;
 }
 
 .my-ai-info {
@@ -658,6 +665,18 @@ function handleUpdateLikes(aiId, newLikes) {
   font-size: 24px;
 }
 
+.chat-ai-avatar .my-ai-icon .avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.chat-ai-avatar .my-ai-icon .default-avatar {
+  font-size: 24px;
+  color: white;
+}
+
 .chat-ai-details h3 {
   margin: 0;
   color: #333;
@@ -703,6 +722,18 @@ function handleUpdateLikes(aiId, newLikes) {
   width: 35px;
   height: 35px;
   font-size: 16px;
+}
+
+.message-avatar .my-ai-icon .avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.message-avatar .my-ai-icon .default-avatar {
+  font-size: 16px;
+  color: white;
 }
 
 .message-content {
