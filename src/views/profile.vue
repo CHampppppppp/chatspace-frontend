@@ -17,7 +17,8 @@
           <p class="user-email">{{ userInfo.email }}</p>
           <div class="signature-section">
             <p style="margin-bottom:10px">个性签名</p>
-            <div v-if="!editingSignature" class="signature-display" @click="editSignature" :title="userInfo.signature || '......'">
+            <div v-if="!editingSignature" class="signature-display" @click="editSignature"
+              :title="userInfo.signature || '......'">
               <span>{{ userInfo.signature || '......' }}</span>
             </div>
             <div v-else class="signature-edit">
@@ -148,7 +149,7 @@ const userInfo = computed(() => {
     signature: '',
     avatar: '',
     createdAt: '',
-  userId: ''
+    userId: ''
   }
 })
 
@@ -357,28 +358,31 @@ function updateUserInfo() {
 
 // 提交用户信息表单
 function submitUserInfoForm(formData) {
-  // 更新userStore中的用户信息
-  userStore.setUserInfo(formData)
-  console.log('更新信息： ')
-  console.log(formData)
 
   //保存到后端
   api.post('/user/info', {
     userId: userInfo.value.userId,
     username: formData.username,
     email: formData.email,
-    avatar:formData.avatar,
+    avatar: formData.avatar,
     age: formData.age,
     gender: formData.gender,
     signature: formData.signature
   }).then(resp => {
-    if (resp.code === 200)
+    if (resp.code === 200) {
       showAlert('个人信息已保存', 'success')
+      userStore.setUserInfo({ ...userInfo.value, ...formData })
+      // 更新userStore中的用户信息
+      console.log('更新formData： ')
+      console.log(formData)
+    }
     else
       showAlert(resp.msg, 'error')
-  }).catch(err=>{
+  }).catch(err => {
     showAlert('服务器未响应，失败')
   })
+
+  router.push('/profile')
 }
 
 // 修改密码
@@ -422,7 +426,7 @@ function changePassword() {
     }
     else
       showAlert(resp.msg, 'error')
-  }).catch(err=>{
+  }).catch(err => {
     showAlert('服务器未响应，失败')
   })
 }
@@ -430,12 +434,6 @@ function changePassword() {
 // 退出登录
 function logout() {
   showConfirm('确定要退出登录吗？', () => {
-    // 使用userStore的logout方法清除用户数据
-    userStore.logout()
-    // 清除记住我相关的数据
-    localStorage.removeItem('rememberMe')
-    localStorage.removeItem('savedAccount')
-
     api.post('/logout', {
       userId: userInfo.value.userId
     }).then(resp => {
@@ -445,10 +443,16 @@ function logout() {
       else {
         showAlert(resp.msg, 'error')
       }
-    }).catch(err=>{
+    }).catch(err => {
       showAlert('服务器未响应，失败')
     })
   })
+
+    // 使用userStore的logout方法清除用户数据
+    userStore.logout()
+    // 清除记住我相关的数据
+    localStorage.removeItem('rememberMe')
+    localStorage.removeItem('savedAccount')
 }
 
 function handleClose() {

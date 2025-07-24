@@ -5,22 +5,16 @@
       <div class="toolbar-logo">
         <div class="logo-icon">💬</div>
       </div>
-      
+
       <!-- 导航菜单 -->
       <nav class="toolbar-nav">
-        <div 
-          v-for="item in menuItems" 
-          :key="item.name"
-          class="nav-item"
-          :class="{ active: activeItem === item.name }"
-          @click="selectItem(item.name)"
-          :title="item.label"
-        >
+        <div v-for="item in menuItems" :key="item.name" class="nav-item" :class="{ active: activeItem === item.name }"
+          @click="selectItem(item.name)" :title="item.label">
           <div class="nav-icon">{{ item.icon }}</div>
           <span class="nav-label">{{ item.label }}</span>
         </div>
       </nav>
-      
+
       <!-- 底部用户区域 -->
       <div class="toolbar-footer">
         <div class="user-avatar" @click="goToProfile()">
@@ -35,7 +29,7 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../store/user'
-import defualtAvatar from '../assets/images/youcai.jpg'
+import { api } from '../api/api.js'
 
 // 路由相关
 const router = useRouter()
@@ -65,12 +59,12 @@ const adminMenuItems = [
 // 根据用户角色动态生成菜单项
 const menuItems = computed(() => {
   const items = [...baseMenuItems]
-  
+
   // 如果是管理员，添加管理员菜单
   if (userStore.userInfo.role === 'admin') {
     items.push(...adminMenuItems)
   }
-  
+
   return items
 })
 
@@ -89,7 +83,18 @@ function selectItem(itemName) {
   }
 }
 
-function goToProfile(){
+function goToProfile() {
+  api.get(`/${userStore.userInfo.userId}`)
+    .then(resp => {
+      if (resp.code === 200) {
+        userStore.userInfo = resp.data
+      }
+      else {
+        console.error(resp.msg)
+      }
+    }).catch(err => {
+      console.error(err)
+    })
   router.push('/profile')
 }
 
@@ -258,25 +263,25 @@ defineExpose({
   .toolbar-container {
     padding: 10px;
   }
-  
+
   .toolbar {
     width: 70px;
     height: calc(100vh - 20px);
   }
-  
+
   .nav-icon {
     font-size: 18px;
   }
-  
+
   .nav-label {
     font-size: 9px;
   }
-  
+
   .user-avatar {
     width: 40px;
     height: 40px;
   }
-  
+
   .avatar-icon {
     font-size: 18px;
   }
@@ -288,6 +293,7 @@ defineExpose({
     transform: translateX(-100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;

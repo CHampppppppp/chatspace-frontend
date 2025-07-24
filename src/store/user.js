@@ -16,7 +16,7 @@ export const useUserStore = defineStore('user', {
         age: state.userInfo?.age || '',
         gender: state.userInfo?.gender || '',
         role: state.userInfo?.role || 'user',
-        userId: state.userInfo?.userId || state.userInfo?.id || null,
+        userId: state.userInfo?.userId || null,
         signature: state.userInfo?.signature || '',
         status: state.userInfo?.status || '',
         createdAt: state.userInfo?.createdAt || '',
