@@ -233,7 +233,6 @@ export const useAIStore = defineStore('ai', {
     updateMessages(data) {
       // 添加数据验证
       if (!data || !data.aiId) {
-        console.warn('updateMessages: 无效的数据参数', data)
         return
       }
       
@@ -286,7 +285,6 @@ export const useAIStore = defineStore('ai', {
     updateAiList(updateData) {
       // 验证更新数据
       if (!updateData || !updateData.aiId) {
-        console.warn('updateAiList: 无效的更新数据', updateData)
         return
       }
       
@@ -301,8 +299,6 @@ export const useAIStore = defineStore('ai', {
           lastMessage: lastMessage,
           lastTime: lastTime
         }
-      } else {
-        console.warn(`AI with id ${aiId} not found in aiAssistants`)
       }
     },
 
@@ -316,7 +312,6 @@ export const useAIStore = defineStore('ai', {
           this.myAIList = response.data
           return response.data
         } else {
-          console.error('获取我的AI列表失败:', response.message)
           throw new Error(response.message || '获取我的AI列表失败')
         }
       } catch (error) {
@@ -333,10 +328,8 @@ export const useAIStore = defineStore('ai', {
         
         if (response.code === 200) {
           this.selectedMyAIDetail = response.data
-          console.log('获取我的AI详情成功')
           return response.data
         } else {
-          console.error('获取我的AI详情失败:', response.message)
           throw new Error(response.message || '获取我的AI详情失败')
         }
       } catch (error) {

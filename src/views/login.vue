@@ -12,7 +12,10 @@
           <div class="myCenter">
             <h1>注册</h1>
             <input v-model="username_regis" type="text" maxlength="30" placeholder="用户名">
-            <input v-model="password_regis" type="password" maxlength="30" placeholder="密码">
+              <input ref="registerPasswordInput" v-model="password_regis" :type="showPasswordRegis ? 'text' : 'password'" maxlength="30" placeholder="密码">
+              <button type="button" class="password-toggle-btn-regis" @click="togglePasswordVisibility('register')">
+                <i :class="showPasswordRegis ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+              </button>
             <input v-model="email_regis" type="email" placeholder="邮箱">
             <!-- <input v-model="code" type="text" placeholder="验证码" :disabled="!codeEnabled"> -->
             <a style="margin: 10px" href="#" @click="getVerificationCode()" :class="{ disabled: codeBtnDisabled }">{{
@@ -24,7 +27,10 @@
           <div class="myCenter">
             <h1>登录</h1>
             <input v-model="username" type="text" placeholder="用户名">
-            <input v-model="password" type="password" placeholder="密码">
+              <input ref="loginPasswordInput" v-model="password" :type="showPassword ? 'text' : 'password'" placeholder="密码">
+              <button type="button" class="password-toggle-btn-login" @click="togglePasswordVisibility('login')">
+                <i :class="showPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+              </button>
             <label class="remember-me">
               <input v-model="rememberMe" type="checkbox">
               <span class="checkmark"></span>
@@ -99,6 +105,39 @@ const isRegistLoading = ref(false) // 注册加载状态
 const codeEnabled = ref(false) // 验证码输入框是否启用
 const codeBtnText = ref('获取验证码') // 获取验证码按钮文字
 const codeBtnDisabled = ref(false) // 获取验证码按钮是否禁用
+
+// 密码可见性控制
+const showPassword = ref(false) // 登录密码可见性
+const showPasswordRegis = ref(false) // 注册密码可见性
+
+// 密码输入框引用
+const loginPasswordInput = ref(null)
+const registerPasswordInput = ref(null)
+
+// 切换密码可见性
+function togglePasswordVisibility(type) {
+  if (type === 'login') {
+    showPassword.value = !showPassword.value
+    // 聚焦到登录密码输入框并将光标定位到末尾
+    setTimeout(() => {
+      if (loginPasswordInput.value) {
+        loginPasswordInput.value.focus()
+        const len = loginPasswordInput.value.value.length
+        loginPasswordInput.value.setSelectionRange(len, len)
+      }
+    }, 0)
+  } else if (type === 'register') {
+    showPasswordRegis.value = !showPasswordRegis.value
+    // 聚焦到注册密码输入框并将光标定位到末尾
+    setTimeout(() => {
+      if (registerPasswordInput.value) {
+        registerPasswordInput.value.focus()
+        const len = registerPasswordInput.value.value.length
+        registerPasswordInput.value.setSelectionRange(len, len)
+      }
+    }, 0)
+  }
+}
 
 // 弹窗相关数据
 const showDialog = ref(false)
@@ -211,7 +250,6 @@ function login() {
     }, 1000);
     //如果有response
     if (resp.code === 200) {
-      console.log(resp)
       const userInfo = resp.data
       userStore.setUserInfo(userInfo)
       // 如果选择了记住我，可以在这里保存登录状态到localStorage
@@ -829,6 +867,63 @@ onMounted(() => {
   .logo-container {
     margin-bottom: 25px;
   }
+}
+
+.password-toggle-btn-login {
+  position: fixed;
+  right: 14%;
+  top: 51.5%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 16px;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+}
+
+.password-toggle-btn-regis {
+  position: fixed;
+  right: 14%;
+  top: 47.5%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 16px;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+}
+
+.password-toggle-btn-login:hover,
+.password-toggle-btn-regis:hover {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.password-toggle-btn-login:active,
+.password-toggle-btn-regis:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.password-toggle-btn-login i,
+.password-toggle-btn-regis i {
+  font-size: 14px;
 }
 
 /* 弹窗样式已移至 CustomDialog 组件 */
