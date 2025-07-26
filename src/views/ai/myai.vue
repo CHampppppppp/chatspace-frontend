@@ -46,10 +46,7 @@
               <div class="my-ai-type">{{ myAi.type }}</div>
               <div class="my-ai-description">{{ myAi.description }}</div>
             </div>
-            <div class="my-ai-actions" v-if="userProfile.role === 'admin'">
-              <button @click.stop="editAI(myAi)" class="edit-btn">✏️</button>
-              <button @click.stop="deleteAI(myAi.aiId)" class="delete-btn">🗑️</button>
-            </div>
+
           </div>
         </div>
       </div>
@@ -211,54 +208,7 @@ function selectMyAI(aiId) {
   scrollToBottom()
 }
 
-function editAI(myAi) {
-  // 检查是否为管理员
-  if (userProfile.value.role !== 'admin') {
-    showAlert('只有管理员才能编辑AI助手', 'error')
-    return
-  }
-  
-  editingAI.value = myAi
-  aiForm.value = { ...myAi }
-  showCreateDialog.value = true
-}
 
-function deleteAI(aiId) {
-  // 检查是否为管理员
-  if (userProfile.value.role !== 'admin') {
-    showAlert('只有管理员才能删除AI助手', 'error')
-    return
-  }
-  
-  showConfirm('确定要删除这个角色吗？', () => {
-    // //前端视觉上删除（假删除）
-    // myAIList.value = myAIList.value.filter(ai => ai.aiId !== aiId)
-    // if (selectedAIId.value === aiId) {
-    //   selectedAIId.value = null
-    // }
-    // delete messages.value[aiId]
-    
-    api.delete(`/myai/${aiId}`).then(resp => {
-      if(resp.code === 200){
-        showAlert('删除成功', 'success')
-        // 删除成功后重新获取AI列表
-        fetchMyAIList()
-        // 如果删除的是当前选中的AI，清除选中状态
-        if (selectedAIId.value === aiId) {
-          selectedAIId.value = null
-          aiStore.clearSelectedMyAIDetail()
-        }
-        // 清除该AI的消息记录
-        delete messages.value[aiId]
-      }
-      else{
-        showAlert(resp.msg, 'error')
-      }
-    }).catch(err => {
-      showAlert('服务器未响应', 'error')
-    })
-  })
-}
 
 function closeCreateDialog() {
   showCreateDialog.value = false
@@ -589,43 +539,7 @@ onMounted(() => {
   line-height: 1.4;
 }
 
-.my-ai-actions {
-  display: flex;
-  gap: 5px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
 
-.my-ai-item:hover .my-ai-actions {
-  opacity: 1;
-}
-
-.edit-btn, .delete-btn {
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  transition: all 0.3s ease;
-}
-
-.edit-btn {
-  background: #4ade80;
-  color: white;
-}
-
-.delete-btn {
-  background: #ef4444;
-  color: white;
-}
-
-.edit-btn:hover, .delete-btn:hover {
-  transform: scale(1.1);
-}
 
 .chat-area {
   flex: 1;

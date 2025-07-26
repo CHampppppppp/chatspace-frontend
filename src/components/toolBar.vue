@@ -54,6 +54,7 @@ const baseMenuItems = [
 // 管理员专用菜单项
 const adminMenuItems = [
   { name: 'adminUsers', label: '用户管理', icon: '👤', path: '/admin/users' },
+  { name: 'adminMyAI', label: 'AI管理', icon: '🤖', path: '/admin/myai' },
 ]
 
 // 根据用户角色动态生成菜单项

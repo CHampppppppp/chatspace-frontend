@@ -42,6 +42,11 @@ const routes = [
     name: 'AdminUsers',
     component: () => import('../views/admin/user.vue'),
   },
+  {
+    path: '/admin/myai',
+    name: 'AdminMyAI',
+    component: () => import('../views/admin/myai.vue'),
+  },
   // 保留原有路由以兼容
   {
     path: '/home',

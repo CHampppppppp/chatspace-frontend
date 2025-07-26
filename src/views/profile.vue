@@ -463,8 +463,6 @@ function deleteAccount() {
           showAlert('账号已成功注销', 'success')
           // 清除所有用户数据
           userStore.logout()
-          localStorage.removeItem('rememberMe')
-          localStorage.removeItem('savedAccount')
           // 跳转到登录页
           setTimeout(() => {
             router.push('/login')
