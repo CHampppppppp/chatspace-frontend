@@ -63,7 +63,7 @@
     <div v-if="showCreateDialog" class="dialog-overlay" @click="closeCreateDialog">
       <div class="dialog-content" @click.stop>
         <div class="dialog-header">
-          <h3>{{ editingAI ? '编辑AI助手' : '创建新的AI助手' }}</h3>
+          <h3>创建新的AI助手</h3>
           <button @click="closeCreateDialog" class="close-btn">✕</button>
         </div>
         
@@ -74,17 +74,10 @@
           </div>
           
           <div class="form-group">
-            <label>图标</label>
-            <div class="icon-selector">
-              <div 
-                v-for="icon in availableIcons" 
-                :key="icon"
-                class="icon-option"
-                :class="{ active: aiForm.icon === icon }"
-                @click="aiForm.icon = icon"
-              >
-                {{ icon }}
-              </div>
+            <label>头像图片URL</label>
+            <input v-model="aiForm.avatar" type="url" placeholder="请输入头像图片的URL地址" />
+            <div v-if="aiForm.avatar" class="avatar-preview">
+              <img :src="aiForm.avatar" alt="头像预览" class="preview-image" />
             </div>
           </div>
           
@@ -101,7 +94,7 @@
         
         <div class="dialog-footer">
           <button @click="closeCreateDialog" class="cancel-btn">取消</button>
-          <button @click="saveAI" class="save-btn">{{ editingAI ? '保存' : '创建' }}</button>
+          <button @click="saveAI" class="save-btn">创建</button>
         </div>
       </div>
     </div>
@@ -155,7 +148,7 @@ const messageInput = ref('')
 const messagesContainer = ref(null)
 const toolBarRef = ref(null)
 const showCreateDialog = ref(false)
-const editingAI = ref(null)
+
 
 // 弹窗相关数据
 const showAlertDialog = ref(false)
@@ -169,12 +162,12 @@ const userProfile = computed(() => userStore.userProfile)
 
 const aiForm = ref({
   name: '',
-  icon: '⭐',
+  avatar: '',
   description: '',
   prompt: ''
 })
 
-const availableIcons = ['⭐', '🤖', '🎯', '💡', '🎨', '📚', '🔬', '🎵', '🏆', '🌟', '💎', '🚀', '🎭', '🔮', '🎪']
+// 移除availableIcons数组，改用URL输入
 
 const myAIList = ref([])
 
@@ -212,10 +205,9 @@ function selectMyAI(aiId) {
 
 function closeCreateDialog() {
   showCreateDialog.value = false
-  editingAI.value = null
   aiForm.value = {
     name: '',
-    icon: '⭐',
+    avatar: '',
     description: '',
     prompt: ''
   }
@@ -237,52 +229,27 @@ function saveAI() {
     return
   }
   
-  if (editingAI.value) {
-    // 编辑现有AI - 调用后端API
-    const aiData = {
-      name: aiForm.value.name,
-      icon: aiForm.value.icon,
-      description: aiForm.value.description,
-      prompt: aiForm.value.prompt,
-      userId: userProfile.value.userId
-    }
-    
-    api.post(`/myai/${editingAI.value.aiId}`, aiData).then(resp => {
-      if (resp.code === 200) {
-        showAlert('AI编辑成功', 'success')
-        closeCreateDialog()
-        // 重新获取AI列表
-        fetchMyAIList()
-      } else {
-        showAlert(resp.msg || 'AI编辑失败', 'error')
-      }
-    }).catch(err => {
-      showAlert('服务器未响应', 'error')
-    })
-    return
-  } else {
-    // 创建新AI - 调用后端API
-    const aiData = {
-      name: aiForm.value.name,
-      icon: aiForm.value.icon,
-      description: aiForm.value.description,
-      prompt: aiForm.value.prompt,
-      userId: userProfile.value.userId
-    }
-    
-    api.post('/myai', aiData).then(resp => {
-      if (resp.code === 200) {
-        showAlert('AI创建成功', 'success')
-        closeCreateDialog()
-        // 重新获取AI列表
-        fetchMyAIList()
-      } else {
-        showAlert(resp.msg || 'AI创建失败', 'error')
-      }
-    }).catch(err => {
-      showAlert('服务器未响应', 'error')
-    })
+  // 创建新AI - 调用后端API
+  const aiData = {
+    name: aiForm.value.name,
+    avatar: aiForm.value.avatar,
+    description: aiForm.value.description,
+    prompt: aiForm.value.prompt,
+    userId: userProfile.value.userId
   }
+  
+  api.post('/myai', aiData).then(resp => {
+    if (resp.code === 200) {
+      showAlert('AI创建成功', 'success')
+      closeCreateDialog()
+      // 重新获取AI列表
+      fetchMyAIList()
+    } else {
+      showAlert(resp.msg || 'AI创建失败', 'error')
+    }
+  }).catch(err => {
+    showAlert('服务器未响应', 'error')
+  })
 }
 
 // 显示提示弹窗
@@ -879,34 +846,23 @@ onMounted(() => {
   border-color: #e1e5e9;
 }
 
-.icon-selector {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+.avatar-preview {
   margin-top: 10px;
+  text-align: center;
 }
 
-.icon-option {
-  width: 40px;
-  height: 40px;
-  border: 2px solid #e1e5e9;
+.preview-image {
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  cursor: pointer;
+  object-fit: cover;
+  border: 2px solid #e1e5e9;
   transition: all 0.3s ease;
 }
 
-.icon-option:hover {
+.preview-image:hover {
   border-color: #667eea;
-  transform: scale(1.1);
-}
-
-.icon-option.active {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.1);
+  transform: scale(1.05);
 }
 
 .dialog-footer {
