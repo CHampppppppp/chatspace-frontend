@@ -27,14 +27,14 @@
             <div class="stat-icon">📅</div>
             <div class="stat-content">
               <div class="stat-label">注册时间</div>
-              <div class="stat-value">{{ formatDate(selectedUser.registerDate) }}</div>
+              <div class="stat-value">{{ formatDate(selectedUser.createdAt) }}</div>
             </div>
           </div>
           <div class="stat-item">
             <div class="stat-icon">🕐</div>
             <div class="stat-content">
               <div class="stat-label">最后登录</div>
-              <div class="stat-value">{{ formatLastLogin(selectedUser.lastLogin) }}</div>
+              <div class="stat-value">{{ formatLastLogin(selectedUser.lastSeen) }}</div>
             </div>
           </div>
           <div class="stat-item">
@@ -65,11 +65,11 @@
           
           <button 
             class="action-button status-button" 
-            :class="selectedUser.status === 'blocked' ? 'unblock' : 'block'"
+            :class="selectedUser.isBlocked === true ? 'unblock' : 'block'"
             @click="toggleUserStatus"
           >
-            <span class="button-icon">{{ selectedUser.status === 'blocked' ? '🔓' : '🔒' }}</span>
-            <span class="button-text">{{ selectedUser.status === 'blocked' ? '解除封禁' : '封禁用户' }}</span>
+            <span class="button-icon">{{ selectedUser.isBlocked === true ? '🔓' : '🔒' }}</span>
+            <span class="button-text">{{ selectedUser.isBlocked === true ? '解除封禁' : '封禁用户' }}</span>
           </button>
           
           <button class="action-button reset-button" @click="resetPassword">
@@ -85,7 +85,7 @@
       </div>
 
       <!-- 用户活动日志 -->
-      <div class="user-logs-section">
+      <!-- <div class="user-logs-section">
         <h3>活动日志</h3>
         <div class="logs-list">
           <div v-for="log in userLogs" :key="log.id" class="log-item">
@@ -96,7 +96,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
 
     <!-- 未选择用户时的占位内容 -->
@@ -175,6 +175,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+// 导入API模块
+import { api } from '../api/api.js'
 
 // 定义props
 const props = defineProps({
@@ -260,47 +262,120 @@ function closeDialog() {
   showDialog.value = false
 }
 
-function saveUserInfo() {
+// 修改saveUserInfo函数，调用API接口
+async function saveUserInfo() {
   if (props.selectedUser) {
-    emit('update-user', props.selectedUser.id, editForm.value)
-    closeDialog()
+    try {
+      // 调用后端API更新用户信息
+      const response = await api.put('/admin/user/info', {
+        userId: props.selectedUser.userId,
+        name: editForm.value.name,
+        email: editForm.value.email,
+        avatar: editForm.value.avatar,
+        role: editForm.value.role,
+        status: editForm.value.status
+      })
+      
+      if (response.code === 200) {
+        // API调用成功，通知父组件更新用户信息
+        emit('update-user')
+        closeDialog()
+        
+        // 可以添加成功提示
+        console.log('用户信息更新成功:', response.msg || '操作成功')
+      } else {
+        // 处理业务错误
+        console.error('更新用户信息失败:', response.msg || '操作失败')
+        alert(response.msg || '更新用户信息失败')
+      }
+    } catch (error) {
+      // 处理网络错误或其他异常
+      console.error('更新用户信息时发生错误:', error.message)
+      alert('更新用户信息时发生错误: ' + error.message)
+    }
   }
 }
 
-function toggleUserStatus() {
+async function toggleUserStatus() {
   if (props.selectedUser) {
-    const newStatus = props.selectedUser.status === 'blocked' ? 'active' : 'blocked'
-    emit('update-user', props.selectedUser.id, { status: newStatus })
+    try {
+      const isBlocked = props.selectedUser.status === 'blocked'
+      const action = isBlocked ? '解除封禁' : '封禁'
+      
+      // 确认操作
+      const confirmed = confirm(`确定要${action}用户 ${props.selectedUser.name} 吗？`)
+      if (!confirmed) {
+        return
+      }
+      
+      // 调用后端API
+      const response = await api.put(`/admin/${props.selectedUser.id}/block`, {
+        block: !isBlocked // true表示封禁，false表示解除封禁
+      })
+      
+      if (response.code === 200) {
+        // API调用成功，通知父组件更新用户状态
+        const newStatus = isBlocked ? 'active' : 'blocked'
+        emit('update-user')
+      } else {
+        // 处理业务错误
+        console.error(`${action}用户失败:`, response.msg || '操作失败')
+        alert(response.msg || `${action}用户失败`)
+      }
+    } catch (error) {
+      // 处理网络错误或其他异常
+      console.error('切换用户状态时发生错误:', error.message)
+      alert('操作失败: ' + error.message)
+    }
   }
 }
 
-function resetPassword() {
+async function resetPassword() {
   if (props.selectedUser) {
-    // 这里可以调用重置密码的API
-    alert(`已为用户 ${props.selectedUser.name} 重置密码`)
+    try {
+      // 确认是否要重置密码
+      const confirmed = confirm(`确定要为用户 ${props.selectedUser.name} 重置密码吗？`)
+      if (!confirmed) {
+        return
+      }
+      
+      // 调用后端API重置密码
+      const response = await api.put(`/admin/${props.selectedUser.id}/password`)
+      
+      if (response.code === 200) {
+        // 重置成功
+        alert(`已成功为用户 ${props.selectedUser.name} 重置密码。新密码：${response.data?.newPassword || '请查看系统通知'}`)
+        console.log('密码重置成功:', response.msg || '操作成功')
+      } else {
+        // 处理业务错误
+        console.error('重置密码失败:', response.msg || '操作失败')
+        alert(response.msg || '重置密码失败')
+      }
+    } catch (error) {
+      // 处理网络错误或其他异常
+      console.error('重置密码时发生错误:', error.message)
+      alert('重置密码时发生错误: ' + error.message)
+    }
   }
 }
 
 function confirmDelete() {
-  if (props.selectedUser) {
-    emit('delete-user', props.selectedUser.id)
-  }
+  emit('delete-user', props.selectedUser)
 }
 
 function getRoleText(role) {
   const roleMap = {
     admin: '管理员',
-    moderator: '版主',
     user: '用户'
   }
-  return roleMap[role] || '用户'
+  return roleMap[role]
 }
 
 function getStatusText(status) {
   const statusMap = {
-    active: '正常',
-    blocked: '封禁',
-    pending: '待审核'
+    online: '在线',
+    offline: '离线',
+    away: '离开'
   }
   return statusMap[status] || '未知'
 }
@@ -334,17 +409,6 @@ function getActivityLevel(loginCount) {
   if (loginCount > 50) return '中'
   if (loginCount > 10) return '低'
   return '新用户'
-}
-
-function getLogIcon(type) {
-  const iconMap = {
-    login: '🔑',
-    update: '✏️',
-    warning: '⚠️',
-    info: 'ℹ️',
-    error: '❌'
-  }
-  return iconMap[type] || 'ℹ️'
 }
 
 function formatLogTime(time) {

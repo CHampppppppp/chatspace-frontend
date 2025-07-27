@@ -90,18 +90,18 @@ export const useAIStore = defineStore('ai', {
       this.selectedAIId = aiId
       
       // 如果是第一次选择这个AI，添加欢迎消息
-      // if (!this.aiMessages[aiId]) {
-      //   const ai = this.aiAssistants.find(a => a.id === aiId)
-      //   this.aiMessages[aiId] = [
-      //     {
-      //       id: Date.now(),
-      //       sender: ai.name,
-      //       content: `你好！我是${ai.name}，${ai.description}。有什么可以帮助您的吗？`,
-      //       time: new Date(),
-      //       isOwn: false
-      //     }
-      //   ]
-      // }
+      if (!this.aiMessages[aiId]) {
+        const ai = this.aiAssistants.find(a => a.id === aiId)
+        this.aiMessages[aiId] = [
+          {
+            id: Date.now(),
+            sender: ai.name,
+            content: `你好！我是${ai.name}，${ai.description}。有什么可以帮助您的吗？`,
+            time: new Date(),
+            isOwn: false
+          }
+        ]
+      }
     },
     
     // 添加用户消息
@@ -143,17 +143,17 @@ export const useAIStore = defineStore('ai', {
     clearAIConversation(aiId) {
       if (this.aiMessages[aiId]) {
         this.aiMessages[aiId] = []
-        // // 重新添加欢迎消息
-        // const ai = this.aiAssistants.find(a => a.id === aiId)
-        // this.aiMessages[aiId] = [
-        //   {
-        //     id: Date.now(),
-        //     sender: ai.name,
-        //     content: `你好！我是${ai.name}，${ai.description}。有什么可以帮助您的吗？`,
-        //     time: new Date(),
-        //     isOwn: false
-        //   }
-        // ]
+        // 重新添加欢迎消息
+        const ai = this.aiAssistants.find(a => a.id === aiId)
+        this.aiMessages[aiId] = [
+          {
+            id: Date.now(),
+            sender: ai.name,
+            content: `你好！我是${ai.name}，${ai.description}。有什么可以帮助您的吗？`,
+            time: new Date(),
+            isOwn: false
+          }
+        ]
       }
     },
     
@@ -212,12 +212,7 @@ export const useAIStore = defineStore('ai', {
             userMessage
           )
         } else {
-          // 其他AI助手使用默认处理
-          response = await callDeepSeekAPI(
-            ai.name, // AI类型
-            historyMessages, // 历史消息
-            userMessage // 用户输入
-          )
+          console.warn('调用deepseek失败')
         }
         
         this.addAIMessage(aiId, response)

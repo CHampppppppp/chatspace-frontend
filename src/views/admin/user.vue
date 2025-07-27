@@ -2,59 +2,59 @@
   <div class="admin-users-container">
     <!-- 左侧工具栏 -->
     <ToolBar ref="toolBarRef" />
-    
+
     <!-- 用户列表区域 -->
     <div class="users-list-container">
       <div class="users-list-header">
         <h2>用户管理</h2>
-        <div class="header-actions">
-          <SearchBox 
-            v-model="searchQuery" 
-            placeholder="搜索用户..." 
-            @search="handleSearch"
-          />
-          <button class="add-user-btn" @click="showAddUserDialog">
-            <span class="btn-icon">➕</span>
-            <span class="btn-text">添加用户</span>
-          </button>
-        </div>
+        <SearchBox v-model="searchQuery" placeholder="搜索用户..." @search="handleSearch" />
       </div>
-      
+
       <div class="users-list-content">
         <!-- 用户统计信息 -->
         <div class="stats-section">
           <div class="stat-card">
             <div class="stat-icon">👥</div>
             <div class="stat-info">
+              <div class="stat-label">用户</div>
               <div class="stat-number">{{ totalUsers }}</div>
-              <div class="stat-label">总用户数</div>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">🟢</div>
             <div class="stat-info">
+              <div class="stat-label">在线</div>
               <div class="stat-number">{{ onlineUsers }}</div>
-              <div class="stat-label">在线用户</div>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">🔒</div>
+            <div class="stat-icon">⏸️</div>
             <div class="stat-info">
+              <div class="stat-label">离开</div>
+              <div class="stat-number">{{ awayUsers }}</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⏸️</div>
+            <div class="stat-info">
+              <div class="stat-label">离线</div>
+              <div class="stat-number">{{ offlineUsers }}</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🚫</div>
+            <div class="stat-info">
+              <div class="stat-label">封禁</div>
               <div class="stat-number">{{ blockedUsers }}</div>
-              <div class="stat-label">封禁用户</div>
             </div>
           </div>
         </div>
 
         <!-- 用户列表 -->
         <div class="user-items">
-          <div 
-            v-for="user in filteredUsers" 
-            :key="user.id"
-            class="user-item"
+          <div v-for="user in filteredUsers" :key="user.id" class="user-item"
             :class="{ 'selected': selectedUserId === user.id, 'blocked': user.status === 'blocked' }"
-            @click="selectUser(user)"
-          >
+            @click="selectUser(user)">
             <div class="user-avatar">
               <img :src="user.avatar" :alt="user.name" />
               <div v-if="user.online" class="online-indicator"></div>
@@ -74,76 +74,7 @@
     </div>
 
     <!-- 右侧用户详情区域 -->
-    <UserDetailArea 
-      :selectedUser="selectedUser"
-      @update-user="updateUser"
-      @delete-user="confirmDeleteUser"
-    />
-
-    <!-- 添加/编辑用户对话框 -->
-    <div v-if="showUserDialog" class="dialog-overlay" @click="closeUserDialog">
-      <div class="user-dialog" @click.stop>
-        <div class="dialog-header">
-          <h3>{{ editingUser ? '编辑用户' : '添加用户' }}</h3>
-          <button class="close-btn" @click="closeUserDialog">×</button>
-        </div>
-        
-        <div class="dialog-content">
-          <div class="form-group">
-            <label>用户名：</label>
-            <input 
-              v-model="userForm.name" 
-              type="text" 
-              placeholder="输入用户名"
-              class="form-input"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label>邮箱：</label>
-            <input 
-              v-model="userForm.email" 
-              type="email" 
-              placeholder="输入邮箱地址"
-              class="form-input"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label>头像URL：</label>
-            <input 
-              v-model="userForm.avatar" 
-              type="url" 
-              placeholder="输入头像链接"
-              class="form-input"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label>角色：</label>
-            <select v-model="userForm.role" class="form-select">
-              <option value="user">普通用户</option>
-              <option value="admin">管理员</option>
-              <option value="moderator">版主</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label>状态：</label>
-            <select v-model="userForm.status" class="form-select">
-              <option value="active">正常</option>
-              <option value="blocked">封禁</option>
-              <option value="pending">待审核</option>
-            </select>
-          </div>
-        </div>
-        
-        <div class="dialog-actions">
-          <button class="dialog-btn save-btn" @click="saveUser">保存</button>
-          <button class="dialog-btn cancel-btn" @click="closeUserDialog">取消</button>
-        </div>
-      </div>
-    </div>
+    <UserDetailArea :selectedUser="selectedUser" @update-user="fetchUserList" @delete-user="deleteUser" />
 
     <!-- 删除确认对话框 -->
     <div v-if="showDeleteConfirm" class="dialog-overlay" @click="cancelDelete">
@@ -166,81 +97,21 @@ import { ref, computed, onMounted } from 'vue'
 import ToolBar from '../../components/toolBar.vue'
 import SearchBox from '../../components/SearchBox.vue'
 import UserDetailArea from '../../components/UserDetailArea.vue'
-
+import { api } from '../../api/api.js'
 
 // 响应式数据
 const searchQuery = ref('')
 const selectedUserId = ref(null)
-const showUserDialog = ref(false)
 const showDeleteConfirm = ref(false)
-const editingUser = ref(null)
 const userToDelete = ref(null)
 
-// 用户表单数据
-const userForm = ref({
-  name: '',
-  email: '',
-  avatar: '',
-  role: 'user',
-  status: 'active'
-})
-
-// 模拟用户数据
-const users = ref([
-  {
-    id: 1,
-    name: '张三',
-    email: 'zhangsan@example.com',
-    avatar: 'https://i.pinimg.com/736x/de/ea/8a/deea8a2d17215a61e5f1b8c0cb7cb01b.jpg',
-    role: 'admin',
-    status: 'active',
-    online: true,
-    lastLogin: new Date('2024-01-15 10:30:00'),
-    registerDate: new Date('2023-06-01'),
-    loginCount: 156
-  },
-  {
-    id: 2,
-    name: '李四',
-    email: 'lisi@example.com',
-    avatar: 'https://i.pinimg.com/736x/97/a3/65/97a3653e287af621be9ede4d91628ed9.jpg',
-    role: 'user',
-    status: 'active',
-    online: false,
-    lastLogin: new Date('2024-01-14 15:20:00'),
-    registerDate: new Date('2023-08-15'),
-    loginCount: 89
-  },
-  {
-    id: 3,
-    name: '王五',
-    email: 'wangwu@example.com',
-    avatar: 'https://i.pinimg.com/736x/ad/45/97/ad4597f4acb6498d11063f1fd00e5cd5.jpg',
-    role: 'moderator',
-    status: 'blocked',
-    online: false,
-    lastLogin: new Date('2024-01-10 09:15:00'),
-    registerDate: new Date('2023-09-20'),
-    loginCount: 45
-  },
-  {
-    id: 4,
-    name: '赵六',
-    email: 'zhaoliu@example.com',
-    avatar: 'https://i.pinimg.com/736x/de/ea/8a/deea8a2d17215a61e5f1b8c0cb7cb01b.jpg',
-    role: 'user',
-    status: 'pending',
-    online: true,
-    lastLogin: new Date('2024-01-15 14:45:00'),
-    registerDate: new Date('2024-01-15'),
-    loginCount: 2
-  }
-])
+// 用户数据（从后端API获取）
+const users = ref([])
 
 // 计算属性
 const filteredUsers = computed(() => {
   if (!searchQuery.value) return users.value
-  return users.value.filter(user => 
+  return users.value.filter(user =>
     user.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
@@ -251,8 +122,10 @@ const selectedUser = computed(() => {
 })
 
 const totalUsers = computed(() => users.value.length)
-const onlineUsers = computed(() => users.value.filter(user => user.online).length)
-const blockedUsers = computed(() => users.value.filter(user => user.status === 'blocked').length)
+const onlineUsers = computed(() => users.value.filter(user => user.status === 'online').length)
+const offlineUsers = computed(() => users.value.filter(user => user.status === 'offline').length)
+const awayUsers = computed(() => users.value.filter(user => user.status === 'away').length)
+const blockedUsers = computed(() => users.value.filter(user => user.isBlocked === true).length)
 
 // 方法
 function handleSearch() {
@@ -263,72 +136,15 @@ function selectUser(user) {
   selectedUserId.value = user.id
 }
 
-function showAddUserDialog() {
-  editingUser.value = null
-  userForm.value = {
-    name: '',
-    email: '',
-    avatar: '',
-    role: 'user',
-    status: 'active'
-  }
-  showUserDialog.value = true
-}
-
-
-function closeUserDialog() {
-  showUserDialog.value = false
-  editingUser.value = null
-}
-
-function saveUser() {
-  if (editingUser.value) {
-    // 编辑现有用户
-    const index = users.value.findIndex(u => u.id === editingUser.value.id)
-    if (index !== -1) {
-      users.value[index] = {
-        ...users.value[index],
-        ...userForm.value
-      }
-    }
-  } else {
-    // 添加新用户
-    const newUser = {
-      id: Date.now(),
-      ...userForm.value,
-      online: false,
-      lastLogin: new Date(),
-      registerDate: new Date(),
-      loginCount: 0
-    }
-    users.value.push(newUser)
-  }
-  closeUserDialog()
-}
-
 function deleteUser(user) {
-  userToDelete.value = user
   showDeleteConfirm.value = true
-}
-
-function confirmDeleteUser(userId) {
-  const user = users.value.find(u => u.id === userId)
-  if (user) {
-    deleteUser(user)
-  }
+  userToDelete.value = user
 }
 
 function confirmDelete() {
-  if (userToDelete.value) {
-    const index = users.value.findIndex(u => u.id === userToDelete.value.id)
-    if (index !== -1) {
-      users.value.splice(index, 1)
-      if (selectedUserId.value === userToDelete.value.id) {
-        selectedUserId.value = null
-      }
-    }
-  }
-  cancelDelete()
+  fetchUserList()
+  showDeleteConfirm.value = false
+  userToDelete.value = null
 }
 
 function cancelDelete() {
@@ -336,37 +152,45 @@ function cancelDelete() {
   userToDelete.value = null
 }
 
-function updateUser(userId, updates) {
-  const index = users.value.findIndex(u => u.id === userId)
-  if (index !== -1) {
-    users.value[index] = { ...users.value[index], ...updates }
-  }
-}
-
 function getRoleText(role) {
   const roleMap = {
     admin: '管理员',
-    moderator: '版主',
     user: '用户'
   }
-  return roleMap[role] || '用户'
+  return roleMap[role]
 }
 
 function getStatusText(status) {
   const statusMap = {
-    active: '正常',
-    blocked: '封禁',
-    pending: '待审核'
+    online: '在线',
+    offline: '离线',
+    away: '离开'
   }
   return statusMap[status] || '未知'
 }
 
+// 从后端获取用户列表
+async function fetchUserList() {
+  try {
+    const response = await api.get('/admin/user/list')
+    if (response.code === 200) {
+      users.value = response.data
+      // 如果有用户数据，默认选中第一个用户
+      if (users.value.length > 0) {
+        selectedUserId.value = users.value[0].id
+      }
+    } else {
+      console.error('获取用户列表失败:', response.msg)
+    }
+  } catch (error) {
+    console.error('获取用户列表出错:', error)
+  }
+}
+
 // 生命周期
 onMounted(() => {
-  // 初始化时选中第一个用户
-  if (users.value.length > 0) {
-    selectedUserId.value = users.value[0].id
-  }
+  // 页面加载时获取用户列表
+  fetchUserList()
 })
 </script>
 
@@ -457,7 +281,7 @@ onMounted(() => {
   flex: 1;
   background: rgba(255, 255, 255, 0.8);
   border-radius: 12px;
-  padding: 12px;
+  padding: 1px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -575,7 +399,8 @@ onMounted(() => {
   gap: 8px;
 }
 
-.user-role, .user-status {
+.user-role,
+.user-status {
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 4px;
@@ -748,7 +573,8 @@ onMounted(() => {
   font-size: 14px;
 }
 
-.form-input, .form-select {
+.form-input,
+.form-select {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #ddd;
@@ -758,7 +584,8 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-.form-input:focus, .form-select:focus {
+.form-input:focus,
+.form-select:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
