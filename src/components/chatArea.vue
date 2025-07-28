@@ -52,8 +52,14 @@
             <!-- 输入区域 -->
             <div class="input-container">
                 <div class="input-tools">
-                    <button class="tool-btn" title="表情" @click="showEmo()">😊</button>
+                    <button class="tool-btn" title="表情" @click="toggleEmojiPicker()" :class="{ active: showEmojiPicker }">😊</button>
                     <button class="tool-btn" title="文件" @click="showFile()">📎</button>
+                    <!-- Emoji选择器 -->
+                    <EmojiPicker 
+                        :visible="showEmojiPicker" 
+                        @select="insertEmoji" 
+                        @close="closeEmojiPicker"
+                    />
                 </div>
                 <div class="input-area">
                     <div class="input-wrapper">
@@ -93,10 +99,11 @@
 </template>
 
 <script setup>
-import {ref, computed, nextTick, watch, onUnmounted} from 'vue'
+import {ref, computed, nextTick, watch, onMounted, onUnmounted} from 'vue'
 import { useChatStore } from '../store/chat'
 import { useUserStore } from '../store/user'
 import CustomDialog from './customDialog.vue'
+import EmojiPicker from './EmojiPicker.vue'
 import { api } from '../api/api.js'
 
 // 使用Chat Store
@@ -108,6 +115,7 @@ const messageInput = ref('')
 const messagesContainer = ref(null)
 const messageTextarea = ref(null)
 const showMoreMenu = ref(false)
+const showEmojiPicker = ref(false)
 const userProfile = computed(() => userStore.userProfile)
 
 // 确认弹窗相关数据
@@ -237,21 +245,45 @@ function focusInput() {
   }
 }
 
-// 暴露方法给父组件
-defineExpose({
-  focusInput
+// 点击外部关闭emoji选择器
+function handleEmojiClickOutside(event) {
+  if (showEmojiPicker.value && !event.target.closest('.input-tools')) {
+    closeEmojiPicker()
+  }
+}
+
+// 监听点击事件
+onMounted(() => {
+  document.addEventListener('click', handleEmojiClickOutside)
 })
 
-function showEmo(){
-  api.get('/emo').then(resp => {
-    if(resp.code === 200){
-      console.log(resp.data)
+// Emoji相关方法
+function toggleEmojiPicker() {
+  showEmojiPicker.value = !showEmojiPicker.value
+}
+
+function closeEmojiPicker() {
+  showEmojiPicker.value = false
+}
+
+function insertEmoji(emoji) {
+  const cursorPosition = messageTextarea.value?.selectionStart || messageInput.value.length
+  const textBefore = messageInput.value.substring(0, cursorPosition)
+  const textAfter = messageInput.value.substring(cursorPosition)
+  
+  messageInput.value = textBefore + emoji.char + textAfter
+  
+  // 关闭emoji选择器
+  closeEmojiPicker()
+  
+  // 重新聚焦输入框并设置光标位置
+  nextTick(() => {
+    if (messageTextarea.value) {
+      messageTextarea.value.focus()
+      const newPosition = cursorPosition + emoji.char.length
+      messageTextarea.value.setSelectionRange(newPosition, newPosition)
+      autoResize()
     }
-    else{
-      console.log('getemo: ' + resp.msg)
-    }
-  }).catch(err => {
-    console.log('服务器未响应')
   })
 }
 
@@ -350,6 +382,12 @@ watch(showMoreMenu, (newVal) => {
 // 组件卸载时清理事件监听
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside)
+    document.removeEventListener('click', handleEmojiClickOutside)
+})
+
+// 暴露方法给父组件
+defineExpose({
+  focusInput
 })
 </script>
 
@@ -583,6 +621,7 @@ onUnmounted(() => {
   display: flex;
   gap: 10px;
   margin-bottom: 10px;
+  position: relative;
 }
 
 .tool-btn {
@@ -594,10 +633,20 @@ onUnmounted(() => {
   cursor: pointer;
   font-size: 14px;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .tool-btn:hover {
   background: rgba(102, 126, 234, 0.2);
+  transform: translateY(-2px);
+}
+
+.tool-btn.active {
+  background: rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
 }
 
 .input-area {

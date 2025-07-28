@@ -1,4 +1,4 @@
-[
+const emojiData = [
     {
         "codes": "1F600",
         "char": "😀",
@@ -28096,3 +28096,5 @@
         "subgroup": "subdivision-flag"
     }
 ]
+
+export default emojiData
