@@ -175,7 +175,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { api } from '../api/api.js'
+import { api } from '../utils/axiosApi.js'
 
 // 定义props
 const props = defineProps({

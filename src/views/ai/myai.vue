@@ -135,7 +135,7 @@ import CustomDialog from '../../components/customDialog.vue'
 import ToolBar from '../../components/toolBar.vue'
 import SearchBox from '../../components/SearchBox.vue'
 import myaiArea from '../../components/myaiArea.vue'
-import { api } from '../../api/api.js'
+import { api } from '../../utils/axiosApi.js'
 
 // Store实例
 const userStore = useUserStore()

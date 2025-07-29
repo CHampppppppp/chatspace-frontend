@@ -71,7 +71,7 @@ const categories = ref([
   { name: 'Flags', icon: '🏁' }
 ])
 
-// 计算属性：过滤后的表情
+// 计算属性：过滤后的表情 
 const filteredEmojis = computed(() => {
   let emojis = emojiData
   

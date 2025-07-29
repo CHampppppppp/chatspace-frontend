@@ -12,10 +12,11 @@
           <div class="myCenter">
             <h1>注册</h1>
             <input v-model="username_regis" type="text" maxlength="30" placeholder="用户名">
-              <input ref="registerPasswordInput" v-model="password_regis" :type="showPasswordRegis ? 'text' : 'password'" maxlength="30" placeholder="密码">
-              <button type="button" class="password-toggle-btn-regis" @click="togglePasswordVisibility('register')">
-                <i :class="showPasswordRegis ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
-              </button>
+            <input ref="registerPasswordInput" v-model="password_regis" :type="showPasswordRegis ? 'text' : 'password'"
+              maxlength="30" placeholder="密码">
+            <button type="button" class="password-toggle-btn-regis" @click="togglePasswordVisibility('register')">
+              <i :class="showPasswordRegis ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+            </button>
             <input v-model="email_regis" type="email" placeholder="邮箱">
             <!-- <input v-model="code" type="text" placeholder="验证码" :disabled="!codeEnabled"> -->
             <a style="margin: 10px" href="#" @click="getVerificationCode()" :class="{ disabled: codeBtnDisabled }">{{
@@ -27,22 +28,19 @@
           <div class="myCenter">
             <h1>登录</h1>
             <input v-model="username" type="text" placeholder="用户名">
-              <input ref="loginPasswordInput" v-model="password" :type="showPassword ? 'text' : 'password'" placeholder="密码">
-              <button type="button" class="password-toggle-btn-login" @click="togglePasswordVisibility('login')">
-                <i :class="showPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
-              </button>
+            <input ref="loginPasswordInput" v-model="password" :type="showPassword ? 'text' : 'password'"
+              placeholder="密码">
+            <button type="button" class="password-toggle-btn-login" @click="togglePasswordVisibility('login')">
+              <i :class="showPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+            </button>
             <label class="remember-me">
               <input v-model="rememberMe" type="checkbox">
               <span class="checkmark"></span>
               记住账号
             </label>
-            <!-- <label class="admin">
-              <input v-model="isAdmin" type="checkbox">
-              <span class="checkmark"></span>
-              管理员登录
-            </label> -->
             <a href="#" @click="changeDialog('找回密码')">忘记密码？</a>
-            <customButton text="登录" loadingText="登录中..." :isLoading="isLoginLoading" @click="login()" />
+            <customButton text="登录" loadingText="登录中..." :isLoading="isLoginLoading" @click="login()"
+              @keydown.enter="login()" />
           </div>
         </div>
         <div class="overlay-container">
@@ -84,7 +82,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user.js'
 import customButton from '../components/customButton.vue'
 import CustomDialog from '../components/customDialog.vue'
-import { api } from '../api/api.js'
+import { loginApi, registerCodeApi, passwordCodeApi, registerApi } from '../utils/api.js'
 
 // 路由、store
 const router = useRouter()
@@ -99,7 +97,6 @@ const password = ref('')
 const code = ref('')
 const isAuthenticated = ref(false)
 const rememberMe = ref(false) // 记住我状态
-// const isAdmin = ref(false)
 const isLoginLoading = ref(false) // 登录加载状态
 const isRegistLoading = ref(false) // 注册加载状态
 const codeEnabled = ref(false) // 验证码输入框是否启用
@@ -175,7 +172,7 @@ function signIn() {
 }
 
 // 注册功能
-function regist() {
+async function regist() {
   // 基本验证
   if (!username_regis.value || !password_regis.value || !email_regis.value) {
     showAlert('请填写完整的注册信息')
@@ -195,40 +192,28 @@ function regist() {
   // 开始加载状态
   isRegistLoading.value = true
 
-  // 后端注册 - 使用form-data格式
-  api.post("/register", {
-    username: username_regis.value,
-    password: password_regis.value,
-    email: email_regis.value,
-    // code: code.value
-  }).then((resp) => {
-    // 结束加载状态
-    isRegistLoading.value = false
-    //注册成功
-    if (resp.code === 200) {
-      // 清空表单
-      username_regis.value = ''
-      password_regis.value = ''
-      email_regis.value = ''
-      code.value = ''
-      codeEnabled.value = false
-      // 显示注册成功弹窗
-      showAlert('注册成功', 'success')
-    }
-    //注册失败
-    else {
-      showAlert(resp.msg)
-    }
+  // 后端注册
+  const res = await registerApi(username_regis.value, password_regis.value, email_regis.value)
+  if (res === 0) {
+    // 清空表单
+    username_regis.value = ''
+    password_regis.value = ''
+    email_regis.value = ''
+    code.value = ''
+    codeEnabled.value = false
+    showAlert('注册成功', 'success')
+  } else if (res === 1) {
+    showAlert('注册失败')
+  } else if (res === 2) {
+    showAlert('服务器未响应')
+  }
 
-  }).catch(err => {
-    // 结束加载状态
-    isRegistLoading.value = false
-    showAlert('服务器未响应，失败')
-  })
+  // 结束加载状态
+  isRegistLoading.value = false
 }
 
 // 登录功能
-function login() {
+async function login() {
   // 基本验证
   if (!username.value || !password.value) {
     showAlert('请填写完整的登录信息')
@@ -238,64 +223,26 @@ function login() {
   // 开始加载状态
   isLoginLoading.value = true
 
-  // 调用登录API
-  api.post('/login', {
-    username: username.value,
-    password: password.value
-  }).then(resp => {
-    setTimeout(() => {
-      // 结束加载状态
-      isLoginLoading.value = false
-      isAuthenticated.value = true
-    }, 1000);
-    //如果有response
-    if (resp.code === 200) {
-      const userInfo = resp.data
-      userStore.setUserInfo(userInfo)
-      // 如果选择了记住我，可以在这里保存登录状态到localStorage
-      if (rememberMe.value) {
-        localStorage.setItem('rememberMe', 'true')
-        localStorage.setItem('savedAccount', username.value)
-      } else {
-        localStorage.removeItem('rememberMe')
-        localStorage.removeItem('savedAccount')
-      }
-      router.push('/home')
+  const res = await loginApi(username.value, password.value)
+  if (res === 0) {
+    // 如果选择了记住我，可以在这里保存登录状态到localStorage
+    if (rememberMe.value) {
+      localStorage.setItem('rememberMe', 'true')
+      localStorage.setItem('savedAccount', username.value)
+    } else {
+      localStorage.removeItem('rememberMe')
+      localStorage.removeItem('savedAccount')
     }
-    else {
-      showAlert(resp.msg)
-    }
-  }).catch(err => {
-    showAlert('服务器未响应，失败')
-  })
-
-  // //模拟登录
-  // setTimeout(() => {
-  //   // 结束加载状态
-  //   isLoginLoading.value = false
-  //   isAuthenticated.value = true
-  //   // 登录成功后，更新用户信息
-  //   userStore.setUserInfo({
-  //     id: 1,
-  //     username: account.value,
-  //     password: password.value,
-  //     email: '2681158691@qq.com',
-  //     avatar: defaultAvatar,
-  //     role: 'admin',
-  //     sex: 'male',
-  //     age: '20'
-  //   })
-
-  //   // 如果选择了记住我，可以在这里保存登录状态到localStorage
-  //   if (rememberMe.value) {
-  //     localStorage.setItem('rememberMe', 'true')
-  //     localStorage.setItem('savedAccount', account.value)
-  //   } else {
-  //     localStorage.removeItem('rememberMe')
-  //     localStorage.removeItem('savedAccount')
-  //   }
-  //   router.push('/home')
-  // }, 1500);
+    router.push('/home')
+  } else if (res === 1) {
+    showAlert('用户名或密码不正确')
+  } else if (res === 2) {
+    showAlert('服务器未响应')
+  }
+  
+  // 结束加载状态
+  isLoginLoading.value = false
+  isAuthenticated.value = false
 }
 
 // 获取验证码功能
@@ -323,20 +270,16 @@ function getVerificationCode() {
   // 开始倒计时
   startCountdown()
 
-  // 这里可以添加发送验证码的API调用（springboot mail?)
-  api.post('/code', {
-    email: email_regis.value,
-  }).then(resp => {
-    if (resp.code === 200) {
-      showAlert('验证码已发送到您的邮箱，请查收', 'success')
-      closeDialog()
-    }
-    else {
-      showAlert(resp.msg)
-    }
-  }).catch(err => {
-    showAlert('服务器未响应，失败')
-  })
+  //调用注册验证码api
+  const res = registerCodeApi(username_regis.value, password_regis.value, email_regis.value)
+  if (res === 0) {
+    showAlert('验证码已发送到您的邮箱，请查收', 'success')
+  } else if (res === 1) {
+    showAlert('验证码发送失败')
+  } else if (res === 2) {
+    showAlert('服务器未响应')
+  }
+  closeDialog()
 }
 
 // 倒计时功能
@@ -407,19 +350,15 @@ function sendResetEmail(email) {
   }
 
   // 这里可以添加发送重置密码邮件的API调用
-  api.post('/code', {
-    email: emailToUse,
-  }).then(resp => {
-    if (resp.code === 200) {
-      showAlert('重置密码链接已发送到您的邮箱，请查收', 'success')
-      closeDialog()
-    }
-    else {
-      showAlert(resp.msg)
-    }
-  }).catch(err => {
-    showAlert('服务器未响应，失败')
-  })
+  const res = passwordCodeApi(emailToUse)
+  if (res === 0) {
+    showAlert('重置密码链接已发送到您的邮箱，请查收', 'success')
+  } else if (res === 1) {
+    showAlert('发送失败')
+  } else if (res === 2) {
+    showAlert('服务器未响应')
+  }
+  closeDialog()
 }
 
 // 切换到登录面板
@@ -926,5 +865,4 @@ onMounted(() => {
   font-size: 14px;
 }
 
-/* 弹窗样式已移至 CustomDialog 组件 */
 </style>

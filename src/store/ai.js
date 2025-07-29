@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { callDeepSeekAPI } from '../api/deepseek.js'
+import { callDeepSeekAPI } from '../utils/deepseek.js'
 
 export const useAIStore = defineStore('ai', {
   state: () => ({
@@ -300,7 +300,7 @@ export const useAIStore = defineStore('ai', {
     // 获取我的AI列表
     async fetchMyAIList() {
       try {
-        const { api } = await import('../api/api.js')
+        const { api } = await import('../utils/axiosApi.js')
         const response = await api.get('/myai/list')
         
         if (response.code === 200) {
@@ -318,7 +318,7 @@ export const useAIStore = defineStore('ai', {
     // 获取我的AI详情
     async fetchMyAIDetail(aiId) {
       try {
-        const { api } = await import('../api/api.js')
+        const { api } = await import('../utils/axiosApi.js')
         const response = await api.get(`/myai/${aiId}`)
         
         if (response.code === 200) {

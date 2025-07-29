@@ -104,7 +104,7 @@ import { useChatStore } from '../store/chat'
 import { useUserStore } from '../store/user'
 import CustomDialog from './customDialog.vue'
 import EmojiPicker from './EmojiPicker.vue'
-import { api } from '../api/api.js'
+import { api } from '../utils/axiosApi.js'
 
 // 使用Chat Store
 const chatStore = useChatStore()

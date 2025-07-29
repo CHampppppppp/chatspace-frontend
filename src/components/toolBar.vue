@@ -29,7 +29,7 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../store/user'
-import { api } from '../api/api.js'
+import { api } from '../utils/axiosApi.js'
 
 // 路由相关
 const router = useRouter()

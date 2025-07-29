@@ -80,18 +80,21 @@
         <!-- 密码修改 -->
         <div class="password-section">
           <h3>修改密码</h3>
+          <button type="button" class="password-toggle-btn" @click="togglePasswordVisibility()">
+            <i :class="showPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+          </button>
           <div class="password-form">
             <div class="form-group">
               <label>当前密码</label>
-              <input v-model="passwordForm.currentPassword" type="password" placeholder="请输入当前密码" class="form-input" />
+              <input v-model="passwordForm.currentPassword" :type="showPassword ? 'text' : 'password'" placeholder="请输入当前密码" class="form-input" />
             </div>
             <div class="form-group">
               <label>新密码</label>
-              <input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" class="form-input" />
+              <input v-model="passwordForm.newPassword" :type="showPassword ? 'text' : 'password'" placeholder="请输入新密码" class="form-input" />
             </div>
             <div class="form-group">
               <label>确认新密码</label>
-              <input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" class="form-input" />
+              <input v-model="passwordForm.confirmPassword" :type="showPassword ? 'text' : 'password'" placeholder="请再次输入新密码" class="form-input" />
             </div>
             <button @click="changePassword" class="btn-primary">修改密码</button>
           </div>
@@ -134,7 +137,8 @@ import { ref, reactive, nextTick, computed, onMounted } from 'vue'
 import CustomDialog from '../components/customDialog.vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user.js'
-import { api } from '../api/api.js'
+import { deleteAccountApi, logoutApi, updateUserInfoApi, resetPasswordApi } from '../utils/api.js'
+
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -167,6 +171,7 @@ const editableUserInfo = reactive({
 })
 
 // 密码表单
+const showPassword = ref(false)
 const passwordForm = reactive({
   currentPassword: '',
   newPassword: '',
@@ -358,33 +363,29 @@ function updateUserInfo() {
 }
 
 // 提交用户信息表单
-function submitUserInfoForm(formData) {
+async function submitUserInfoForm(formData) {
 
   //保存到后端
-  api.post('/user/info', {
-    userId: userInfo.value.userId,
-    username: formData.username,
-    email: formData.email,
-    avatar: formData.avatar,
-    age: formData.age,
-    gender: formData.gender,
-    signature: formData.signature
-  }).then(resp => {
-    if (resp.code === 200) {
-      showAlert('个人信息已保存', 'success')
-      userStore.setUserInfo({ ...userInfo.value, ...formData })
-    }
-    else
-      showAlert(resp.msg, 'error')
-  }).catch(err => {
-    showAlert('服务器未响应，失败')
-  })
+  const res = await updateUserInfoApi(userInfo.value.userId, formData)
+  if (res === 0) {
+    showAlert('个人信息已保存', 'success')
+    userStore.setUserInfo({ ...userInfo.value, ...formData })
+  } else if (res === 1) {
+    showAlert('保持失败')
+  } else if (res === 2) {
+    showAlert('服务器未响应')
+  }
 
+  // 刷新页面
   router.push('/profile')
 }
 
+function togglePasswordVisibility(){
+  showPassword.value = !showPassword.value
+}
+
 // 修改密码
-function changePassword() {
+async function changePassword() {
   if (!passwordForm.currentPassword) {
     showAlert('请输入当前密码')
     return
@@ -410,70 +411,57 @@ function changePassword() {
     return
   }
 
-  api.post('/user/password', {
-    userId: userInfo.value.userId,
-    currentPassword: passwordForm.currentPassword,
-    newPassword: passwordForm.newPassword
-  }).then(resp => {
-    if (resp.code === 200) {
-      showAlert('密码修改成功', 'success')
-      // 清空表单
-      passwordForm.currentPassword = ''
-      passwordForm.newPassword = ''
-      passwordForm.confirmPassword = ''
-    }
-    else
-      showAlert(resp.msg, 'error')
-  }).catch(err => {
-    showAlert('服务器未响应，失败')
-  })
+  //调用修改密码接口
+  const res = await resetPasswordApi(userInfo.value.email, passwordForm.currentPassword, passwordForm.newPassword)
+  if (res === 0) {
+    showAlert('密码修改成功', 'success')
+    // 清空表单
+    passwordForm.currentPassword = ''
+    passwordForm.newPassword = ''
+    passwordForm.confirmPassword = ''
+  } else if (res === 1) {
+    showAlert('密码修改失败')
+  } else if (res === 2) {
+    showAlert('服务器未响应')
+  }
 }
 
 // 退出登录
 function logout() {
-  showConfirm('确定要退出登录吗？', () => {
-    api.post('/logout', {
-      userId: userInfo.value.userId
-    }).then(resp => {
-      if (resp.code === 200) {
-
-        // 使用userStore的logout方法清除用户数据
-        userStore.logout()
-        // 清除记住我相关的数据
-        localStorage.removeItem('rememberMe')
-        localStorage.removeItem('savedAccount')
-        router.push('/login')
-      }
-      else {
-        showAlert(resp.msg, 'error')
-      }
-    }).catch(err => {
-      showAlert('服务器未响应，失败')
-    })
+  showConfirm('确定要退出登录吗？', async () => {
+    const res = await logoutApi(userInfo.value.userId)
+    if (res === 0) {
+      // 使用userStore的logout方法清除用户数据
+      userStore.logout()
+      // 清除记住我相关的数据
+      router.push('/login')
+    } else if (res === 1) {
+      showAlert('退出登录失败')
+    } else {
+      showAlert('服务器未响应')
+    }
   })
-
 }
 
 // 注销账号
 function deleteAccount() {
-  showConfirm('警告：注销账号将永久删除您的所有数据，此操作不可恢复！确定要注销账号吗？', () => {
-    api.delete(`/${userInfo.value.userId}`)
-      .then(resp => {
-        if (resp.code === 200) {
-          showAlert('账号已成功注销', 'success')
-          // 清除所有用户数据
-          userStore.logout()
-          // 跳转到登录页
-          setTimeout(() => {
-            router.push('/login')
-          }, 1000)
-        }
-        else {
-          showAlert(resp.msg, 'error')
-        }
-      }).catch(err => {
-        showAlert('服务器未响应，注销失败', 'error')
-      })
+  showConfirm('警告：注销账号将永久删除您的所有数据，此操作不可恢复！确定要注销账号吗？', async () => {
+    const res = await deleteAccountApi(userInfo.value.userId)
+    if (res === 0) {
+      showAlert('账号已成功注销', 'success')
+      // 清除所有用户数据
+      userStore.logout()
+      localStorage.removeItem('rememberMe')
+      localStorage.removeItem('savedAccount')
+      // 跳转到登录页
+      setTimeout(() => {
+        router.push('/login')
+      }, 1000)
+    } else if (res === 1) {
+      showAlert('注销失败', 'error')
+    } else {
+      showAlert('服务器未响应')
+    }
   })
 }
 
@@ -831,6 +819,39 @@ function handleClose() {
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: rotate(90deg);
+}
+
+.password-toggle-btn {
+  position: absolute;
+  left: 140px;
+  top: 1125px;
+  transform: translateY(-10%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 32px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+}
+
+.password-toggle-btn:hover{
+  color: #081a68;
+  background: rgba(247, 247, 247, 0.11);
+  transform: translateY(-10%) scale(1.1);
+}
+
+.password-toggle-btn:active {
+  transform: translateY(-10%) scale(0.95);
+}
+
+.password-toggle-btn i {
+  font-size: 20px;
 }
 
 /* 响应式设计 */

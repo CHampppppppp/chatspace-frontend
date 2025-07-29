@@ -180,7 +180,7 @@ import ToolBar from '../components/toolBar.vue'
 import ChatArea from '../components/chatArea.vue'
 import SearchBox from '../components/SearchBox.vue'
 import CustomDialog from '../components/customDialog.vue'
-import { api } from '../api/api.js'
+import { api } from '../utils/axiosApi.js'
 
 const route = useRoute()
 const chatStore = useChatStore()

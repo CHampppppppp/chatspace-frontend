@@ -143,7 +143,7 @@ import ToolBar from '../../components/toolBar.vue'
 import FriendArea from '../../components/friendArea.vue'
 import SearchBox from '../../components/SearchBox.vue'
 import CustomDialog from '../../components/customDialog.vue'
-import { api } from '../../api/api.js'
+import { api } from '../../utils/axiosApi.js'
 
 const router = useRouter()
 const friendStore = useFriendStore()

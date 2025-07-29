@@ -18,13 +18,13 @@ axios.interceptors.response.use(success=>{
     if (success.data.status == 500) {
       // 请求成功，但业务处理出现错误
       console.error('业务处理错误:', success.data.msg || '服务器内部错误');
-      return Promise.reject(new Error(success.data.msg || '服务器内部错误'));
+      // return Promise.reject(new Error(success.data.msg || '服务器内部错误'));
     }
     
-    // 请求成功且服务器处理无错误
+    // 请求成功，无论业务状态码如何都返回数据，让上层业务逻辑处理
     if (success.data.code && success.data.code !== 200) {
-      console.error('业务状态码错误:', success.data.code, success.data.msg);
-      return Promise.reject(new Error(success.data.msg || '请求失败'));
+      console.warn('业务状态码提示:', success.data.code, success.data.msg);
+      // 不要reject，直接返回数据让上层处理
     }
     
     console.log('请求成功:', success.config.url, success.data);
@@ -32,13 +32,13 @@ axios.interceptors.response.use(success=>{
   }
   
   console.error('HTTP状态码异常:', success.status);
-  return Promise.reject(new Error('HTTP状态码异常'));
+  // return Promise.reject(new Error('HTTP状态码异常'));
 }, error => {
   // 网络错误或HTTP状态码错误
   if (!error.response) {
     // 网络错误，没有响应
     console.error('网络错误，无法连接到服务器:', error.message);
-    return Promise.reject(error);
+    // return Promise.reject(error);
   }
   
   const status = error.response.status;

@@ -97,7 +97,7 @@ import { ref, computed, onMounted } from 'vue'
 import ToolBar from '../../components/toolBar.vue'
 import SearchBox from '../../components/SearchBox.vue'
 import UserDetailArea from '../../components/UserDetailArea.vue'
-import { api } from '../../api/api.js'
+import { api } from '../../utils/axiosApi.js'
 
 // 响应式数据
 const searchQuery = ref('')

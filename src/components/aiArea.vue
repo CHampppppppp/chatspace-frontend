@@ -128,7 +128,7 @@ import { useUserStore } from '../store/user'
 import { callDeepSeekAPI, callDeepSeekAPIStream } from '../api/deepseek.js'
 import { useAIStore } from '../store/ai.js'
 import CustomDialog from './customDialog.vue'
-import { api } from '../api/api.js'
+import { api } from '../utils/axiosApi.js'
 
 // 使用Store
 const aiStore = useAIStore()
