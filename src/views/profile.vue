@@ -823,8 +823,8 @@ function handleClose() {
 
 .password-toggle-btn {
   position: absolute;
-  left: 140px;
-  top: 1125px;
+  left: 9%;
+  top: 66.2%;
   transform: translateY(-10%);
   background: none;
   border: none;
