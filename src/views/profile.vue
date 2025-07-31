@@ -821,23 +821,27 @@ function handleClose() {
   transform: rotate(90deg);
 }
 
+.password-section {
+  position: relative;
+}
+
 .password-toggle-btn {
   position: absolute;
-  left: 9%;
-  top: 66.2%;
-  transform: translateY(-10%);
+  right: 20px;
+  top: 5px;
   background: none;
   border: none;
   cursor: pointer;
   color: #999;
-  font-size: 32px;
+  font-size: 18px;
   border-radius: 50%;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 45px;
-  height: 45px;
+  width: 35px;
+  height: 35px;
+  z-index: 10;
 }
 
 .password-toggle-btn:hover{
@@ -875,6 +879,14 @@ function handleClose() {
   .signature-input {
     max-width: 100%;
   }
+  
+  .password-toggle-btn {
+    right: 15px;
+    top: 2px;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -893,6 +905,19 @@ function handleClose() {
 
   .crop-image {
     max-height: 200px;
+  }
+  
+  .password-toggle-btn {
+    right: 10px;
+    top: 0px;
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+  
+  .password-section h3 {
+    padding-right: 50px;
+    font-size: 1.1rem;
   }
 }
 

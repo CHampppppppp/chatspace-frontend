@@ -17,25 +17,25 @@
       <div class="ai-list-content">
         <!-- AI统计信息 -->
         <div class="stats-section">
-          <div class="stat-card">
+          <div class="stat-card" :class="{ 'active': statusFilter === 'all' }" @click="filterByStatus('all')">
             <div class="stat-icon">🤖</div>
             <div class="stat-info">
               <div class="stat-number">{{ totalAIs }}</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" :class="{ 'active': statusFilter === 'online' }" @click="filterByStatus('online')">
             <div class="stat-icon">🟢</div>
             <div class="stat-info">
               <div class="stat-number">{{ activeAIs }}</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" :class="{ 'active': statusFilter === 'offline' }" @click="filterByStatus('offline')">
             <div class="stat-icon">⏸️</div>
             <div class="stat-info">
               <div class="stat-number">{{ pausedAIs }}</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" :class="{ 'active': statusFilter === 'banned' }" @click="filterByStatus('banned')">
             <div class="stat-icon">🚫</div>
             <div class="stat-info">
               <div class="stat-number">{{ bannedAIs }}</div>
@@ -106,6 +106,7 @@ const searchQuery = ref('')
 const selectedAiId = ref(null)
 const showDeleteConfirm = ref(false)
 const aiToDelete = ref(null)
+const statusFilter = ref('all') // 添加状态筛选
 
 // AI数据
 const ais = ref([])
@@ -113,11 +114,26 @@ const loading = ref(false)
 
 // 计算属性
 const filteredAIs = computed(() => {
-  if (!searchQuery.value) return ais.value
-  return ais.value.filter(ai => 
-    ai.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    (ai.description && ai.description.toLowerCase().includes(searchQuery.value.toLowerCase()))
-  )
+  let filtered = ais.value
+  
+  // 根据状态筛选
+  if (statusFilter.value !== 'all') {
+    if (statusFilter.value === 'banned') {
+      filtered = filtered.filter(ai => ai.status === 'banned')
+    } else {
+      filtered = filtered.filter(ai => ai.status === statusFilter.value)
+    }
+  }
+  
+  // 根据搜索关键词筛选
+  if (searchQuery.value) {
+    filtered = filtered.filter(ai => 
+      ai.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      (ai.description && ai.description.toLowerCase().includes(searchQuery.value.toLowerCase()))
+    )
+  }
+  
+  return filtered
 })
 
 const selectedAi = computed(() => {
@@ -227,6 +243,13 @@ function getStatusText(status) {
   return statusMap[status]
 }
 
+// 点击统计卡片筛选AI
+function filterByStatus(status) {
+  statusFilter.value = status
+  // 清空当前选中的AI，因为筛选后可能不在列表中
+  selectedAiId.value = null
+}
+
 // 生命周期
 onMounted(() => {
   // 获取AI列表
@@ -297,6 +320,22 @@ onMounted(() => {
 .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  cursor:pointer;
+}
+
+.stat-card.active {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.stat-card.active .stat-number {
+  color: white;
+}
+
+.stat-card.active .stat-icon {
+  color: white;
 }
 
 .stat-icon {

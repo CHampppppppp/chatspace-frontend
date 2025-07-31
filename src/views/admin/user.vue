@@ -13,35 +13,35 @@
       <div class="users-list-content">
         <!-- 用户统计信息 -->
         <div class="stats-section">
-          <div class="stat-card">
+          <div class="stat-card" :class="{ 'active': statusFilter === 'all' }" @click="filterByStatus('all')">
             <div class="stat-icon">👥</div>
             <div class="stat-info">
               <div class="stat-label">用户</div>
               <div class="stat-number">{{ totalUsers }}</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" :class="{ 'active': statusFilter === 'online' }" @click="filterByStatus('online')">
             <div class="stat-icon">🟢</div>
             <div class="stat-info">
               <div class="stat-label">在线</div>
               <div class="stat-number">{{ onlineUsers }}</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" :class="{ 'active': statusFilter === 'away' }" @click="filterByStatus('away')">
             <div class="stat-icon">⏸️</div>
             <div class="stat-info">
               <div class="stat-label">离开</div>
               <div class="stat-number">{{ awayUsers }}</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" :class="{ 'active': statusFilter === 'offline' }" @click="filterByStatus('offline')">
             <div class="stat-icon">⏸️</div>
             <div class="stat-info">
               <div class="stat-label">离线</div>
               <div class="stat-number">{{ offlineUsers }}</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" :class="{ 'active': statusFilter === 'blocked' }" @click="filterByStatus('blocked')">
             <div class="stat-icon">🚫</div>
             <div class="stat-info">
               <div class="stat-label">封禁</div>
@@ -104,17 +104,33 @@ const searchQuery = ref('')
 const selectedUserId = ref(null)
 const showDeleteConfirm = ref(false)
 const userToDelete = ref(null)
+const statusFilter = ref('all') // 添加状态筛选
 
 // 用户数据（从后端API获取）
 const users = ref([])
 
 // 计算属性
 const filteredUsers = computed(() => {
-  if (!searchQuery.value) return users.value
-  return users.value.filter(user =>
-    user.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
+  let filtered = users.value
+  
+  // 根据状态筛选
+  if (statusFilter.value !== 'all') {
+    if (statusFilter.value === 'blocked') {
+      filtered = filtered.filter(user => user.isBlocked === true)
+    } else {
+      filtered = filtered.filter(user => user.status === statusFilter.value)
+    }
+  }
+  
+  // 根据搜索关键词筛选
+  if (searchQuery.value) {
+    filtered = filtered.filter(user =>
+      user.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
+    )
+  }
+  
+  return filtered
 })
 
 const selectedUser = computed(() => {
@@ -167,6 +183,13 @@ function getStatusText(status) {
     away: '离开'
   }
   return statusMap[status] || '未知'
+}
+
+// 点击统计卡片筛选用户
+function filterByStatus(status) {
+  statusFilter.value = status
+  // 清空当前选中的用户，因为筛选后可能不在列表中
+  selectedUserId.value = null
 }
 
 // 从后端获取用户列表
@@ -279,13 +302,35 @@ onMounted(() => {
 
 .stat-card {
   flex: 1;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255,1);
   border-radius: 12px;
-  padding: 1px;
+  padding: 2px;
   display: flex;
   align-items: center;
   gap: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition:all 0.3s ease;
+}
+
+.stat-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  cursor:pointer;
+}
+
+.stat-card.active {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.stat-card.active .stat-number {
+  color: white;
+}
+
+.stat-card.active .stat-label {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .stat-icon {

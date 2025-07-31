@@ -149,3 +149,17 @@ export async function deleteAccountApi(userId){
     return 2
   }
 }
+
+export async function revokeMessageApi(messageId){
+  try{
+    const resp = await api.delete('/revokeMsg',{messageId: messageId})
+    if (resp.code === 200) {
+      return 0
+    }
+    else {
+      return 1
+    }
+  }catch(err){
+    return 2
+  }
+}

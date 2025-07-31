@@ -98,7 +98,8 @@ export const useAIStore = defineStore('ai', {
             sender: ai.name,
             content: `你好！我是${ai.name}，${ai.description}。有什么可以帮助您的吗？`,
             time: new Date(),
-            isOwn: false
+            isOwn: false,
+            avatar:ai.avatar
           }
         ]
       }
@@ -120,7 +121,8 @@ export const useAIStore = defineStore('ai', {
         sender: ai.name,
         content: content,
         time: new Date(),
-        isOwn: false
+        isOwn: false,
+        avatar:ai.avatar
       }
       
       if (!this.aiMessages[aiId]) {

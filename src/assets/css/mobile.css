@@ -1,0 +1,487 @@
+/* 移动端适配样式 */
+
+/* 基础响应式断点 */
+:root {
+  --mobile-breakpoint: 768px;
+  --small-mobile-breakpoint: 480px;
+  --tablet-breakpoint: 1024px;
+}
+
+/* 全局移动端基础样式 */
+@media (max-width: 768px) {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* 防止横向滚动 */
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  /* 触摸优化 */
+  button, 
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  /* 输入框优化 */
+  input, 
+  textarea, 
+  select {
+    font-size: 16px; /* 防止iOS缩放 */
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  /* 容器间距优化 */
+  .container {
+    padding: 10px;
+    margin: 0;
+  }
+
+  /* 卡片样式优化 */
+  .card {
+    border-radius: 12px;
+    margin: 10px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* 小屏手机适配 */
+@media (max-width: 480px) {
+  body {
+    font-size: 13px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+  }
+
+  /* 按钮优化 */
+  button {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  /* 表单优化 */
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-input {
+    padding: 10px;
+  }
+}
+
+/* 横屏适配 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .toolbar {
+    width: 60px;
+  }
+
+  .chat-header {
+    padding: 10px 15px;
+  }
+
+  .messages-container {
+    padding: 10px;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 移除hover效果，使用active状态 */
+  .hover-effect:hover {
+    transform: none;
+  }
+
+  .hover-effect:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+
+  /* 增大可点击区域 */
+  .nav-item {
+    padding: 15px;
+  }
+
+  .action-btn {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* 高DPI屏幕优化 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .avatar img,
+  .user-avatar img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* 移动端特定组件样式 */
+@media (max-width: 768px) {
+  /* 工具栏移动端优化 */
+  .toolbar-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    height: auto;
+    padding: 0;
+    z-index: 1000;
+  }
+
+  .toolbar {
+    width: 100%;
+    height: 70px;
+    border-radius: 0;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 10px 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .toolbar-nav {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+    padding: 0;
+    gap: 0;
+  }
+
+  .nav-item {
+    flex: 1;
+    padding: 8px;
+  }
+
+  .nav-icon {
+    font-size: 20px;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    margin-top: 2px;
+  }
+
+  /* 主容器适配 */
+  .home-container {
+    padding-bottom: 80px; /* 为底部导航栏留空间 */
+  }
+
+  /* 聊天界面移动端优化 */
+  .chat-list-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .chat-list-container.show {
+    transform: translateX(0);
+  }
+
+  .chat-interface-container {
+    margin: 0;
+    border-radius: 0;
+    height: calc(100vh - 80px);
+  }
+
+  /* 消息输入区域优化 */
+  .input-section {
+    padding: 15px;
+    background: white;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .message-input {
+    font-size: 16px; /* 防止iOS缩放 */
+    padding: 12px 50px 12px 15px;
+  }
+
+  /* 对话框移动端优化 */
+  .dialog-container {
+    width: 95vw;
+    max-width: none;
+    margin: 10px;
+    max-height: 90vh;
+  }
+
+  .dialog-content {
+    padding: 20px 15px;
+  }
+
+  .dialog-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-cancel,
+  .btn-confirm {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+  }
+
+  /* 表单移动端优化 */
+  .form-container {
+    padding: 20px 15px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-input,
+  .form-textarea,
+  .form-select {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 2px solid #e1e5e9;
+  }
+
+  /* 个人资料页面移动端优化 */
+  .profile-container {
+    padding: 15px;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .avatar-wrapper {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+  }
+
+  .user-basic h2 {
+    font-size: 1.5rem;
+    margin: 10px 0;
+  }
+
+  /* AI页面移动端优化 */
+  .customization-container {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .my-ai-list-container {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    height: auto;
+    max-height: 40vh;
+  }
+
+  .ai-detail-container {
+    margin: 0;
+    border-radius: 0;
+    flex: 1;
+  }
+
+  /* 朋友页面移动端优化 */
+  .friends-container {
+    padding: 15px;
+  }
+
+  .friend-card {
+    margin-bottom: 15px;
+    padding: 15px;
+  }
+
+  /* 搜索框移动端优化 */
+  .search-input {
+    font-size: 16px;
+    padding: 12px 40px 12px 15px;
+  }
+
+  /* 表情选择器移动端优化 */
+  .emoji-picker {
+    width: 100vw;
+    height: 50vh;
+    border-radius: 20px 20px 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .emoji-grid {
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+  }
+
+  .emoji-item {
+    padding: 12px;
+    font-size: 20px;
+  }
+}
+
+/* 超小屏幕优化 */
+@media (max-width: 360px) {
+  .toolbar {
+    height: 60px;
+  }
+
+  .nav-icon {
+    font-size: 18px;
+  }
+
+  .nav-label {
+    font-size: 9px;
+  }
+
+  .home-container {
+    padding-bottom: 70px;
+  }
+
+  .dialog-container {
+    width: 98vw;
+    margin: 5px;
+  }
+
+  .form-input,
+  .form-textarea {
+    padding: 12px;
+  }
+}
+
+/* 平板适配 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .chat-list-container {
+    width: 300px;
+  }
+
+  .toolbar {
+    width: 90px;
+  }
+
+  .home-container {
+    padding-left: 100px;
+  }
+}
+
+/* 安全区域适配（刘海屏等） */
+@supports (padding: max(0px)) {
+  .toolbar-container {
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+/* 
+  .chat-interface-container {
+    height: calc(100vh - 80px - env(safe-area-inset-bottom));修复电脑端底部样式
+  } */
+
+  .profile-container {
+    padding-top: max(15px, env(safe-area-inset-top));
+    padding-bottom: max(15px, env(safe-area-inset-bottom));
+  }
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  @media (max-width: 768px) {
+    .toolbar {
+      background: rgba(30, 30, 30, 0.98);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .chat-interface-container {
+      background: rgba(20, 20, 20, 0.95);
+    }
+
+    .dialog-container {
+      background: #2a2a2a;
+      color: white;
+    }
+  }
+}
+
+/* 减少动画（用户偏好） */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  .form-input,
+  .form-textarea,
+  .form-select {
+    border: 3px solid #000;
+  }
+
+  .btn-primary {
+    border: 2px solid #000;
+  }
+}
+
+/* 移动端特定工具类 */
+@media (max-width: 768px) {
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  .mobile-full-width {
+    width: 100% !important;
+  }
+
+  .mobile-center {
+    text-align: center !important;
+  }
+
+  .mobile-padding {
+    padding: 15px !important;
+  }
+
+  .mobile-margin {
+    margin: 10px 0 !important;
+  }
+
+  .mobile-no-margin {
+    margin: 0 !important;
+  }
+
+  .mobile-stack {
+    flex-direction: column !important;
+  }
+
+  .mobile-scroll {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}

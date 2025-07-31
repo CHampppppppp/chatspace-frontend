@@ -1,114 +1,110 @@
 <template>
-
-    <!-- 右侧聊天界面 -->
-    <div class="chat-interface-container">
-        <div v-if="chatStore.selectedChatId" class="chat-interface">
-            <!-- 聊天头部 -->
-            <div class="chat-header">
-                <div class="chat-user-info">
-                    <div class="chat-user-avatar">
-                        <img :src="currentChat.avatar" :alt="currentChat.name" />
-                    </div>
-                    <div class="chat-user-details">
-                        <h3>{{ currentChat.name }}</h3>
-                        <span class="user-status">{{ currentChat.online ? '在线' : '离线' }}</span>
-                    </div>
-                </div>
-                <div class="chat-actions">
-                    <div class="more-menu-container">
-                        <button class="action-btn" title="更多" @click="showMore()">⋯</button>
-                        <transition name="menu-fade">
-                            <div v-if="showMoreMenu" class="more-menu" @click.stop>
-                                <div class="menu-item" @click="deleteChatHistory">
-                                    <span class="menu-icon">🗑️</span>
-                                    <span>删除聊天记录</span>
-                                </div>
-                                <div class="menu-item danger" @click="deleteFriend">
-                                    <span class="menu-icon">❌</span>
-                                    <span>删除好友</span>
-                                </div>
-                            </div>
-                        </transition>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 消息区域 -->
-            <div class="messages-container" ref="messagesContainer">
-                <div v-for="message in currentMessages" :key="message.id" class="message"
-                    :class="{ 'own-message': message.isOwn }">
-                    <div class="message-avatar">
-                        <img :src="message.avatar" :alt="message.sender" />
-                    </div>
-                    <div class="message-content">
-                        <div class="message-bubble">
-                            <p>{{ message.content }}</p>
-                        </div>
-                        <div class="message-time">{{ formatTime(message.time) }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 输入区域 -->
-            <div class="input-container">
-                <div class="input-tools">
-                    <button class="tool-btn" title="表情" @click="toggleEmojiPicker()" :class="{ active: showEmojiPicker }">😊</button>
-                    <button class="tool-btn" title="文件" @click="showFile()">📎</button>
-                    <!-- Emoji选择器 -->
-                    <EmojiPicker 
-                        :visible="showEmojiPicker" 
-                        @select="insertEmoji" 
-                        @close="closeEmojiPicker"
-                    />
-                </div>
-                <div class="input-area">
-                    <div class="input-wrapper">
-                        <textarea v-model="messageInput" placeholder="输入消息..." class="message-input"
-                            @keydown="handleKeydown" ref="messageTextarea"></textarea>
-                            <transition name="gentle">
-                              <div class="send-btn" v-show="messageInput.trim()" @click="sendMessage">
-                                发送
-                              </div>
-                            </transition>
-                    </div>
-                </div>
-            </div>
+  <!-- 右侧聊天界面 -->
+  <div class="chat-interface-container">
+    <div v-if="chatStore.selectedChatId" class="chat-interface">
+      <!-- 聊天头部 -->
+      <div class="chat-header">
+        <button class="mobile-menu-btn" @click="$emit('toggle-chat-list')" v-if="isMobile">
+          <span class="hamburger-icon">🔙</span>
+        </button>
+        <div class="chat-user-info">
+          <div class="chat-user-avatar">
+            <img :src="currentChat.avatar" :alt="currentChat.name" />
+          </div>
+          <div class="chat-user-details">
+            <h3>{{ currentChat.name }}</h3>
+            <span class="user-status">{{ currentChat.online ? '在线' : '离线' }}</span>
+          </div>
         </div>
-
-        <!-- 未选择聊天时的占位内容 -->
-        <div v-else class="empty-chat">
-            <div class="empty-icon">💬</div>
-            <h3>Welcome to chatSpace</h3>
-            <p>选择一个聊天开始对话</p>
+        <div class="chat-actions">
+          <div class="more-menu-container">
+            <button class="action-btn" title="更多" @click="showMore()">⋯</button>
+            <transition name="menu-fade">
+              <div v-if="showMoreMenu" class="more-menu" @click.stop>
+                <div class="menu-item" @click="deleteChatHistory">
+                  <span class="menu-icon">🗑️</span>
+                  <span>删除聊天记录</span>
+                </div>
+                <div class="menu-item danger" @click="deleteFriend">
+                  <span class="menu-icon">❌</span>
+                  <span>删除好友</span>
+                </div>
+              </div>
+            </transition>
+          </div>
         </div>
+      </div>
+
+      <!-- 消息区域 -->
+      <div class="messages-container" ref="messagesContainer">
+        <div v-for="message in currentMessages" :key="message.id" class="message"
+          :class="{ 'own-message': message.isOwn }">
+          <div class="message-avatar">
+            <img :src="message.avatar" :alt="message.sender" />
+          </div>
+          <div class="message-content">
+            <div class="message-bubble">
+              <p>{{ message.content }}</p>
+            </div>
+            <div class="message-time">{{ formatTime(message.time) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 输入区域 -->
+      <div class="input-container">
+        <div class="input-tools">
+          <button class="tool-btn" title="表情" @click="toggleEmojiPicker()"
+            :class="{ active: showEmojiPicker }">😊</button>
+          <button class="tool-btn" title="文件" @click="showFile()">📎</button>
+          <!-- Emoji选择器 -->
+          <EmojiPicker :visible="showEmojiPicker" @select="insertEmoji" @close="closeEmojiPicker" />
+        </div>
+        <div class="input-area">
+          <div class="input-wrapper">
+            <textarea v-model="messageInput" placeholder="输入消息..." class="message-input" @keydown="handleKeydown"
+              ref="messageTextarea"></textarea>
+            <transition name="gentle">
+              <div class="send-btn" v-show="messageInput.trim()" @click="sendMessage">
+                发送
+              </div>
+            </transition>
+          </div>
+        </div>
+      </div>
     </div>
-    
-    <!-- 确认弹窗组件 -->
-    <CustomDialog
-      v-model:visible="showConfirmDialog"
-      title="确认"
-      type="confirm"
-      :message="confirmMessage"
-      :show-cancel="true"
-      cancel-text="取消"
-      confirm-text="确定"
-      @confirm="handleConfirmDialogConfirm"
-      @cancel="closeConfirmDialog"
-      @close="closeConfirmDialog"
-    />
+
+    <!-- 未选择聊天时的占位内容 -->
+    <div v-else class="empty-chat">
+      <div class="empty-icon">💬</div>
+      <h3>Welcome to chatSpace</h3>
+      <p>选择一个聊天开始对话</p>
+    </div>
+  </div>
+
+  <!-- 确认弹窗组件 -->
+  <CustomDialog v-model:visible="showConfirmDialog" title="确认" type="confirm" :message="confirmMessage"
+    :show-cancel="true" cancel-text="取消" confirm-text="确定" @confirm="handleConfirmDialogConfirm"
+    @cancel="closeConfirmDialog" @close="closeConfirmDialog" />
 </template>
 
 <script setup>
-import {ref, computed, nextTick, watch, onMounted, onUnmounted} from 'vue'
+import { ref, computed, nextTick, watch, onMounted, onUnmounted } from 'vue'
 import { useChatStore } from '../store/chat'
 import { useUserStore } from '../store/user'
 import CustomDialog from './customDialog.vue'
 import EmojiPicker from './EmojiPicker.vue'
 import { api } from '../utils/axiosApi.js'
 
+// 定义emit事件
+const emit = defineEmits(['toggle-chat-list'])
+
 // 使用Chat Store
 const chatStore = useChatStore()
 const userStore = useUserStore()
+
+// 移动端检测
+const isMobile = ref(window.innerWidth <= 768)
 
 // 本地响应式数据
 const messageInput = ref('')
@@ -131,9 +127,9 @@ const currentMessages = computed(() => {
   return chatStore.currentMessages
 })
 
-function sendMessage() {  
+function sendMessage() {
   if (!messageInput.value.trim() || !chatStore.selectedChatId) return
-  
+
   const newMessage = {
     id: userProfile.value.userId,
     sender: '我',
@@ -143,32 +139,32 @@ function sendMessage() {
     avatar: userProfile.value.avatar,
     name: userProfile.value.username
   }
-  
+
   // 直接使用store方法添加消息
   chatStore.addMessage(chatStore.selectedChatId, newMessage)
 
   //使用api发送消息
-  api.post('/private-message',{
-    senderId:userProfile.value.userId,
-    sessionId:chatStore.selectedChatId,
-      content:messageInput.value.trim(),
-      contentType:'text'
+  api.post('/private-message', {
+    senderId: userProfile.value.userId,
+    sessionId: chatStore.selectedChatId,
+    content: messageInput.value.trim(),
+    contentType: 'text'
   }).then(resp => {
-    if(resp.code === 200){
-        console.log('发送消息： ' + messageInput.value.trim())
-      }
-      else{
-        showConfirmDialog.value = true
-        confirmMessage.value = resp.msg
-      }
+    if (resp.code === 200) {
+      console.log('发送消息： ' + messageInput.value.trim())
+    }
+    else {
+      showConfirmDialog.value = true
+      confirmMessage.value = resp.msg
+    }
   }).catch(err => {
     showConfirmDialog.value = true
     confirmMessage.value = '服务器未响应'
   })
-  
+
   // 直接使用store方法更新聊天列表
   chatStore.updateChatLastMessage(chatStore.selectedChatId, newMessage.content, newMessage.time)
-  
+
   messageInput.value = ''
   // 重置textarea高度
   nextTick(() => {
@@ -190,7 +186,7 @@ function scrollToBottom() {
 function formatTime(time) {
   const now = new Date()
   const diff = now - time
-  
+
   if (diff < 1000 * 60) {
     return '刚刚'
   } else if (diff < 1000 * 60 * 60) {
@@ -252,9 +248,15 @@ function handleEmojiClickOutside(event) {
   }
 }
 
+// 处理窗口大小变化
+function handleResize() {
+  isMobile.value = window.innerWidth <= 768
+}
+
 // 监听点击事件
 onMounted(() => {
   document.addEventListener('click', handleEmojiClickOutside)
+  window.addEventListener('resize', handleResize)
 })
 
 // Emoji相关方法
@@ -270,12 +272,12 @@ function insertEmoji(emoji) {
   const cursorPosition = messageTextarea.value?.selectionStart || messageInput.value.length
   const textBefore = messageInput.value.substring(0, cursorPosition)
   const textAfter = messageInput.value.substring(cursorPosition)
-  
+
   messageInput.value = textBefore + emoji.char + textAfter
-  
+
   // 关闭emoji选择器
   closeEmojiPicker()
-  
+
   // 重新聚焦输入框并设置光标位置
   nextTick(() => {
     if (messageTextarea.value) {
@@ -287,50 +289,50 @@ function insertEmoji(emoji) {
   })
 }
 
-function showFile(){
-    console.log("show File")
+function showFile() {
+  console.log("show File")
 }
 
 function showMore() {
-    showMoreMenu.value = !showMoreMenu.value
+  showMoreMenu.value = !showMoreMenu.value
 }
 
 function deleteChatHistory() {
-    showConfirm('确定要删除所有聊天记录吗？此操作不可恢复。', () => {
-        // 清空当前聊天的消息
-        // TODO: 实现清空聊天记录功能
-        api.delete(`/session/${chatStore.selectedChatId}`)
-        .then(resp => {
-          if(resp.code === 200){
-            showConfirmDialog.value = true
-            confirmMessage.value = '删除成功'
-          }
-          else{
-            showConfirmDialog.value = true
-            confirmMessage.value = resp.msg
-          }
-        }).catch(err => {
+  showConfirm('确定要删除所有聊天记录吗？此操作不可恢复。', () => {
+    // 清空当前聊天的消息
+    // TODO: 实现清空聊天记录功能
+    api.delete(`/session/${chatStore.selectedChatId}`)
+      .then(resp => {
+        if (resp.code === 200) {
           showConfirmDialog.value = true
-          confirmMessage.value = '服务器未响应'
-        })
-    })
-    showMoreMenu.value = false
+          confirmMessage.value = '删除成功'
+        }
+        else {
+          showConfirmDialog.value = true
+          confirmMessage.value = resp.msg
+        }
+      }).catch(err => {
+        showConfirmDialog.value = true
+        confirmMessage.value = '服务器未响应'
+      })
+  })
+  showMoreMenu.value = false
 }
 
 function deleteFriend() {
-    console.log('删除好友')
-    showConfirm('确定要删除该好友吗？删除后将无法恢复聊天记录。', () => {
-        // 删除好友逻辑
-        // TODO: 实现删除好友功能
-        api.delete(`/${friendId}`,{
-        userId:userProfile.value.userId
-        }).then(resp => {
-          if(resp.code === 200){
-            showConfirmDialog.value = true
-            confirmMessage.value = '删除成功'
-          }
-          else{
-            showConfirmDialog.value = true
+  console.log('删除好友')
+  showConfirm('确定要删除该好友吗？删除后将无法恢复聊天记录。', () => {
+    // 删除好友逻辑
+    // TODO: 实现删除好友功能
+    api.delete(`/${friendId}`, {
+      userId: userProfile.value.userId
+    }).then(resp => {
+      if (resp.code === 200) {
+        showConfirmDialog.value = true
+        confirmMessage.value = '删除成功'
+      }
+      else {
+        showConfirmDialog.value = true
             confirmMessage.value = resp.msg
           }
         }).catch(err => {
@@ -383,6 +385,7 @@ watch(showMoreMenu, (newVal) => {
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside)
     document.removeEventListener('click', handleEmojiClickOutside)
+    window.removeEventListener('resize', handleResize)
 })
 
 // 暴露方法给父组件
@@ -392,7 +395,7 @@ defineExpose({
 </script>
 
 <style scoped>
-    /* 右侧聊天界面 */
+/* 右侧聊天界面 */
 .chat-interface-container {
   flex: 1;
   background: rgba(255, 255, 255, 0.95);
@@ -419,6 +422,29 @@ defineExpose({
   align-items: center;
   padding: 20px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.mobile-menu-btn {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  margin-right: 15px;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+}
+
+.hamburger-icon {
+  position: relative;
+  margin-left: -5px;
+  font-size: 18px;
+  color: #667eea;
 }
 
 .chat-user-info {
@@ -532,6 +558,7 @@ defineExpose({
     opacity: 0;
     transform: translateY(-10px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -543,6 +570,7 @@ defineExpose({
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+
   to {
     opacity: 0;
     transform: translateY(-10px) scale(0.95);
@@ -679,9 +707,11 @@ defineExpose({
   overflow: auto;
   box-sizing: border-box;
 
-    /* 隐藏滚动条（适用于大多数现代浏览器） */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  /* 隐藏滚动条（适用于大多数现代浏览器） */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
 }
 
 .message-input:focus {
@@ -772,9 +802,32 @@ defineExpose({
 }
 
 @media (max-width: 768px) {
-.chat-interface-container {
+  .chat-interface-container {
     border-radius: 0;
     margin: 0;
+  }
+  
+  .mobile-menu-btn {
+    display: block;
+  }
+  
+  .chat-header {
+    padding: 15px;
+  }
+  
+  .chat-user-avatar img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .chat-user-details h3 {
+    font-size: 1rem;
+  }
+  
+  .action-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
   }
 }
 </style>

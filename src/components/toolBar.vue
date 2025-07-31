@@ -18,7 +18,7 @@
       <!-- 底部用户区域 -->
       <div class="toolbar-footer">
         <div class="user-avatar" @click="goToProfile()">
-          <img :src="userAvatar" alt="用户头像" class="avatar-image" />
+          <img :src="userStore.userInfo.avatar" alt="用户头像" class="avatar-image" />
         </div>
       </div>
     </div>
@@ -37,11 +37,6 @@ const route = useRoute()
 
 // 用户store
 const userStore = useUserStore()
-
-// 用户头像
-const userAvatar = computed(() => {
-  return userStore.userInfo.avatar
-})
 
 // 菜单项配置
 const baseMenuItems = [
@@ -261,29 +256,84 @@ defineExpose({
 /* 响应式设计 */
 @media (max-width: 768px) {
   .toolbar-container {
-    padding: 10px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    height: auto;
+    padding: 0;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
   }
 
   .toolbar {
-    width: 70px;
-    height: calc(100vh - 20px);
+    width: 100%;
+    height: 70px;
+    border-radius: 0;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 8px 0;
+    background: transparent;
+    box-shadow: none;
+    border: none;
+  }
+
+  .toolbar:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .toolbar-logo {
+    display: none;
+  }
+
+  .toolbar-nav {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+    padding: 0;
+    gap: 0;
+    margin-bottom: 0;
+  }
+
+  .nav-item {
+    flex: 1;
+    padding: 8px 4px;
+    margin: 0;
   }
 
   .nav-icon {
-    font-size: 18px;
+    font-size: 20px;
+    margin-bottom: 2px;
   }
 
   .nav-label {
-    font-size: 9px;
+    font-size: 10px;
+    margin-top: 2px;
   }
 
   .user-avatar {
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
+    margin-top: 0;
   }
 
   .avatar-icon {
-    font-size: 18px;
+    font-size: 16px;
+  }
+
+  .avatar-image {
+    width: 35px;
+    height: 35px;
+  }
+
+  /* 隐藏工具提示 */
+  .nav-item::before {
+    display: none;
   }
 }
 

@@ -26,10 +26,10 @@
                                     <span class="menu-icon">📤</span>
                                     <span>导出对话</span>
                                 </div>
-                                <div class="menu-item" @click="aiSettings">
+                                <!-- <div class="menu-item" @click="aiSettings">
                                     <span class="menu-icon">⚙️</span>
                                     <span>AI设置</span>
-                                </div>
+                                </div> -->
                             </div>
                         </transition>
                     </div>
@@ -125,10 +125,10 @@
 <script setup>
 import {ref, computed, nextTick, watch, onUnmounted} from 'vue'
 import { useUserStore } from '../store/user'
-import { callDeepSeekAPI, callDeepSeekAPIStream } from '../api/deepseek.js'
+import { callDeepSeekAPI } from '../utils/deepseek.js'
 import { useAIStore } from '../store/ai.js'
 import CustomDialog from './customDialog.vue'
-import { api } from '../utils/axiosApi.js'
+import { revokeMessageApi } from '../utils/api.js'
 
 // 使用Store
 const aiStore = useAIStore()
@@ -159,9 +159,9 @@ const aiAvatar = 'https://i.pinimg.com/736x/f1/7d/db/f17ddb244e3f2f6a720e61cd3f8
 const currentAi = computed(() => {
   return aiStore.currentAI || {
     id: aiStore.selectedAIId,
-    name: 'AI助手',
+    name: 'ai助手',
     avatar: aiAvatar,
-    status: 'AI助手'
+    status: 'online'
   }
 })
 
@@ -268,88 +268,6 @@ async function simulateAiResponse(userInput) {
     isAiTyping.value = false
     scrollToBottom()
   }
-}
-
-// 流式AI回复函数（可选，提供更好的用户体验）
-async function streamAiResponse(userInput) {
-  isAiTyping.value = true
-  
-  // 创建一个空的AI消息用于流式更新
-  const streamMessage = {
-    id: Date.now() + 1,
-    sender: currentAi.value.name,
-    content: '',
-    time: new Date(),
-    isOwn: false,
-    avatar: currentAi.value.avatar,
-    isStreaming: true
-  }
-  
-  aiStore.updateMessages({
-    aiId: aiStore.selectedAIId,
-    message: streamMessage
-  })
-  
-  try {
-    // 获取历史消息用于上下文
-    const historyMessages = currentMessages.value.filter(msg => !msg.isTyping && !msg.isStreaming)
-    
-    // 调用流式API
-    const fullResponse = await callDeepSeekAPIStream(
-      currentAi.value.name,
-      historyMessages,
-      userInput,
-      (chunk) => {
-        // 实时更新消息内容
-        streamMessage.content += chunk
-        aiStore.updateMessages({
-          aiId: aiStore.selectedAIId,
-          message: { ...streamMessage },
-          action: 'update-stream'
-        })
-        scrollToBottom()
-      }
-    )
-    
-    // 完成流式回复，更新最终消息
-    const finalMessage = {
-      ...streamMessage,
-      content: fullResponse,
-      isStreaming: false
-    }
-    
-    aiStore.updateMessages({
-      aiId: aiStore.selectedAIId,
-      message: finalMessage,
-      action: 'finalize-stream'
-    })
-    
-    // 更新AI列表
-    aiStore.updateAiList({
-      aiId: aiStore.selectedAIId,
-      lastMessage: fullResponse.substring(0, 50) + (fullResponse.length > 50 ? '...' : ''),
-      lastTime: finalMessage.time
-    })
-    
-  } catch (error) {
-    // 全局拦截器已处理错误
-  } finally {
-    isAiTyping.value = false
-    scrollToBottom()
-  }
-}
-
-// 备用的简单回复生成函数（当API不可用时使用）
-function generateFallbackResponse(userInput) {
-  const responses = [
-    `我理解您说的"${userInput}"。这是一个很有趣的话题，让我为您详细分析一下...`,
-    `关于"${userInput}"，我有以下几点看法：\n1. 这个问题很有深度\n2. 需要从多个角度考虑\n3. 建议您可以尝试...`,
-    `您提到的"${userInput}"确实值得深入探讨。根据我的分析，这涉及到多个方面的考量...`,
-    `感谢您的提问！关于"${userInput}"，我建议我们可以从以下几个维度来思考...`,
-    `这是一个很好的问题。"${userInput}"这个话题让我想到了很多相关的知识点...`
-  ]
-  
-  return responses[Math.floor(Math.random() * responses.length)]
 }
 
 function formatAiMessage(content) {
@@ -467,11 +385,11 @@ function exportChat() {
   showMoreMenu.value = false
 }
 
-function aiSettings() {
-  console.log('AI设置')
-  // TODO: 实现AI设置功能
-  showMoreMenu.value = false
-}
+// function aiSettings() {
+//   console.log('AI设置')
+//   // TODO: 实现AI设置功能
+//   showMoreMenu.value = false
+// }
 
 
 function uploadFile() {
@@ -558,30 +476,25 @@ function fallbackCopyText(text) {
 function revokeMessage() {
   if (selectedMessage.value && selectedMessage.value.isOwn) {
     const messageToRevoke = selectedMessage.value
-    showConfirm('确定要撤回这条消息吗？', () => {
+    showConfirm('确定要撤回这条消息吗？', async () => {
       if (messageToRevoke && messageToRevoke.id) {
         aiStore.updateMessages({
           aiId: aiStore.selectedAIId,
           messageId: messageToRevoke.id,
           action: 'delete-message'
         })
-        
-        api.delete('/revokeMsg',{
-          messageId: messageToRevoke.id
-        }).then(resp=>{
-          if(resp.code === 200){
-            ElMessage.success('撤回成功')
-          }
-          else{
-            ElMessage.error('撤回失败')
-          }
-        }).catch(err=>{
-          console.error('撤回失败:', err)
-        })
+        const res = await revokeMessageApi(messageToRevoke.id)
+        if(res === 0){
+          ElMessage.success('撤回成功')
+        }else if(res === 1){
+          ElMessage.error('撤回失败')
+        }else{
+          ElMessage.error('服务器未响应')
+        }
+        hideContextMenu()
       }
     })
   }
-  hideContextMenu()
 }
 
 // 删除消息

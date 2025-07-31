@@ -11,6 +11,7 @@ import './assets/css/animation.css'
 import './assets/css/index.css'
 import './assets/css/color.css'
 import './assets/css/font-awesome.min.css'
+import './assets/css/mobile.css'
 
 const app = createApp(App)
 const pinia = createPinia()

@@ -4,7 +4,7 @@
     <ToolBar ref="toolBarRef" />
 
     <!-- 聊天列表区域 -->
-    <div class="chat-list-container">
+    <div class="chat-list-container" :class="{ show: showMobileChatList }">
       <div class="chat-list-header">
         <h2>聊天</h2>
         <div class="header-actions">
@@ -18,7 +18,7 @@
       <div class="chat-list-content">
         <div class="chat-items">
           <div v-for="chat in chatStore.filteredChats" :key="chat.id" class="chat-item"
-            :class="{ active: chatStore.selectedChatId === chat.id }" @click="selectChat(chat.id)">
+            :class="{ active: chatStore.selectedChatId === chat.id }" @click="selectChatMobile(chat.id)">
             <div class="chat-avatar">
               <img :src="chat.avatar" :alt="chat.name" />
               <div v-if="chat.online" class="online-indicator"></div>
@@ -36,29 +36,15 @@
       </div>
     </div>
 
-    <!-- 聊天内容区 -->
-    <ChatArea ref="chatAreaRef" />
-    
     <!-- 创建群聊弹窗 -->
-    <CustomDialog 
-      v-model:visible="showGroupChatDialog"
-      title="创建群聊"
-      :show-actions="false"
-      :close-on-overlay="false"
-    >
+    <CustomDialog v-model:visible="showGroupChatDialog" title="创建群聊" :show-actions="false" :close-on-overlay="false">
       <div class="group-chat-form">
         <!-- 群聊名称输入 -->
         <div class="form-group">
           <label class="form-label">群聊名称</label>
-          <input 
-            v-model="groupChatForm.name"
-            type="text"
-            placeholder="请输入群聊名称"
-            class="form-input"
-            maxlength="20"
-          />
+          <input v-model="groupChatForm.name" type="text" placeholder="请输入群聊名称" class="form-input" maxlength="20" />
         </div>
-        
+
         <!-- 群聊头像选择 -->
         <div class="form-group">
           <label class="form-label">群聊头像</label>
@@ -70,52 +56,32 @@
                 <span class="upload-text">点击上传头像</span>
               </div>
             </div>
-            <input 
-              ref="avatarInput"
-              type="file"
-              accept="image/*"
-              @change="handleAvatarUpload"
-              class="avatar-input"
-              style="display: none;"
-            />
+            <input ref="avatarInput" type="file" accept="image/*" @change="handleAvatarUpload" class="avatar-input"
+              style="display: none;" />
             <div class="avatar-actions">
-              <button v-if="groupChatForm.avatar" @click="removeAvatar" class="remove-avatar-btn" type="button">移除头像</button>
+              <button v-if="groupChatForm.avatar" @click="removeAvatar" class="remove-avatar-btn"
+                type="button">移除头像</button>
               <span class="avatar-tip">支持 JPG、PNG 格式，建议尺寸 200x200</span>
             </div>
           </div>
         </div>
-        
+
         <!-- 群聊描述输入 -->
         <div class="form-group">
           <label class="form-label">群聊描述</label>
-          <textarea 
-            v-model="groupChatForm.description"
-            placeholder="请输入群聊描述（可选）"
-            class="form-textarea"
-            maxlength="100"
-            rows="3"
-          ></textarea>
+          <textarea v-model="groupChatForm.description" placeholder="请输入群聊描述（可选）" class="form-textarea" maxlength="100"
+            rows="3"></textarea>
         </div>
-        
+
         <!-- 选择群成员 -->
         <div class="form-group">
           <label class="form-label">选择群成员</label>
           <div class="friend-search">
-            <input 
-              v-model="friendSearchQuery"
-              type="text"
-              placeholder="搜索好友..."
-              class="search-input"
-            />
+            <input v-model="friendSearchQuery" type="text" placeholder="搜索好友..." class="search-input" />
           </div>
           <div class="friend-list">
-            <div 
-              v-for="friend in filteredFriends" 
-              :key="friend.id" 
-              class="friend-item"
-              :class="{ selected: selectedFriends.includes(friend.id) }"
-              @click="toggleFriendSelection(friend.id)"
-            >
+            <div v-for="friend in filteredFriends" :key="friend.id" class="friend-item"
+              :class="{ selected: selectedFriends.includes(friend.id) }" @click="toggleFriendSelection(friend.id)">
               <div class="friend-avatar">
                 <img :src="friend.avatar" :alt="friend.name" />
               </div>
@@ -129,49 +95,40 @@
             </div>
           </div>
         </div>
-        
+
         <!-- 已选择的成员显示 -->
         <div v-if="selectedFriends.length > 0" class="selected-members">
           <label class="form-label">已选择成员 ({{ selectedFriends.length }})</label>
           <div class="selected-list">
-            <div 
-              v-for="friendId in selectedFriends" 
-              :key="friendId" 
-              class="selected-member"
-            >
+            <div v-for="friendId in selectedFriends" :key="friendId" class="selected-member">
               <span>{{ getFriendName(friendId) }}</span>
               <button @click="removeFriend(friendId)" class="remove-btn">×</button>
             </div>
           </div>
         </div>
-        
+
         <!-- 操作按钮 -->
         <div class="form-actions">
           <button @click="closeGroupChatDialog" class="btn-cancel">取消</button>
-          <button 
-            @click="createGroupChat" 
-            class="btn-confirm"
-            :disabled="!canCreateGroup"
-          >
+          <button @click="createGroupChat" class="btn-confirm" :disabled="!canCreateGroup">
             创建群聊
           </button>
         </div>
       </div>
     </CustomDialog>
-    
+
     <!-- 提示弹窗 -->
-    <CustomDialog 
-      v-model:visible="showAlertDialog"
-      :title="alertTitle"
-      :type="alertType"
-      :message="alertMessage"
-      :show-cancel="false"
-    />
+    <CustomDialog v-model:visible="showAlertDialog" :title="alertTitle" :type="alertType" :message="alertMessage"
+      :show-cancel="false" />
+
+    <!-- 聊天内容区 -->
+    <ChatArea ref="chatAreaRef" @toggle-chat-list="toggleMobileChatList" />
   </div>
+
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useChatStore } from '../store/chat'
 import { useUserStore } from '../store/user'
@@ -191,6 +148,10 @@ const friendStore = useFriendStore()
 const messagesContainer = ref(null)
 const toolBarRef = ref(null)
 const chatAreaRef = ref(null)
+
+// 移动端相关
+const showMobileChatList = ref(false)
+const isMobile = ref(window.innerWidth <= 768)
 
 // 群聊相关数据
 const showGroupChatDialog = ref(false)
@@ -214,7 +175,7 @@ const filteredFriends = computed(() => {
   if (!friendSearchQuery.value) {
     return friendStore.friendList
   }
-  return friendStore.friendList.filter(friend => 
+  return friendStore.friendList.filter(friend =>
     friend.name.toLowerCase().includes(friendSearchQuery.value.toLowerCase())
   )
 })
@@ -335,19 +296,19 @@ function triggerAvatarUpload() {
 function handleAvatarUpload(event) {
   const file = event.target.files[0]
   if (!file) return
-  
+
   // 验证文件类型
   if (!file.type.startsWith('image/')) {
     showAlert('请选择图片文件', 'warning')
     return
   }
-  
+
   // 验证文件大小（限制为2MB）
   if (file.size > 2 * 1024 * 1024) {
     showAlert('图片大小不能超过2MB', 'warning')
     return
   }
-  
+
   // 创建FileReader读取文件
   const reader = new FileReader()
   reader.onload = (e) => {
@@ -368,43 +329,43 @@ function createGroupChat() {
     showAlert('请填写群聊名称并选择至少一个好友', 'warning')
     return
   }
-  
+
   const groupData = {
     groupName: groupChatForm.value.name.trim(),
     description: groupChatForm.value.description.trim(),
     avatar: groupChatForm.value.avatar || '/images/group-default.png',
     members: selectedFriends.value,
-    ownerId : userStore.userProfile.userId
+    ownerId: userStore.userProfile.userId
   }
-  
+
   api.post('/group', groupData)
-  .then(resp => {
-    if (resp.code === 200) {
-      // 创建成功，添加到聊天列表
-      const newGroupChat = {
-        id: resp.data.groupId,
-        name: resp.data.groupName,
-        avatar: resp.data.avatar || '/images/group-default.png',
-        lastMessage: '群聊已创建',
-        lastTime: new Date(),
-        unreadCount: 0,
-        online: true,
-        isGroup: true,
-        memberCount: resp.data.memberCount
+    .then(resp => {
+      if (resp.code === 200) {
+        // 创建成功，添加到聊天列表
+        const newGroupChat = {
+          id: resp.data.groupId,
+          name: resp.data.groupName,
+          avatar: resp.data.avatar || '/images/group-default.png',
+          lastMessage: '群聊已创建',
+          lastTime: new Date(),
+          unreadCount: 0,
+          online: true,
+          isGroup: true,
+          memberCount: resp.data.memberCount
+        }
+        console.log(resp.data)
+
+        chatStore.addChat(newGroupChat)
+        chatStore.selectChat(newGroupChat.id)
+
+        showAlert('群聊创建成功！', 'success')
+        closeGroupChatDialog()
+      } else {
+        showAlert(resp.msg)
       }
-      console.log(resp.data)
-      
-      chatStore.addChat(newGroupChat)
-      chatStore.selectChat(newGroupChat.id)
-      
-      showAlert('群聊创建成功！', 'success')
-      closeGroupChatDialog()
-    } else {
-      showAlert(resp.msg)
-    }
-  }).catch(err => {
-    showAlert('服务器未响应', 'error')
-  })
+    }).catch(err => {
+      showAlert('服务器未响应', 'error')
+    })
 }
 
 function showAlert(message, type = 'message', title = '提示') {
@@ -422,6 +383,32 @@ watch(() => route.query.chatWith, (newChatWith) => {
   }
 }, { immediate: true })
 
+// 移动端相关方法
+function toggleMobileChatList() {
+  showMobileChatList.value = !showMobileChatList.value
+}
+
+function closeMobileChatList() {
+  showMobileChatList.value = false
+}
+
+function handleResize() {
+  isMobile.value = window.innerWidth <= 768
+  if (!isMobile.value) {
+    showMobileChatList.value = false
+  }
+}
+
+// 重写selectChat方法以支持移动端
+function selectChatMobile(chatId) {
+  chatStore.selectChat(chatId)
+  scrollToBottom()
+  // 移动端选择聊天后关闭侧边栏
+  if (isMobile.value) {
+    closeMobileChatList()
+  }
+}
+
 // 生命周期
 onMounted(() => {
   // 初始化用户状态
@@ -436,6 +423,24 @@ onMounted(() => {
     const friendId = parseInt(route.query.chatWith)
     handleChatWithFriend(friendId)
   }
+
+  // 添加窗口大小变化监听
+  window.addEventListener('resize', handleResize)
+
+  // 添加移动端汉堡菜单点击事件
+  const chatHeader = document.querySelector('.chat-header')
+  if (chatHeader) {
+    chatHeader.addEventListener('click', (e) => {
+      if (isMobile.value && e.target.closest('.chat-header::before')) {
+        toggleMobileChatList()
+      }
+    })
+  }
+})
+
+// 组件卸载时清理事件监听
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
@@ -484,12 +489,22 @@ onMounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 10px 0;
+
+  /* 隐藏滚动条（适用于大多数现代浏览器） */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+}
+
+.chat-list-content::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, and Opera */
 }
 
 /* 聊天项样式 */
 .chat-item,
 .friend-item,
-.ai-item,
 .my-ai-item {
   display: flex;
   align-items: center;
@@ -1318,32 +1333,135 @@ onMounted(() => {
 @media (max-width: 768px) {
   .home-container {
     flex-direction: column;
+    padding-bottom: 80px;
+    /* 为底部导航栏留空间 */
+    height: 100vh;
+    overflow: hidden;
   }
 
   .chat-list-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 80px;
     width: 100%;
-    margin-left: 0;
-    border-radius: 0;
     margin: 0;
+    border-radius: 0;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+  }
+
+  .chat-list-container.show {
+    transform: translateX(0);
   }
 
   .chat-interface-container {
     border-radius: 0;
     margin: 0;
+    height: calc(100vh - 80px);
+    width: 100%;
   }
-  
+
+  .chat-header {
+    padding: 15px 20px;
+    position: relative;
+  }
+
+  .chat-header::before {
+    content: '☰';
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    cursor: pointer;
+    color: #667eea;
+    z-index: 1;
+  }
+
+  .chat-user-info {
+    margin-left: 35px;
+  }
+
+  .messages-container {
+    padding: 15px;
+    height: calc(100vh - 200px);
+  }
+
+  .input-section {
+    padding: 15px;
+    background: white;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .message-input {
+    font-size: 16px;
+    /* 防止iOS缩放 */
+    padding: 12px 50px 12px 15px;
+    border-radius: 25px;
+  }
+
   .group-chat-form {
     padding: 16px;
     max-height: 80vh;
   }
-  
+
   .form-actions {
     flex-direction: column;
+    gap: 10px;
   }
-  
+
   .btn-cancel,
   .btn-confirm {
     width: 100%;
+    padding: 15px;
+    font-size: 16px;
+  }
+
+  /* 消息气泡优化 */
+  .message {
+    margin-bottom: 12px;
+  }
+
+  .message-content {
+    max-width: 85%;
+    padding: 12px 16px;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .message-time {
+    font-size: 11px;
+    margin-top: 4px;
+  }
+
+  /* 聊天列表项优化 */
+  .chat-item {
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+
+  .chat-avatar img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .chat-info h4 {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+
+  .chat-preview {
+    font-size: 14px;
+  }
+
+  .chat-time {
+    font-size: 12px;
   }
 }
 </style>
