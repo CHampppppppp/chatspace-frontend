@@ -617,6 +617,10 @@ defineExpose({
   padding: 12px 16px;
   border-radius: 18px;
   margin-bottom: 5px;
+  word-wrap: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+  white-space: pre-wrap;
 }
 
 .message.own-message .message-bubble {
@@ -627,6 +631,24 @@ defineExpose({
 .message-bubble p {
   margin: 0;
   line-height: 1.4;
+}
+
+/* 消息气泡滚动条样式 */
+.message-bubble::-webkit-scrollbar {
+  width: 4px;
+}
+
+.message-bubble::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-bubble::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.message-bubble::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .message-time {

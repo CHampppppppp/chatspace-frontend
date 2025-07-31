@@ -38,6 +38,25 @@
 
             <!-- AI消息区域 -->
             <div class="ai-messages-container" ref="messagesContainer">
+                <!-- 欢迎信息 - 仅在没有消息时显示 -->
+                <div v-if="currentMessages.length === 0" class="welcome-message">
+                    <div class="welcome-content">
+                        <div class="welcome-avatar">
+                            <img :src="currentAi.avatar" :alt="currentAi.name" />
+                        </div>
+                        <div class="welcome-text">
+                            <h3>Hi, {{ userProfile.username }}</h3>
+                            <p>我是 {{ currentAi.name }}，{{ currentAi.description }}</p>
+                            <div class="welcome-tips">
+                                <span class="tip-item">💡 开始对话</span>
+                                <span class="tip-item">🎯 专业解答</span>
+                                <span class="tip-item">⚡ 快速响应</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 消息列表 -->
                 <div v-for="message in currentMessages" :key="message.id" class="ai-message"
                     :class="{ 'own-message': message.isOwn, 'ai-message-item': !message.isOwn }"
                     @contextmenu="handleContextMenu($event, message)">
@@ -46,6 +65,14 @@
                     </div>
                     <div class="message-content">
                         <div class="message-bubble" :class="{ 'ai-bubble': !message.isOwn }">
+                            <!-- 回复引用显示 -->
+                            <div v-if="message.replyTo" class="reply-reference">
+                                <div class="reply-line"></div>
+                                <div class="reply-content">
+                                    <div class="reply-sender">{{ message.replyTo.sender }}</div>
+                                    <div class="reply-text">{{ message.replyTo.content }}</div>
+                                </div>
+                            </div>
                             <!-- 显示AI思考中的输入框 -->
                             <div v-if="message.isTyping" class="typing-indicator">
                                 <span></span><span></span><span></span>
@@ -172,19 +199,40 @@ const currentMessages = computed(() => {
 function sendMessage() {
   if (!messageInput.value.trim() || !aiStore.selectedAIId || isAiTyping.value) return
   
+  let actualContent = messageInput.value.trim()
+  let replyInfo = null
+  
+  // 检查是否是回复消息
+  if (replyToMessageId.value) {
+    const replyToMsg = currentMessages.value.find(msg => msg.id === replyToMessageId.value)
+    if (replyToMsg) {
+      replyInfo = {
+        id: replyToMsg.id,
+        sender: replyToMsg.sender,
+        content: replyToMsg.content.replace(/<[^>]*>/g, '').substring(0, 10)
+      }
+      
+      // 移除输入框中的回复前缀
+      const replyPrefixRegex = /^回复: \[[^\]]*\]\n\n/
+      actualContent = actualContent.replace(replyPrefixRegex, '')
+    }
+    replyToMessageId.value = null
+  }
+  
   const userMessage = {
     id: Date.now(),
     sender: '我',
-    content: messageInput.value.trim(),
+    content: actualContent,
     time: new Date(),
     isOwn: true,
-    avatar: userProfile.value.avatar
+    avatar: userProfile.value.avatar,
+    replyTo: replyInfo
   }
   
   // 直接添加用户消息到store
   aiStore.addUserMessage(aiStore.selectedAIId, userMessage)
   
-  const userInput = messageInput.value.trim()
+  const userInput = actualContent
   messageInput.value = ''
   
   // 重置textarea高度
@@ -520,8 +568,8 @@ function replyToMessage() {
     replyToMessageId.value = selectedMessage.value.id
     
     // 在输入框中添加回复提示
-    const replyText = selectedMessage.value.content.replace(/<[^>]*>/g, '').substring(0, 50)
-    const replyPrefix = `回复 ${selectedMessage.value.sender}: "${replyText}${replyText.length > 50 ? '...' : ''}"\n\n`
+    const replyText = selectedMessage.value.content.replace(/<[^>]*>/g, '').substring(0, 10)
+    const replyPrefix = `回复: [${replyText}...]\n\n`
     
     messageInput.value = replyPrefix + messageInput.value
     
@@ -782,6 +830,9 @@ onUnmounted(() => {
   border-radius: 18px;
   margin-bottom: 5px;
   word-wrap: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+  white-space: pre-wrap;
 }
 
 .ai-message.own-message .message-bubble {
@@ -798,6 +849,24 @@ onUnmounted(() => {
 .message-bubble p {
   margin: 0;
   line-height: 1.4;
+}
+
+/* 消息气泡滚动条样式 */
+.message-bubble::-webkit-scrollbar {
+  width: 4px;
+}
+
+.message-bubble::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-bubble::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.message-bubble::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .message-time {
@@ -1023,10 +1092,196 @@ onUnmounted(() => {
   font-size: 14px;
 }
 
+/* 欢迎信息样式 */
+.welcome-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  min-height: 400px;
+  padding: 40px 20px;
+}
+
+.welcome-content {
+  text-align: center;
+  max-width: 500px;
+  animation: welcomeFadeIn 0.8s ease-out;
+}
+
+.welcome-avatar {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 30px;
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(102, 126, 234, 0.05));
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(102, 126, 234, 0.1);
+}
+
+.welcome-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.welcome-avatar:hover img {
+  transform: scale(1.05);
+}
+
+.welcome-text h3 {
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin: 0 0 15px 0;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.welcome-text p {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 0 0 30px 0;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.welcome-tips {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.tip-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: rgba(102, 126, 234, 0.08);
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: #667eea;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  backdrop-filter: blur(5px);
+}
+
+.tip-item:hover {
+  background: rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+@keyframes welcomeFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 回复引用样式 - 微信风格 */
+.reply-reference {
+  display: flex;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  position: relative;
+}
+
+.reply-line {
+  width: 3px;
+  background: rgba(102, 126, 234, 0.6);
+  border-radius: 2px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.reply-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.reply-sender {
+  font-size: 0.75rem;
+  color: rgba(102, 126, 234, 0.8);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.reply-text {
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.6);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* AI消息的回复引用样式调整 */
+.ai-bubble .reply-reference {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.ai-bubble .reply-text {
+  color: rgba(0, 0, 0, 0.5);
+}
+
 @media (max-width: 768px) {
   .ai-interface-container {
     border-radius: 0;
     margin: 0;
+  }
+  
+  .welcome-content {
+    padding: 20px;
+  }
+  
+  .welcome-avatar {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 20px;
+  }
+  
+  .welcome-text h3 {
+    font-size: 1.8rem;
+  }
+  
+  .welcome-text p {
+    font-size: 1rem;
+  }
+  
+  .welcome-tips {
+    gap: 10px;
+  }
+  
+  .tip-item {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .reply-reference {
+    padding: 6px 10px;
+  }
+
+  .reply-sender {
+    font-size: 0.7rem;
+  }
+
+  .reply-text {
+    font-size: 0.75rem;
   }
 }
 </style>

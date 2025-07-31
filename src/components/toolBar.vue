@@ -217,7 +217,6 @@ defineExpose({
 
 /* 底部用户区域 */
 .toolbar-footer {
-  margin-top: 20px;
   padding: 10px;
 }
 

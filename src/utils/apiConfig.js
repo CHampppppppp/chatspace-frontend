@@ -11,9 +11,9 @@ export function getAPIConfig() {
   return {
     apiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || '',
     baseURL: import.meta.env.VITE_DEEPSEEK_API_BASE || 'https://api.deepseek.com/v1',
-    timeout: 30000, // 30秒超时
+    timeout: 1800000, // 设置三分钟超时,防止生成一半中断
     maxRetries: 3,
-    retryDelay: 1000 // 1秒重试延迟
+    retryDelay: 3000 // 3秒重试延迟
   }
 }
 
@@ -111,7 +111,7 @@ export function handleAPIError(error) {
  * @param {number} delay - 重试延迟（毫秒）
  * @returns {Promise} API调用结果
  */
-export async function retryAPICall(apiCall, maxRetries = 3, delay = 1000) {
+export async function retryAPICall(apiCall, maxRetries = 3, delay = 3000) {
   let lastError
   
   for (let attempt = 0; attempt <= maxRetries; attempt++) {

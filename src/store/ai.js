@@ -89,19 +89,9 @@ export const useAIStore = defineStore('ai', {
     selectAI(aiId) {
       this.selectedAIId = aiId
       
-      // 如果是第一次选择这个AI，添加欢迎消息
+      // 如果是第一次选择这个AI，初始化空的消息数组
       if (!this.aiMessages[aiId]) {
-        const ai = this.aiAssistants.find(a => a.id === aiId)
-        this.aiMessages[aiId] = [
-          {
-            id: Date.now(),
-            sender: ai.name,
-            content: `你好！我是${ai.name}，${ai.description}。有什么可以帮助您的吗？`,
-            time: new Date(),
-            isOwn: false,
-            avatar:ai.avatar
-          }
-        ]
+        this.aiMessages[aiId] = []
       }
     },
     
@@ -145,17 +135,6 @@ export const useAIStore = defineStore('ai', {
     clearAIConversation(aiId) {
       if (this.aiMessages[aiId]) {
         this.aiMessages[aiId] = []
-        // 重新添加欢迎消息
-        const ai = this.aiAssistants.find(a => a.id === aiId)
-        this.aiMessages[aiId] = [
-          {
-            id: Date.now(),
-            sender: ai.name,
-            content: `你好！我是${ai.name}，${ai.description}。有什么可以帮助您的吗？`,
-            time: new Date(),
-            isOwn: false
-          }
-        ]
       }
     },
     
@@ -174,48 +153,12 @@ export const useAIStore = defineStore('ai', {
         
         let response
         
-        // 如果是Prompt生成助手，使用特殊的prompt
-        if (aiId === 3) {
-          const promptGeneratorSystemMessage = `你是一个专业的AI角色扮演prompt生成助手。你的任务是根据用户描述的人物特征，生成高质量、详细的角色扮演prompt。
-
-请按照以下格式生成prompt：
-
-**角色设定：**
-[详细描述角色的身份、背景、性格特点]
-
-**对话风格：**
-[描述角色的说话方式、语气、用词习惯]
-
-**行为特征：**
-[描述角色的行为模式、习惯动作、反应方式]
-
-**知识背景：**
-[角色掌握的知识领域、专业技能]
-
-**互动指南：**
-[如何与用户互动，保持角色一致性的建议]
-
-请确保生成的prompt具有以下特点：
-1. 角色特征鲜明，个性突出
-2. 背景设定合理，符合逻辑
-3. 对话风格独特，易于识别
-4. 可操作性强，便于AI执行
-5. 内容丰富，细节充实
-
-现在请根据用户的描述生成相应的角色扮演prompt。`
-          
-          response = await callDeepSeekAPI(
-            'Prompt生成助手',
-            [{
-              sender: 'system',
-              content: promptGeneratorSystemMessage,
-              isOwn: false
-            }, ...historyMessages],
-            userMessage
-          )
-        } else {
-          console.warn('调用deepseek失败')
-        }
+        // 根据AI类型调用相应的API
+        response = await callDeepSeekAPI(
+          ai.name,
+          historyMessages,
+          userMessage
+        )
         
         this.addAIMessage(aiId, response)
         
