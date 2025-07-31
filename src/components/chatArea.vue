@@ -38,16 +38,45 @@
       <!-- 消息区域 -->
       <div class="messages-container" ref="messagesContainer">
         <div v-for="message in currentMessages" :key="message.id" class="message"
-          :class="{ 'own-message': message.isOwn }">
+          :class="{ 'own-message': message.isOwn }"
+          @contextmenu="handleContextMenu($event, message)">
           <div class="message-avatar">
             <img :src="message.avatar" :alt="message.sender" />
           </div>
           <div class="message-content">
             <div class="message-bubble">
+              <!-- 回复引用显示 -->
+              <div v-if="message.replyTo" class="reply-reference">
+                <div class="reply-line"></div>
+                <div class="reply-content">
+                  <div class="reply-sender">{{ message.replyTo.sender }}</div>
+                  <div class="reply-text">{{ message.replyTo.content }}</div>
+                </div>
+              </div>
               <p>{{ message.content }}</p>
             </div>
             <div class="message-time">{{ formatTime(message.time) }}</div>
           </div>
+        </div>
+      </div>
+
+      <!-- 右键菜单 -->
+      <div v-if="showContextMenu" class="context-menu" :style="contextMenuStyle" @click.stop>
+        <div class="context-menu-item" @click="copyMessage">
+          <span class="menu-icon">📋</span>
+          <span>一键复制</span>
+        </div>
+        <div v-if="selectedMessage && selectedMessage.isOwn" class="context-menu-item" @click="revokeMessage">
+          <span class="menu-icon">↩️</span>
+          <span>撤回</span>
+        </div>
+        <div class="context-menu-item" @click="deleteMessage">
+          <span class="menu-icon">🗑️</span>
+          <span>删除</span>
+        </div>
+        <div class="context-menu-item" @click="replyToMessage">
+          <span class="menu-icon">💬</span>
+          <span>回复</span>
         </div>
       </div>
 
@@ -95,6 +124,7 @@ import { useUserStore } from '../store/user'
 import CustomDialog from './customDialog.vue'
 import EmojiPicker from './EmojiPicker.vue'
 import { api } from '../utils/axiosApi.js'
+import { revokeMessageApi } from '../utils/api.js'
 
 // 定义emit事件
 const emit = defineEmits(['toggle-chat-list'])
@@ -119,6 +149,12 @@ const showConfirmDialog = ref(false)
 const confirmMessage = ref('')
 const confirmCallback = ref(null)
 
+// 右键菜单相关数据
+const showContextMenu = ref(false)
+const contextMenuStyle = ref({})
+const selectedMessage = ref(null)
+const replyToMessageId = ref(null)
+
 const currentChat = computed(() => {
   return chatStore.currentChat
 })
@@ -130,14 +166,35 @@ const currentMessages = computed(() => {
 function sendMessage() {
   if (!messageInput.value.trim() || !chatStore.selectedChatId) return
 
+  let actualContent = messageInput.value.trim()
+  let replyInfo = null
+  
+  // 检查是否是回复消息
+  if (replyToMessageId.value) {
+    const replyToMsg = currentMessages.value.find(msg => msg.id === replyToMessageId.value)
+    if (replyToMsg) {
+      replyInfo = {
+        id: replyToMsg.id,
+        sender: replyToMsg.sender,
+        content: replyToMsg.content.substring(0, 10)
+      }
+      
+      // 移除输入框中的回复前缀
+      const replyPrefixRegex = /^回复: \[[^\]]*\]\n\n/
+      actualContent = actualContent.replace(replyPrefixRegex, '')
+    }
+    replyToMessageId.value = null
+  }
+
   const newMessage = {
-    id: userProfile.value.userId,
+    id: Date.now(),
     sender: '我',
-    content: messageInput.value.trim(),
+    content: actualContent,
     time: new Date(),
     isOwn: true,
     avatar: userProfile.value.avatar,
-    name: userProfile.value.username
+    name: userProfile.value.username,
+    replyTo: replyInfo
   }
 
   // 直接使用store方法添加消息
@@ -381,10 +438,139 @@ watch(showMoreMenu, (newVal) => {
     }
 })
 
+// 右键菜单相关功能
+function handleContextMenu(event, message) {
+  event.preventDefault()
+  selectedMessage.value = message
+  
+  const container = event.currentTarget.closest('.chat-interface-container')
+  
+  if (container) {
+    const rect = container.getBoundingClientRect()
+    contextMenuStyle.value = {
+      position: 'absolute',
+      left: (event.clientX - rect.left) + 'px',
+      top: (event.clientY - rect.top) + 'px'
+    }
+  }
+  
+  showContextMenu.value = true
+  
+  // 添加全局点击事件监听，点击其他地方关闭菜单
+  nextTick(() => {
+    document.addEventListener('click', hideContextMenu)
+  })
+}
+
+function hideContextMenu() {
+  showContextMenu.value = false
+  selectedMessage.value = null
+  document.removeEventListener('click', hideContextMenu)
+}
+
+// 复制消息内容
+function copyMessage() {
+  if (selectedMessage.value && selectedMessage.value.content) {
+    const textContent = selectedMessage.value.content
+    
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(textContent).then(() => {
+        // 可以添加一个提示消息
+      }).catch(err => {
+        console.error('复制失败:', err)
+        fallbackCopyText(textContent)
+      })
+    } else {
+      fallbackCopyText(textContent)
+    }
+  }
+  hideContextMenu()
+}
+
+// 备用复制方法
+function fallbackCopyText(text) {
+  const textArea = document.createElement('textarea')
+  textArea.value = text
+  document.body.appendChild(textArea)
+  textArea.select()
+  try {
+    document.execCommand('copy')
+    console.log('消息已复制到剪贴板')
+  } catch (err) {
+    console.error('复制失败:', err)
+  }
+  document.body.removeChild(textArea)
+}
+
+// 撤回消息（仅限用户自己的消息）
+function revokeMessage() {
+  if (selectedMessage.value && selectedMessage.value.isOwn) {
+    const messageToRevoke = selectedMessage.value
+    showConfirm('确定要撤回这条消息吗？', async () => {
+      if (messageToRevoke && messageToRevoke.id) {
+        // 从聊天记录中删除消息
+        chatStore.deleteMessage(chatStore.selectedChatId, messageToRevoke.id)
+        
+        try {
+          const res = await revokeMessageApi(messageToRevoke.id)
+          if(res === 0){
+            console.log('撤回成功')
+          }else if(res === 1){
+            console.log('撤回失败')
+          }else{
+            console.log('服务器未响应')
+          }
+        } catch (error) {
+          console.error('撤回消息失败:', error)
+        }
+        hideContextMenu()
+      }
+    })
+  }
+}
+
+// 删除消息
+function deleteMessage() {
+  if (selectedMessage.value) {
+    const messageToDelete = selectedMessage.value
+    showConfirm('确定要删除这条消息吗？此操作不可恢复。', () => {
+      if (messageToDelete && messageToDelete.id) {
+        // 从聊天记录中删除消息
+        chatStore.deleteMessage(chatStore.selectedChatId, messageToDelete.id)
+      }
+    })
+  }
+  hideContextMenu()
+}
+
+// 回复消息
+function replyToMessage() {
+  if (selectedMessage.value) {
+    replyToMessageId.value = selectedMessage.value.id
+    
+    // 在输入框中添加回复提示
+    const replyText = selectedMessage.value.content.substring(0, 10)
+    const replyPrefix = `回复: [${replyText}...]\n\n`
+    
+    messageInput.value = replyPrefix + messageInput.value
+    
+    // 聚焦到输入框
+    nextTick(() => {
+      if (messageTextarea.value) {
+        messageTextarea.value.focus()
+        // 将光标移到最后
+        messageTextarea.value.setSelectionRange(messageTextarea.value.value.length, messageTextarea.value.value.length)
+      }
+    })
+  }
+  hideContextMenu()
+}
+
 // 组件卸载时清理事件监听
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside)
     document.removeEventListener('click', handleEmojiClickOutside)
+    document.removeEventListener('click', hideContextMenu)
     window.removeEventListener('resize', handleResize)
 })
 
@@ -851,5 +1037,99 @@ defineExpose({
     height: 35px;
     font-size: 14px;
   }
+}
+
+/* 右键菜单样式 */
+.context-menu {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  min-width: 140px;
+  padding: 6px 0;
+  z-index: 500;
+  animation: contextMenuShow 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+  color: #333;
+}
+
+.context-menu-item:hover {
+  background-color: rgba(102, 126, 234, 0.08);
+}
+
+.context-menu-item .menu-icon {
+  margin-right: 8px;
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+}
+
+@keyframes contextMenuShow {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* 回复引用样式 */
+.reply-reference {
+  display: flex;
+  margin-bottom: 8px;
+  padding: 8px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
+}
+
+.reply-line {
+  width: 3px;
+  background: #667eea;
+  margin-right: 8px;
+  border-radius: 2px;
+}
+
+.reply-content {
+  flex: 1;
+}
+
+.reply-sender {
+  font-size: 12px;
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 2px;
+}
+
+.reply-text {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+/* 自己消息的回复引用样式调整 */
+.own-message .reply-reference {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.own-message .reply-text {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.own-message .reply-sender {
+  color: rgba(255, 255, 255, 0.9);
 }
 </style>

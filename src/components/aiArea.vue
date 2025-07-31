@@ -466,9 +466,22 @@ function handleContextMenu(event, message) {
   event.preventDefault()
   selectedMessage.value = message
   
-  contextMenuStyle.value = {
-    left: event.clientX + 'px',
-    top: event.clientY + 'px'
+  const container = event.currentTarget.closest('.ai-interface-container')
+  
+  if (container) {
+    const rect = container.getBoundingClientRect()
+    contextMenuStyle.value = {
+      position: 'absolute',
+      left: (event.clientX - rect.left) + 'px',
+      top: (event.clientY - rect.top) + 'px'
+    }
+  } else {
+    // 备用方案：使用固定定位
+    contextMenuStyle.value = {
+      position: 'fixed',
+      left: event.clientX + 'px',
+      top: event.clientY + 'px'
+    }
   }
   
   showContextMenu.value = true
@@ -606,6 +619,7 @@ onUnmounted(() => {
   margin-top: 20px;
   margin-bottom: 20px;
   margin-right: 20px;
+  position: relative;
 }
 
 .ai-interface {

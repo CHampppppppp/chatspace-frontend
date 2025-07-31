@@ -3,7 +3,7 @@ import { useUserStore } from '../store/user.js'
 
 //封装项目中所有的api，统一从此处调用，返回状态码0：成功，1：失败，2：未响应
 
-
+//登录接口
 export async function loginApi(username, password) {
   const userStore = useUserStore()
   try {
@@ -28,6 +28,7 @@ export async function loginApi(username, password) {
   }
 }
 
+//注册接口
 export async function registerApi(username, password, email) {
   try {
     const resp = await api.post("/register", {
@@ -48,6 +49,8 @@ export async function registerApi(username, password, email) {
     return 2
   }
 }
+
+//发送注册验证码接口
 export async function registerCodeApi(emailToUse) {
   // 这里可以添加发送验证码的API调用（springboot mail?)
   try {
@@ -65,6 +68,7 @@ export async function registerCodeApi(emailToUse) {
   }
 }
 
+//发送找回密码验证码接口
 export async function passwordCodeApi(emailToUse) {
   try {
     const resp = await api.post('/code', {
@@ -81,6 +85,7 @@ export async function passwordCodeApi(emailToUse) {
   }
 }
 
+//修改密码接口
 export async function resetPasswordApi(emailToUse, codeToUse, newPassword) {
   try{
     const resp = await api.post('/user/password', {
@@ -99,6 +104,7 @@ export async function resetPasswordApi(emailToUse, codeToUse, newPassword) {
   }
 }
 
+//更新个人信息接口
 export async function updateUserInfoApi(userId, formData) {
   try {
     const resp = await api.post('/user/info', {
@@ -120,6 +126,7 @@ export async function updateUserInfoApi(userId, formData) {
   }
 }
 
+//退出登录接口
 export async function logoutApi(userId){
   try{
     const resp = await api.post('/logout', {
@@ -136,6 +143,7 @@ export async function logoutApi(userId){
   }
 }
 
+//注销账号接口
 export async function deleteAccountApi(userId){
   try{
     const resp = await api.delete(`/${userId}`)
@@ -150,6 +158,7 @@ export async function deleteAccountApi(userId){
   }
 }
 
+//撤回消息接口
 export async function revokeMessageApi(messageId){
   try{
     const resp = await api.delete('/revokeMsg',{messageId: messageId})

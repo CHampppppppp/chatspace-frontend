@@ -108,6 +108,16 @@ export const useChatStore = defineStore('chat', {
       this.messages[chatId].push(message)
     },
     
+    // 删除消息
+    deleteMessage(chatId, messageId) {
+      if (this.messages[chatId]) {
+        const index = this.messages[chatId].findIndex(msg => msg.id === messageId)
+        if (index > -1) {
+          this.messages[chatId].splice(index, 1)
+        }
+      }
+    },
+    
     // 更新聊天列表中的最后消息
     updateChatLastMessage(chatId, lastMessage, lastTime) {
       const chat = this.chatList.find(c => c.id === chatId)
