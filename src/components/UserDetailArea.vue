@@ -4,14 +4,13 @@
       <!-- 用户基本信息区域 -->
       <div class="user-info-section">
         <div class="user-avatar-large">
-          <img :src="selectedUser.avatar" :alt="selectedUser.name" />
-          <div v-if="selectedUser.online" class="online-indicator-large"></div>
-          <div v-if="selectedUser.status === 'blocked'" class="blocked-indicator-large">🚫</div>
+          <img :src="selectedUser.avatar" :alt="selectedUser.username" />
+          <div v-if="selectedUser.status === 'online'" class="online-indicator-large"></div>
+          <div v-if="selectedUser.is_blocked === 1" class="blocked-indicator-large">🚫</div>
         </div>
         
         <div class="user-details">
-          <h2 class="user-name">{{ selectedUser.name }}</h2>
-          <div class="user-email">{{ selectedUser.email }}</div>
+          <h2 class="user-name">{{ selectedUser.username }}</h2>
           <div class="user-badges">
             <span class="role-badge" :class="selectedUser.role">{{ getRoleText(selectedUser.role) }}</span>
             <span class="status-badge" :class="selectedUser.status">{{ getStatusText(selectedUser.status) }}</span>
@@ -65,11 +64,11 @@
           
           <button 
             class="action-button status-button" 
-            :class="selectedUser.isBlocked === true ? 'unblock' : 'block'"
+            :class="selectedUser.is_blocked === 1 ? 'unblock' : 'block'"
             @click="toggleUserStatus"
           >
-            <span class="button-icon">{{ selectedUser.isBlocked === true ? '🔓' : '🔒' }}</span>
-            <span class="button-text">{{ selectedUser.isBlocked === true ? '解除封禁' : '封禁用户' }}</span>
+            <span class="button-icon">{{ selectedUser.is_blocked === 1 ? '🔓' : '🔒' }}</span>
+            <span class="button-text">{{ selectedUser.is_blocked === 1 ? '解除封禁' : '封禁用户' }}</span>
           </button>
           
           <button class="action-button reset-button" @click="resetPassword">
@@ -235,10 +234,10 @@ const userLogs = computed(() => {
 watch(() => props.selectedUser, (newUser) => {
   if (newUser) {
     editForm.value = {
-      name: newUser.name,
-      email: newUser.email,
+      name: newUser.username,
+      email: newUser.email || '',
       avatar: newUser.avatar,
-      role: newUser.role,
+      role: newUser.role || 'user',
       status: newUser.status
     }
   }
@@ -248,10 +247,10 @@ watch(() => props.selectedUser, (newUser) => {
 function showEditDialog() {
   if (props.selectedUser) {
     editForm.value = {
-      name: props.selectedUser.name,
-      email: props.selectedUser.email,
+      name: props.selectedUser.username,
+      email: props.selectedUser.email || '',
       avatar: props.selectedUser.avatar,
-      role: props.selectedUser.role,
+      role: props.selectedUser.role || 'user',
       status: props.selectedUser.status
     }
     showDialog.value = true
@@ -299,17 +298,17 @@ async function saveUserInfo() {
 async function toggleUserStatus() {
   if (props.selectedUser) {
     try {
-      const isBlocked = props.selectedUser.status === 'blocked'
+      const isBlocked = props.selectedUser.is_blocked === 1
       const action = isBlocked ? '解除封禁' : '封禁'
       
       // 确认操作
-      const confirmed = confirm(`确定要${action}用户 ${props.selectedUser.name} 吗？`)
+      const confirmed = confirm(`确定要${action}用户 ${props.selectedUser.username} 吗？`)
       if (!confirmed) {
         return
       }
       
       // 调用后端API
-      const response = await api.put(`/admin/${props.selectedUser.id}/block`, {
+      const response = await api.put(`/admin/${props.selectedUser.userId}/block`, {
         block: !isBlocked // true表示封禁，false表示解除封禁
       })
       
@@ -334,17 +333,17 @@ async function resetPassword() {
   if (props.selectedUser) {
     try {
       // 确认是否要重置密码
-      const confirmed = confirm(`确定要为用户 ${props.selectedUser.name} 重置密码吗？`)
+      const confirmed = confirm(`确定要为用户 ${props.selectedUser.username} 重置密码吗？`)
       if (!confirmed) {
         return
       }
       
       // 调用后端API重置密码
-      const response = await api.put(`/admin/${props.selectedUser.id}/password`)
+      const response = await api.put(`/admin/${props.selectedUser.userId}/password`)
       
       if (response.code === 200) {
         // 重置成功
-        alert(`已成功为用户 ${props.selectedUser.name} 重置密码。新密码：${response.data?.newPassword || '请查看系统通知'}`)
+        alert(`已成功为用户 ${props.selectedUser.username} 重置密码。新密码：${response.data?.newPassword || '请查看系统通知'}`)
         console.log('密码重置成功:', response.msg || '操作成功')
       } else {
         // 处理业务错误

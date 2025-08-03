@@ -53,6 +53,29 @@
         </div>
       </div>
 
+      <!-- AI Prompt信息 -->
+      <div class="ai-prompt-section">
+        <h3>Prompt信息</h3>
+        <div class="prompt-container">
+          <div class="prompt-header" @click="togglePromptExpanded">
+            <div class="prompt-title">
+              <span class="prompt-icon">📝</span>
+              <span>AI Prompt</span>
+            </div>
+            <div class="expand-icon" :class="{ expanded: isPromptExpanded }">
+              {{ isPromptExpanded ? '▼' : '▶' }}
+            </div>
+          </div>
+          <div v-if="isPromptExpanded" class="prompt-content">
+            <div class="prompt-text">{{ selectedAi.prompt || '暂无Prompt信息' }}</div>
+            <div v-if="selectedAi.promptToken" class="prompt-token-info">
+              <span class="token-label">Prompt Token:</span>
+              <span class="token-value">{{ selectedAi.promptToken }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 操作按钮区域 -->
       <div class="ai-actions-section">
         <h3>管理操作</h3>
@@ -190,6 +213,7 @@ const emit = defineEmits(['update-ai', 'delete-ai', 'ban-ai', 'pause-ai'])
 
 // 响应式数据
 const showDialog = ref(false)
+const isPromptExpanded = ref(false)
 const editForm = ref({
   name: '',
   icon: '',
@@ -348,6 +372,10 @@ function getResponseTimePercent() {
 function getPromptToken() {
   // 模拟prompt token
   return Math.floor(Math.random() * 20) + 100
+}
+
+function togglePromptExpanded() {
+  isPromptExpanded.value = !isPromptExpanded.value
 }
 
 </script>
@@ -662,6 +690,122 @@ function getPromptToken() {
 .button-text {
   flex: 1;
   font-size:20px;
+}
+
+/* AI Prompt信息区域 */
+.ai-prompt-section {
+  margin-bottom: 30px;
+}
+
+.ai-prompt-section h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.prompt-container {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.prompt-container:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.prompt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.prompt-header:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.prompt-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.prompt-icon {
+  font-size: 16px;
+}
+
+.expand-icon {
+  font-size: 14px;
+  color: #666;
+  transition: transform 0.3s ease;
+}
+
+.expand-icon.expanded {
+  transform: rotate(0deg);
+}
+
+.prompt-content {
+  padding: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.prompt-text {
+  color: #333;
+  line-height: 1.6;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin-bottom: 15px;
+  padding: 15px;
+  background: rgba(248, 250, 252, 0.8);
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.prompt-token-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.token-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.token-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #667eea;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 /* 性能指标区域 */

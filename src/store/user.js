@@ -21,7 +21,7 @@ export const useUserStore = defineStore('user', {
         status: state.userInfo?.status || '',
         createdAt: state.userInfo?.createdAt || '',
         lastseen: state.userInfo?.lastseen || '',
-        isBlocked:state.userInfo?.isBlocked || false
+        isBlocked:state.userInfo?.is_blocked === 1 || false
       }
     }
   },

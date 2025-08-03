@@ -52,19 +52,17 @@
 
         <!-- 用户列表 -->
         <div class="user-items">
-          <div v-for="user in filteredUsers" :key="user.id" class="user-item"
-            :class="{ 'selected': selectedUserId === user.id, 'blocked': user.status === 'blocked' }"
+          <div v-for="user in filteredUsers" :key="user.userId" class="user-item"
+            :class="{ 'selected': selectedUserId === user.userId, 'blocked': user.is_blocked === 1 }"
             @click="selectUser(user)">
             <div class="user-avatar">
-              <img :src="user.avatar" :alt="user.name" />
-              <div v-if="user.online" class="online-indicator"></div>
-              <div v-if="user.status === 'blocked'" class="blocked-indicator">🚫</div>
+              <img :src="user.avatar" :alt="user.username" />
+              <div v-if="user.status === 'online'" class="online-indicator"></div>
+              <div v-if="user.is_blocked === 1" class="blocked-indicator">🚫</div>
             </div>
             <div class="user-info">
-              <div class="user-name">{{ user.name }}</div>
-              <div class="user-email">{{ user.email }}</div>
+              <div class="user-name">{{ user.username }}</div>
               <div class="user-meta">
-                <span class="user-role" :class="user.role">{{ getRoleText(user.role) }}</span>
                 <span class="user-status" :class="user.status">{{ getStatusText(user.status) }}</span>
               </div>
             </div>
@@ -108,6 +106,14 @@ const statusFilter = ref('all') // 添加状态筛选
 
 // 用户数据（从后端API获取）
 const users = ref([])
+// 用户统计数据（从后端直接获取）
+const userStats = ref({
+  total: 0,
+  online: 0,
+  away: 0,
+  offline: 0,
+  blocked: 0
+})
 
 // 计算属性
 const filteredUsers = computed(() => {
@@ -116,7 +122,7 @@ const filteredUsers = computed(() => {
   // 根据状态筛选
   if (statusFilter.value !== 'all') {
     if (statusFilter.value === 'blocked') {
-      filtered = filtered.filter(user => user.isBlocked === true)
+      filtered = filtered.filter(user => user.is_blocked === 1)
     } else {
       filtered = filtered.filter(user => user.status === statusFilter.value)
     }
@@ -125,8 +131,7 @@ const filteredUsers = computed(() => {
   // 根据搜索关键词筛选
   if (searchQuery.value) {
     filtered = filtered.filter(user =>
-      user.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
+      user.username.toLowerCase().includes(searchQuery.value.toLowerCase())
     )
   }
   
@@ -134,14 +139,15 @@ const filteredUsers = computed(() => {
 })
 
 const selectedUser = computed(() => {
-  return users.value.find(user => user.id === selectedUserId.value)
+  return users.value.find(user => user.userId === selectedUserId.value)
 })
 
-const totalUsers = computed(() => users.value.length)
-const onlineUsers = computed(() => users.value.filter(user => user.status === 'online').length)
-const offlineUsers = computed(() => users.value.filter(user => user.status === 'offline').length)
-const awayUsers = computed(() => users.value.filter(user => user.status === 'away').length)
-const blockedUsers = computed(() => users.value.filter(user => user.isBlocked === true).length)
+// 直接使用后端返回的统计数据，优化性能
+const totalUsers = computed(() => userStats.value.total)
+const onlineUsers = computed(() => userStats.value.online)
+const offlineUsers = computed(() => userStats.value.offline)
+const awayUsers = computed(() => userStats.value.away)
+const blockedUsers = computed(() => userStats.value.blocked)
 
 // 方法
 function handleSearch() {
@@ -149,7 +155,7 @@ function handleSearch() {
 }
 
 function selectUser(user) {
-  selectedUserId.value = user.id
+  selectedUserId.value = user.userId
 }
 
 function deleteUser(user) {
@@ -195,18 +201,32 @@ function filterByStatus(status) {
 // 从后端获取用户列表
 async function fetchUserList() {
   try {
-    const response = await api.get('/admin/user/list')
+    const response = await api.get('/admin/users/list')
     if (response.code === 200) {
-      users.value = response.data
+      // 分别设置用户列表和统计数据
+      users.value = response.data.list || []
+      userStats.value = {
+        total: response.data.total || 0,
+        online: response.data.online || 0,
+        away: response.data.away || 0,
+        offline: response.data.offline || 0,
+        blocked: response.data.blocked || 0
+      }
       // 如果有用户数据，默认选中第一个用户
       if (users.value.length > 0) {
-        selectedUserId.value = users.value[0].id
+        selectedUserId.value = users.value[0].userId
       }
     } else {
       console.error('获取用户列表失败:', response.msg)
+      // 失败时重置数据
+      users.value = []
+      userStats.value = { total: 0, online: 0, away: 0, offline: 0, blocked: 0 }
     }
   } catch (error) {
     console.error('获取用户列表出错:', error)
+    // 异常时重置数据
+    users.value = []
+    userStats.value = { total: 0, online: 0, away: 0, offline: 0, blocked: 0 }
   }
 }
 
