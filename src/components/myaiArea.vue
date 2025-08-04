@@ -51,6 +51,28 @@
         </div>
       </div>
 
+      <!-- AI Prompt信息区域 -->
+      <div class="ai-prompt-section">
+        <div class="prompt-container">
+          <div class="prompt-header" @click="togglePromptExpanded">
+            <div class="prompt-title">
+              <span class="prompt-icon">📝</span>
+              <span>AI Prompt</span>
+            </div>
+            <div class="expand-icon" :class="{ expanded: isPromptExpanded }">
+              {{ isPromptExpanded ? '▼' : '▶' }}
+            </div>
+          </div>
+          <div v-if="isPromptExpanded" class="prompt-content">
+            <div class="prompt-text">{{ selectedAI.prompt || '暂无Prompt信息' }}</div>
+            <div v-if="isPromptExpanded" class="prompt-token-info">
+              <span class="token-label">Prompt Token:</span>
+              <span class="token-value">{{ selectedAI.promptToken }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 操作按钮区域 -->
       <div class="ai-actions-section">
         <customButton 
@@ -94,6 +116,7 @@ const isAddingFriend = ref(false)
 const likedAIs = ref(new Set()) // 存储已点赞的AI ID
 const likeLoading = ref(false)
 const likeCount = ref(0) // 本地点赞计数
+const isPromptExpanded = ref(false) // 控制prompt展开状态
 
 // 计算当前AI是否被点赞
 const isLiked = computed(() => {
@@ -190,6 +213,11 @@ function truncateText(text, maxLength) {
   if (!text) return ''
   if (text.length <= maxLength) return text
   return text.substring(0, maxLength) + '...'
+}
+
+// 切换prompt展开状态
+function togglePromptExpanded() {
+  isPromptExpanded.value = !isPromptExpanded.value
 }
 </script>
 
@@ -372,6 +400,119 @@ function truncateText(text, maxLength) {
   50% {
     transform: scale(1.1);
   }
+}
+
+/* AI Prompt信息区域 */
+.ai-prompt-section {
+  margin-top:-3%;
+  margin-left:35%;
+  width: 30%;
+  justify-content: center;
+  align-items: center;
+}
+
+.prompt-container {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.prompt-container:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.prompt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.prompt-header:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.prompt-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.prompt-icon {
+  font-size: 16px;
+}
+
+.expand-icon {
+  font-size: 14px;
+  color: #666;
+  transition: transform 0.3s ease;
+}
+
+.expand-icon.expanded {
+  transform: rotate(0deg);
+}
+
+.prompt-content {
+  padding: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.prompt-text {
+  color: #333;
+  line-height: 1.6;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin-bottom: 15px;
+  padding: 15px;
+  background: rgba(248, 250, 252, 0.8);
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.prompt-token-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.token-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.token-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #667eea;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 /* 操作按钮区域 */

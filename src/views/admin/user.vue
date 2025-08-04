@@ -188,7 +188,7 @@ function getStatusText(status) {
     offline: '离线',
     away: '离开'
   }
-  return statusMap[status] || '未知'
+  return statusMap[status] || '封禁'
 }
 
 // 点击统计卡片筛选用户

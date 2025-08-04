@@ -111,6 +111,13 @@ const statusFilter = ref('all') // 添加状态筛选
 // AI数据
 const ais = ref([])
 const loading = ref(false)
+// 统计数据（从后端获取）
+const statsData = ref({
+  total: 0,
+  online: 0,
+  offline: 0,
+  banned: 0
+})
 
 // 计算属性
 const filteredAIs = computed(() => {
@@ -140,10 +147,11 @@ const selectedAi = computed(() => {
   return ais.value.find(ai => ai.aiId === selectedAiId.value)
 })
 
-const totalAIs = computed(() => ais.value.length)
-const activeAIs = computed(() => ais.value.filter(ai => ai.status === 'online').length)
-const pausedAIs = computed(() => ais.value.filter(ai => ai.status === 'offline').length)
-const bannedAIs = computed(() => ais.value.filter(ai => ai.status === 'banned').length)
+// 直接使用后端返回的统计数据
+const totalAIs = computed(() => statsData.value.total)
+const activeAIs = computed(() => statsData.value.online)
+const pausedAIs = computed(() => statsData.value.offline)
+const bannedAIs = computed(() => statsData.value.banned)
 
 // 方法
 function handleSearch() {
@@ -163,9 +171,23 @@ async function fetchAiList() {
     const response = await api.get('/myai/list')
     
     if (response.code === 200) {
-      ais.value = response.data
+      // 更新AI列表
+      ais.value = response.data.list || response.data
+      
+      // 更新统计数据（如果后端返回了统计信息）
+      if (response.data.total !== undefined) {
+        statsData.value = {
+          total: response.data.total || 0,
+          online: response.data.online || 0,
+          offline: response.data.offline || 0,
+          banned: response.data.banned || 0
+        }
+      }
+      
       console.log("ais: ")
       console.log(ais.value)
+      console.log("stats: ")
+      console.log(statsData.value)
     } else {
       console.error('获取AI列表失败:', response.msg)
     }
