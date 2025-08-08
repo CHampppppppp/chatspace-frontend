@@ -50,6 +50,7 @@ const baseMenuItems = [
 const adminMenuItems = [
   { name: 'adminUsers', label: '用户管理', icon: '👤', path: '/admin/users' },
   { name: 'adminMyAI', label: 'AI管理', icon: '🤖', path: '/admin/myai' },
+  { name: 'adminGroups', label: '群聊管理', icon: '👥', path: '/admin/groups' },
 ]
 
 // 根据用户角色动态生成菜单项

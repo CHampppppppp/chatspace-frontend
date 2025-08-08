@@ -1,78 +1,38 @@
 <template>
-  <div class="admin-users-container">
-    <!-- 左侧工具栏 -->
-    <ToolBar ref="toolBarRef" />
-
-    <!-- 用户列表区域 -->
-    <div class="users-list-container">
-      <div class="users-list-header">
-        <h2>用户管理</h2>
-        <SearchBox v-model="searchQuery" placeholder="搜索用户..." @search="handleSearch" />
-      </div>
-
-      <div class="users-list-content">
-        <!-- 用户统计信息 -->
-        <div class="stats-section">
-          <div class="stat-card" :class="{ 'active': statusFilter === 'all' }" @click="filterByStatus('all')">
-            <div class="stat-icon">👥</div>
-            <div class="stat-info">
-              <div class="stat-label">用户</div>
-              <div class="stat-number">{{ totalUsers }}</div>
-            </div>
+  <AdminLayout 
+    title="用户管理"
+    search-placeholder="搜索用户..."
+    :stats-data="statsData"
+    :active-filter="statusFilter"
+    @search="handleSearch"
+    @filter-change="filterByStatus"
+  >
+    <template #list-content>
+      <!-- 用户列表 -->
+      <div class="user-items">
+        <div v-for="user in filteredUsers" :key="user.userId" class="user-item"
+          :class="{ 'selected': selectedUserId === user.userId, 'blocked': user.is_blocked === 1 }"
+          @click="selectUser(user)">
+          <div class="user-avatar">
+            <img :src="user.avatar" :alt="user.username" />
+            <div v-if="user.status === 'online'" class="online-indicator"></div>
+            <div v-if="user.is_blocked === 1" class="blocked-indicator">🚫</div>
           </div>
-          <div class="stat-card" :class="{ 'active': statusFilter === 'online' }" @click="filterByStatus('online')">
-            <div class="stat-icon">🟢</div>
-            <div class="stat-info">
-              <div class="stat-label">在线</div>
-              <div class="stat-number">{{ onlineUsers }}</div>
-            </div>
-          </div>
-          <div class="stat-card" :class="{ 'active': statusFilter === 'away' }" @click="filterByStatus('away')">
-            <div class="stat-icon">⏸️</div>
-            <div class="stat-info">
-              <div class="stat-label">离开</div>
-              <div class="stat-number">{{ awayUsers }}</div>
-            </div>
-          </div>
-          <div class="stat-card" :class="{ 'active': statusFilter === 'offline' }" @click="filterByStatus('offline')">
-            <div class="stat-icon">⏸️</div>
-            <div class="stat-info">
-              <div class="stat-label">离线</div>
-              <div class="stat-number">{{ offlineUsers }}</div>
-            </div>
-          </div>
-          <div class="stat-card" :class="{ 'active': statusFilter === 'blocked' }" @click="filterByStatus('blocked')">
-            <div class="stat-icon">🚫</div>
-            <div class="stat-info">
-              <div class="stat-label">封禁</div>
-              <div class="stat-number">{{ blockedUsers }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 用户列表 -->
-        <div class="user-items">
-          <div v-for="user in filteredUsers" :key="user.userId" class="user-item"
-            :class="{ 'selected': selectedUserId === user.userId, 'blocked': user.is_blocked === 1 }"
-            @click="selectUser(user)">
-            <div class="user-avatar">
-              <img :src="user.avatar" :alt="user.username" />
-              <div v-if="user.status === 'online'" class="online-indicator"></div>
-              <div v-if="user.is_blocked === 1" class="blocked-indicator">🚫</div>
-            </div>
-            <div class="user-info">
-              <div class="user-name">{{ user.username }}</div>
-              <div class="user-meta">
-                <span class="user-status" :class="user.status">{{ getStatusText(user.status) }}</span>
-              </div>
+          <div class="user-info">
+            <div class="user-name">{{ user.username }}</div>
+            <div class="user-meta">
+              <span class="user-status" :class="user.status">{{ getStatusText(user.status) }}</span>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </template>
 
-    <!-- 右侧用户详情区域 -->
-    <UserDetailArea :selectedUser="selectedUser" @update-user="fetchUserList" @delete-user="deleteUser" />
+    <template #detail-area>
+      <!-- 右侧用户详情区域 -->
+      <UserDetailArea :selectedUser="selectedUser" @update-user="fetchUserList" @delete-user="deleteUser" />
+    </template>
+  </AdminLayout>
 
     <!-- 删除确认对话框 -->
     <div v-if="showDeleteConfirm" class="dialog-overlay" @click="cancelDelete">
@@ -87,18 +47,15 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import ToolBar from '../../components/toolBar.vue'
-import SearchBox from '../../components/SearchBox.vue'
+import AdminLayout from '../../components/AdminLayout.vue'
 import UserDetailArea from '../../components/UserDetailArea.vue'
 import { api } from '../../utils/axiosApi.js'
 
 // 响应式数据
-const searchQuery = ref('')
 const selectedUserId = ref(null)
 const showDeleteConfirm = ref(false)
 const userToDelete = ref(null)
@@ -116,6 +73,33 @@ const userStats = ref({
 })
 
 // 计算属性
+const statsData = computed(() => [
+  {
+    key: 'all',
+    label: '用户',
+    value: totalUsers.value,
+    icon: '👥'
+  },
+  {
+    key: 'online',
+    label: '在线',
+    value: onlineUsers.value,
+    icon: '🟢'
+  },
+  {
+    key: 'offline',
+    label: '离线',
+    value: offlineUsers.value,
+    icon: '⏸️'
+  },
+  {
+    key: 'blocked',
+    label: '封禁',
+    value: blockedUsers.value,
+    icon: '🚫'
+  }
+])
+
 const filteredUsers = computed(() => {
   let filtered = users.value
   
@@ -126,13 +110,6 @@ const filteredUsers = computed(() => {
     } else {
       filtered = filtered.filter(user => user.status === statusFilter.value)
     }
-  }
-  
-  // 根据搜索关键词筛选
-  if (searchQuery.value) {
-    filtered = filtered.filter(user =>
-      user.username.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
   }
   
   return filtered
@@ -150,8 +127,9 @@ const awayUsers = computed(() => userStats.value.away)
 const blockedUsers = computed(() => userStats.value.blocked)
 
 // 方法
-function handleSearch() {
-  console.log('执行用户搜索:', searchQuery.value)
+function handleSearch(query) {
+  console.log('执行用户搜索:', query)
+  // 这里可以添加搜索逻辑，比如调用API搜索
 }
 
 function selectUser(user) {
@@ -238,131 +216,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.admin-users-container {
-  display: flex;
-  height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.users-list-container {
-  width: 370px;
-  margin-left: 120px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 20px 0 0 20px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-.users-list-header {
-  padding: 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.users-list-header h2 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.header-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-left: auto;
-}
-
-.add-user-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 8px 12px;
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  margin-left: auto;
-}
-
-.add-user-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-}
-
-.btn-icon {
-  font-size: 14px;
-}
-
-.btn-text {
-  font-weight: 500;
-}
-
-.users-list-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px 0;
-}
-
-/* 统计卡片 */
-.stats-section {
-  display: flex;
-  gap: 10px;
-  padding: 0 20px 15px;
-  margin-bottom: 10px;
-}
-
-.stat-card {
-  flex: 1;
-  background: rgba(255, 255, 255,1);
-  border-radius: 12px;
-  padding: 2px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition:all 0.3s ease;
-}
-
-.stat-card:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  cursor:pointer;
-}
-
-.stat-card.active {
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-}
-
-.stat-card.active .stat-number {
-  color: white;
-}
-
-.stat-card.active .stat-label {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.stat-icon {
-  font-size: 20px;
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-number {
-  font-size: 18px;
+.stat-number{
+/* 用户列表项样式 */
+  font-size:18px;
   font-weight: 600;
   color: #333;
   line-height: 1;

@@ -82,20 +82,6 @@
           </button>
         </div>
       </div>
-
-      <!-- 用户活动日志 -->
-      <!-- <div class="user-logs-section">
-        <h3>活动日志</h3>
-        <div class="logs-list">
-          <div v-for="log in userLogs" :key="log.id" class="log-item">
-            <div class="log-icon" :class="log.type">{{ getLogIcon(log.type) }}</div>
-            <div class="log-content">
-              <div class="log-message">{{ log.message }}</div>
-              <div class="log-time">{{ formatLogTime(log.time) }}</div>
-            </div>
-          </div>
-        </div>
-      </div> -->
     </div>
 
     <!-- 未选择用户时的占位内容 -->
@@ -174,8 +160,9 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-// 导入API模块
 import { api } from '../utils/axiosApi.js'
+import toast from '../utils/toast.js'
+import confirm from '../utils/confirm.js'
 
 // 定义props
 const props = defineProps({
@@ -280,17 +267,18 @@ async function saveUserInfo() {
         emit('update-user')
         closeDialog()
         
-        // 可以添加成功提示
+        // 添加成功提示
+        toast.success('保存成功', '用户信息已更新')
         console.log('用户信息更新成功:', response.msg || '操作成功')
       } else {
         // 处理业务错误
         console.error('更新用户信息失败:', response.msg || '操作失败')
-        alert(response.msg || '更新用户信息失败')
+        toast.error('保存失败', response.msg || '更新用户信息失败')
       }
     } catch (error) {
       // 处理网络错误或其他异常
       console.error('更新用户信息时发生错误:', error.message)
-      alert('更新用户信息时发生错误: ' + error.message)
+      toast.error('保存失败', '网络错误，请稍后重试')
     }
   }
 }
@@ -302,10 +290,9 @@ async function toggleUserStatus() {
       const action = isBlocked ? '解除封禁' : '封禁'
       
       // 确认操作
-      const confirmed = confirm(`确定要${action}用户 ${props.selectedUser.username} 吗？`)
-      if (!confirmed) {
-        return
-      }
+      await confirm.warning(`确定要${action}用户 ${props.selectedUser.username} 吗？`, {
+        confirmText: `确认${action}`
+      })
       
       // 调用后端API
       const response = await api.put(`/admin/${props.selectedUser.userId}/block`, {
@@ -316,16 +303,19 @@ async function toggleUserStatus() {
         // API调用成功，通知父组件更新用户状态
         const newStatus = isBlocked ? 'active' : 'blocked'
         emit('update-user')
+        toast.success(`${action}成功`, `用户已${action}`)
       } else {
         // 处理业务错误
         console.error(`${action}用户失败:`, response.msg || '操作失败')
-        alert(response.msg || `${action}用户失败`)
+        toast.error(`${action}失败`, response.msg || `${action}用户失败`)
       }
     } catch (error) {
       // 处理网络错误或其他异常
-      console.error('切换用户状态时发生错误:', error.message)
-      alert('操作失败: ' + error.message)
-    }
+      if (error.message !== '用户取消操作') {
+         console.error('切换用户状态时发生错误:', error.message)
+         toast.error('操作失败', '网络错误，请稍后重试')
+       }
+     }
   }
 }
 
@@ -333,27 +323,29 @@ async function resetPassword() {
   if (props.selectedUser) {
     try {
       // 确认是否要重置密码
-      const confirmed = confirm(`确定要为用户 ${props.selectedUser.username} 重置密码吗？`)
-      if (!confirmed) {
-        return
-      }
+      await confirm.warning(`确定要为用户 ${props.selectedUser.username} 重置密码吗？`, {
+        confirmText: '确认重置'
+      })
       
       // 调用后端API重置密码
       const response = await api.put(`/admin/${props.selectedUser.userId}/password`)
       
       if (response.code === 200) {
         // 重置成功
-        alert(`已成功为用户 ${props.selectedUser.username} 重置密码。新密码：${response.data?.newPassword || '请查看系统通知'}`)
+        const newPassword = response.data?.newPassword || '请查看系统通知'
+        toast.success('重置成功', `用户 ${props.selectedUser.username} 的新密码：${newPassword}`)
         console.log('密码重置成功:', response.msg || '操作成功')
       } else {
         // 处理业务错误
         console.error('重置密码失败:', response.msg || '操作失败')
-        alert(response.msg || '重置密码失败')
+        toast.error('重置失败', response.msg || '重置密码失败')
       }
     } catch (error) {
       // 处理网络错误或其他异常
-      console.error('重置密码时发生错误:', error.message)
-      alert('重置密码时发生错误: ' + error.message)
+      if (error.message !== '用户取消操作') {
+        console.error('重置密码时发生错误:', error.message)
+        toast.error('重置失败', '网络错误，请稍后重试')
+      }
     }
   }
 }
@@ -774,21 +766,26 @@ function formatLogTime(time) {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
+  padding: 20px;
 }
 
 .edit-dialog {
-  background: white;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   border-radius: 16px;
   width: 500px;
   max-width: 90vw;
   max-height: 80vh;
   overflow: hidden;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .dialog-header {

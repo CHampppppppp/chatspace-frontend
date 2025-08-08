@@ -199,6 +199,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { api } from '../utils/axiosApi.js'
+import toast from '../utils/toast.js'
+import confirm from '../utils/confirm.js'
 
 // 定义props
 const props = defineProps({
@@ -258,47 +260,61 @@ async function saveAiInfo() {
       if (response.data.code === 200) {
         emit('update-ai', props.selectedAi.aiId, editForm.value)
         closeDialog()
-        alert('AI信息更新成功')
+        toast.success('保存成功', 'AI信息已更新')
       } else {
-        alert('更新失败：' + response.data.msg)
+        toast.error('保存失败', response.data.msg || '请稍后重试')
       }
     } catch (error) {
       console.error('更新AI信息失败:', error)
-      alert('更新失败，请稍后重试')
+      toast.error('保存失败', '网络错误，请稍后重试')
     }
   }
 }
 
 async function toggleAiStatus() {
   if (props.selectedAi) {
+    const action = props.selectedAi.status === 'paused' ? '恢复运行' : '暂停'
     try {
+      await confirm.warning(`确定要${action}AI "${props.selectedAi.name}" 吗？`, {
+        confirmText: `确认${action}`
+      })
+      
       const response = await api.post(`/admin/${props.selectedAi.aiId}/pause`)
       if (response.data.code === 200) {
         emit('pause-ai', props.selectedAi.aiId)
-        alert(props.selectedAi.status === 'paused' ? 'AI已恢复运行' : 'AI已暂停')
+        toast.success(`${action}成功`, `AI已${action}`)
       } else {
-        alert('操作失败：' + response.data.msg)
+        toast.error(`${action}失败`, response.data.msg || '请稍后重试')
       }
     } catch (error) {
-      console.error('切换AI状态失败:', error)
-      alert('操作失败，请稍后重试')
+      if (error.message !== '用户取消操作') {
+        console.error('切换AI状态失败:', error)
+        toast.error('操作失败', '网络错误，请稍后重试')
+      }
     }
   }
 }
 
 async function toggleBanStatus() {
   if (props.selectedAi) {
+    const action = props.selectedAi.status === 'banned' ? '解除封禁' : '封禁'
     try {
+      await confirm.warning(`确定要${action}AI "${props.selectedAi.name}" 吗？`, {
+        confirmText: `确认${action}`
+      })
+      
       const response = await api.post(`/admin/${props.selectedAi.aiId}/ban`)
       if (response.data.code === 200) {
         emit('ban-ai', props.selectedAi.aiId)
-        alert(props.selectedAi.status === 'banned' ? 'AI已解除封禁' : 'AI已封禁')
+        toast.success(`${action}成功`, `AI已${action}`)
       } else {
-        alert('操作失败：' + response.data.msg)
+        toast.error(`${action}失败`, response.data.msg || '请稍后重试')
       }
     } catch (error) {
-      console.error('切换封禁状态失败:', error)
-      alert('操作失败，请稍后重试')
+      if (error.message !== '用户取消操作') {
+        console.error('切换封禁状态失败:', error)
+        toast.error('操作失败', '网络错误，请稍后重试')
+      }
     }
   }
 }
@@ -306,31 +322,35 @@ async function toggleBanStatus() {
 function configureAi() {
   if (props.selectedAi) {
     // 这里可以打开AI配置界面
-    alert(`配置AI ${props.selectedAi.name} 的参数`)
+    toast.info('配置功能', `即将配置AI ${props.selectedAi.name} 的参数`)
   }
 }
 
 function testAi() {
   if (props.selectedAi) {
     // 这里可以调用AI测试接口
-    alert(`测试AI ${props.selectedAi.name} 的功能`)
+    toast.info('测试功能', `即将测试AI ${props.selectedAi.name} 的功能`)
   }
 }
 
 async function confirmDelete() {
   if (props.selectedAi) {
-    if (confirm(`确定要删除AI "${props.selectedAi.name}" 吗？此操作不可撤销。`)) {
-      try {
-        const response = await api.delete(`/admin/${props.selectedAi.aiId}`)
-        if (response.data.code === 200) {
-          emit('delete-ai', props.selectedAi.aiId)
-          alert('AI删除成功')
-        } else {
-          alert('删除失败：' + response.data.msg)
-        }
-      } catch (error) {
+    try {
+      await confirm.delete(`确定要删除AI "${props.selectedAi.name}" 吗？`, {
+        message: '此操作不可撤销，请谨慎操作。'
+      })
+      
+      const response = await api.delete(`/admin/${props.selectedAi.aiId}`)
+      if (response.data.code === 200) {
+        emit('delete-ai', props.selectedAi.aiId)
+        toast.success('删除成功', 'AI已被删除')
+      } else {
+        toast.error('删除失败', response.data.msg || '请稍后重试')
+      }
+    } catch (error) {
+      if (error.message !== '用户取消操作') {
         console.error('删除AI失败:', error)
-        alert('删除失败，请稍后重试')
+        toast.error('删除失败', '网络错误，请稍后重试')
       }
     }
   }

@@ -1,82 +1,49 @@
 <template>
-  <div class="admin-ai-container">
-    <!-- 左侧工具栏 -->
-    <ToolBar ref="toolBarRef" />
-    
-    <!-- AI列表区域 -->
-    <div class="ai-list-container">
-      <div class="ai-list-header">
-        <h2>AI管理</h2>
-          <SearchBox 
-            v-model="searchQuery" 
-            placeholder="搜索AI..." 
-            @search="handleSearch"
-          />
-      </div>
-      
-      <div class="ai-list-content">
-        <!-- AI统计信息 -->
-        <div class="stats-section">
-          <div class="stat-card" :class="{ 'active': statusFilter === 'all' }" @click="filterByStatus('all')">
-            <div class="stat-icon">🤖</div>
-            <div class="stat-info">
-              <div class="stat-number">{{ totalAIs }}</div>
-            </div>
-          </div>
-          <div class="stat-card" :class="{ 'active': statusFilter === 'online' }" @click="filterByStatus('online')">
-            <div class="stat-icon">🟢</div>
-            <div class="stat-info">
-              <div class="stat-number">{{ activeAIs }}</div>
-            </div>
-          </div>
-          <div class="stat-card" :class="{ 'active': statusFilter === 'offline' }" @click="filterByStatus('offline')">
-            <div class="stat-icon">⏸️</div>
-            <div class="stat-info">
-              <div class="stat-number">{{ pausedAIs }}</div>
-            </div>
-          </div>
-          <div class="stat-card" :class="{ 'active': statusFilter === 'banned' }" @click="filterByStatus('banned')">
-            <div class="stat-icon">🚫</div>
-            <div class="stat-info">
-              <div class="stat-number">{{ bannedAIs }}</div>
-            </div>
-          </div>
+  <AdminLayout 
+    title="AI管理"
+    search-placeholder="搜索AI..."
+    :stats-data="aiStatsData"
+    :active-filter="statusFilter"
+    @search="handleSearch"
+    @filter-change="filterByStatus"
+  >
+    <template #list-content>
+      <!-- AI列表 -->
+      <div class="ai-items">
+        <div v-if="loading" class="loading-indicator">
+          <div class="loading-text">加载中...</div>
         </div>
-
-        <!-- AI列表 -->
-        <div class="ai-items">
-          <div v-if="loading" class="loading-indicator">
-            <div class="loading-text">加载中...</div>
+        <div 
+          v-for="ai in filteredAIs" 
+          :key="ai.aiId"
+          class="ai-item"
+          :class="{ 'selected': selectedAiId === ai.aiId, 'paused': ai.status === 'paused' }"
+          @click="selectAi(ai)"
+        >
+          <div class="ai-avatar">
+            <img :src="ai.avatar || 'https://i.pinimg.com/736x/de/ea/8a/deea8a2d17215a61e5f1b8c0cb7cb01b.jpg'" :alt="ai.name" />
+            <div v-if="ai.online" class="online-indicator"></div>
+            <div v-if="ai.status === 'paused'" class="paused-indicator">⏸️</div>
           </div>
-          <div 
-            v-for="ai in filteredAIs" 
-            :key="ai.aiId"
-            class="ai-item"
-            :class="{ 'selected': selectedAiId === ai.aiId, 'paused': ai.status === 'paused' }"
-            @click="selectAi(ai)"
-          >
-            <div class="ai-avatar">
-              <img :src="ai.avatar || 'https://i.pinimg.com/736x/de/ea/8a/deea8a2d17215a61e5f1b8c0cb7cb01b.jpg'" :alt="ai.name" />
-              <div v-if="ai.online" class="online-indicator"></div>
-              <div v-if="ai.status === 'paused'" class="paused-indicator">⏸️</div>
-            </div>
-            <div class="ai-info">
-              <div class="ai-name">{{ ai.name }}</div>
-              <div class="ai-meta">
-                <span class="ai-status" :class="ai.status">{{ getStatusText(ai.status) }}</span>
-              </div>
+          <div class="ai-info">
+            <div class="ai-name">{{ ai.name }}</div>
+            <div class="ai-meta">
+              <span class="ai-status" :class="ai.status">{{ getStatusText(ai.status) }}</span>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </template>
 
-    <!-- 右侧AI详情区域 -->
-    <MyAiDetailArea 
-      :selectedAi="selectedAi"
-      @update-ai="updateAi"
-      @delete-ai="confirmDeleteAi"
-    />
+    <template #detail-area>
+      <!-- 右侧AI详情区域 -->
+      <MyAiDetailArea 
+        :selectedAi="selectedAi"
+        @update-ai="updateAi"
+        @delete-ai="confirmDeleteAi"
+      />
+    </template>
+  </AdminLayout>
 
     <!-- 删除确认对话框 -->
     <div v-if="showDeleteConfirm" class="dialog-overlay" @click="cancelDelete">
@@ -91,18 +58,15 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import ToolBar from '../../components/toolBar.vue'
-import SearchBox from '../../components/SearchBox.vue'
+import AdminLayout from '../../components/AdminLayout.vue'
 import MyAiDetailArea from '../../components/MyAiDetailArea.vue'
 import { api } from '../../utils/axiosApi.js'
 
 // 响应式数据
-const searchQuery = ref('')
 const selectedAiId = ref(null)
 const showDeleteConfirm = ref(false)
 const aiToDelete = ref(null)
@@ -120,6 +84,33 @@ const statsData = ref({
 })
 
 // 计算属性
+const aiStatsData = computed(() => [
+  {
+    key: 'all',
+    label: 'AI',
+    value: totalAIs.value,
+    icon: '🤖'
+  },
+  {
+    key: 'online',
+    label: '在线',
+    value: activeAIs.value,
+    icon: '🟢'
+  },
+  {
+    key: 'offline',
+    label: '离线',
+    value: pausedAIs.value,
+    icon: '⏸️'
+  },
+  {
+    key: 'banned',
+    label: '封禁',
+    value: bannedAIs.value,
+    icon: '🚫'
+  }
+])
+
 const filteredAIs = computed(() => {
   let filtered = ais.value
   
@@ -130,14 +121,6 @@ const filteredAIs = computed(() => {
     } else {
       filtered = filtered.filter(ai => ai.status === statusFilter.value)
     }
-  }
-  
-  // 根据搜索关键词筛选
-  if (searchQuery.value) {
-    filtered = filtered.filter(ai => 
-      ai.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      (ai.description && ai.description.toLowerCase().includes(searchQuery.value.toLowerCase()))
-    )
   }
   
   return filtered
@@ -154,8 +137,9 @@ const pausedAIs = computed(() => statsData.value.offline)
 const bannedAIs = computed(() => statsData.value.banned)
 
 // 方法
-function handleSearch() {
-  console.log('执行AI搜索:', searchQuery.value)
+function handleSearch(query) {
+  console.log('执行AI搜索:', query)
+  // 这里可以添加搜索逻辑，比如调用API搜索
 }
 
 function selectAi(ai) {
@@ -280,115 +264,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.admin-ai-container {
-  display: flex;
-  height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.ai-list-container {
-  width: 370px;
-  margin-left: 120px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 20px 0 0 20px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-.ai-list-header {
-  padding: 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.ai-list-header h2 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-
-
-.ai-list-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-}
-
-/* 统计信息样式 */
-.stats-section {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.stat-card {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 12px;
-  padding: 2px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  cursor:pointer;
-}
-
-.stat-card.active {
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-}
-
-.stat-card.active .stat-number {
-  color: white;
-}
-
-.stat-card.active .stat-icon {
-  color: white;
-}
-
-.stat-icon {
-  font-size: 24px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(102, 126, 234, 0.1);
-  border-radius: 10px;
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-number {
-  font-size: 20px;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 2px;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #666;
-  font-weight: 500;
-}
-
-/* AI列表样式 */
+/* AI列表样式 - 保留AI特有的样式 */
 .ai-items {
   display: flex;
   flex-direction: column;
@@ -529,169 +405,4 @@ onMounted(() => {
   color: #ef4444;
 }
 
-/* 对话框样式 */
-.dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.ai-dialog, .confirm-dialog {
-  background: white;
-  border-radius: 16px;
-  width: 500px;
-  max-width: 90vw;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-}
-
-.dialog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.dialog-header h3 {
-  margin: 0;
-  color: #333;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.3s ease;
-}
-
-.close-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.dialog-content {
-  padding: 20px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  color: #333;
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.form-input, .form-select, .form-textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-}
-
-.form-input:focus, .form-select:focus, .form-textarea:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.dialog-actions {
-  display: flex;
-  gap: 12px;
-  padding: 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  justify-content: flex-end;
-}
-
-.dialog-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.save-btn {
-  background: #667eea;
-  color: white;
-}
-
-.save-btn:hover {
-  background: #5a67d8;
-}
-
-.cancel-btn {
-  background: #e5e7eb;
-  color: #374151;
-}
-
-.cancel-btn:hover {
-  background: #d1d5db;
-}
-
-.delete-btn {
-  background: #ef4444;
-  color: white;
-}
-
-.delete-btn:hover {
-  background: #dc2626;
-}
-
-.confirm-content {
-  padding: 30px;
-  text-align: center;
-}
-
-.confirm-content h3 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-size: 18px;
-}
-
-.confirm-content p {
-  margin: 0;
-  color: #666;
-  line-height: 1.5;
-}
-
-.confirm-actions {
-  display: flex;
-  gap: 12px;
-  padding: 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  justify-content: center;
-}
 </style>

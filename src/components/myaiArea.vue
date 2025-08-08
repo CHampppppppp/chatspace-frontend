@@ -48,27 +48,17 @@
               {{ likeLoading ? '...' : (isLiked ? '已赞' : '点赞') }}
             </button>
           </div>
-        </div>
-      </div>
 
-      <!-- AI Prompt信息区域 -->
-      <div class="ai-prompt-section">
-        <div class="prompt-container">
-          <div class="prompt-header" @click="togglePromptExpanded">
-            <div class="prompt-title">
+          <!-- AI Prompt按钮 -->
+          <div class="ai-prompt">
+            <span class="prompt-label">AI Prompt：</span>
+            <button 
+              @click="showPromptDialog" 
+              class="prompt-btn"
+            >
               <span class="prompt-icon">📝</span>
-              <span>AI Prompt</span>
-            </div>
-            <div class="expand-icon" :class="{ expanded: isPromptExpanded }">
-              {{ isPromptExpanded ? '▼' : '▶' }}
-            </div>
-          </div>
-          <div v-if="isPromptExpanded" class="prompt-content">
-            <div class="prompt-text">{{ selectedAI.prompt || '暂无Prompt信息' }}</div>
-            <div v-if="isPromptExpanded" class="prompt-token-info">
-              <span class="token-label">Prompt Token:</span>
-              <span class="token-value">{{ selectedAI.promptToken }}</span>
-            </div>
+              查看
+            </button>
           </div>
         </div>
       </div>
@@ -90,12 +80,30 @@
       <h3>选择一个AI查看详情</h3>
       <p>点击左侧AI列表中的AI来查看详细信息</p>
     </div>
+
+    <!-- Prompt弹窗 -->
+    <customDialog
+      v-model:visible="isPromptDialogVisible"
+      title="AI Prompt详情"
+      type="message"
+      :showActions="false"
+      :closeOnOverlay="true"
+    >
+      <div class="prompt-dialog-content">
+        <div class="prompt-text-dialog">{{ selectedAI?.prompt || '暂无Prompt信息' }}</div>
+        <div class="prompt-token-info-dialog">
+          <span class="token-label">Prompt Token:</span>
+          <span class="token-value">{{ selectedAI?.promptToken || 0 }}</span>
+        </div>
+      </div>
+    </customDialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import customButton from './customButton.vue'
+import customDialog from './customDialog.vue'
 import { useUserStore } from '../store/user.js'
 
 const userStore = useUserStore()
@@ -116,7 +124,7 @@ const isAddingFriend = ref(false)
 const likedAIs = ref(new Set()) // 存储已点赞的AI ID
 const likeLoading = ref(false)
 const likeCount = ref(0) // 本地点赞计数
-const isPromptExpanded = ref(false) // 控制prompt展开状态
+const isPromptDialogVisible = ref(false) // 控制prompt弹窗显示状态
 
 // 计算当前AI是否被点赞
 const isLiked = computed(() => {
@@ -215,9 +223,9 @@ function truncateText(text, maxLength) {
   return text.substring(0, maxLength) + '...'
 }
 
-// 切换prompt展开状态
-function togglePromptExpanded() {
-  isPromptExpanded.value = !isPromptExpanded.value
+// 显示prompt弹窗
+function showPromptDialog() {
+  isPromptDialogVisible.value = true
 }
 </script>
 
@@ -303,7 +311,8 @@ function togglePromptExpanded() {
 .ai-description,
 .ai-creator,
 .ai-created-date,
-.ai-likes {
+.ai-likes,
+.ai-prompt {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -312,7 +321,7 @@ function togglePromptExpanded() {
   margin-bottom: 8px;
 }
 
-.ai-likes {
+.ai-prompt {
   border-bottom: none;
   margin-bottom: 0;
 }
@@ -320,7 +329,8 @@ function togglePromptExpanded() {
 .description-label,
 .creator-label,
 .date-label,
-.likes-label {
+.likes-label,
+.prompt-label {
   font-weight: 600;
   color: #555;
   font-size: 16px;
@@ -402,99 +412,58 @@ function togglePromptExpanded() {
   }
 }
 
-/* AI Prompt信息区域 */
-.ai-prompt-section {
-  margin-top:-3%;
-  margin-left:35%;
-  width: 30%;
-  justify-content: center;
+/* Prompt按钮样式 */
+.prompt-btn {
+  display: inline-flex;
   align-items: center;
-}
-
-.prompt-container {
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.prompt-container:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.prompt-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid #667eea;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: rgba(102, 126, 234, 0.05);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-.prompt-header:hover {
-  background: rgba(102, 126, 234, 0.1);
+.prompt-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
-.prompt-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  color: #333;
-}
-
-.prompt-icon {
+.prompt-btn .prompt-icon {
   font-size: 16px;
 }
 
-.expand-icon {
-  font-size: 14px;
-  color: #666;
-  transition: transform 0.3s ease;
-}
-
-.expand-icon.expanded {
-  transform: rotate(0deg);
-}
-
-.prompt-content {
+/* 弹窗内容样式 */
+.prompt-dialog-content {
   padding: 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  animation: slideDown 0.3s ease;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    max-height: 500px;
-  }
-}
-
-.prompt-text {
+.prompt-text-dialog {
   color: #333;
   line-height: 1.6;
   font-size: 14px;
   white-space: pre-wrap;
   word-wrap: break-word;
-  margin-bottom: 15px;
-  padding: 15px;
+  margin-bottom: 20px;
+  padding: 20px;
   background: rgba(248, 250, 252, 0.8);
   border-radius: 8px;
   border-left: 4px solid #667eea;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
-.prompt-token-info {
+.prompt-token-info-dialog {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 15px;
+  padding: 12px 16px;
   background: rgba(102, 126, 234, 0.1);
   border-radius: 8px;
   border: 1px solid rgba(102, 126, 234, 0.2);
