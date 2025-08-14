@@ -2,15 +2,22 @@
   <div class="friends-container">
     <!-- 左侧工具栏 -->
     <ToolBar ref="toolBarRef" />
+    
+    <!-- 移动端汉堡菜单按钮 -->
+    <div class="mobile-menu-trigger" @click="showMobileFriendsList = !showMobileFriendsList">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    
     <!-- 好友列表区域 -->
-    <div class="friends-list-container">
+    <div class="friends-list-container" :class="{ show: showMobileFriendsList }">
       <div class="friends-list-header">
-        <h2>好友</h2>
+        <h2 v-if="!isMobile">好友</h2>
         <div class="header-actions">
           <SearchBox v-model="userStore.searchQuery" placeholder="搜索好友..." @search="handleSearch" />
-          <button class="add-chat-btn" @click="showAddFriendDialog">
+          <button class="add-friend-btn" @click="showAddFriendDialog">
             <span class="btn-icon">➕</span>
-            <span class="btn-text">添加好友</span>
           </button>
         </div>
       </div>
@@ -23,7 +30,7 @@
             :key="friend.id"
             class="friend-item"
             :class="{ 'selected': friendStore.selectedFriendId === friend.id }"
-            @click="selectFriend(friend)"
+            @click="handleFriendSelect(friend)"
           >
             <div class="friend-avatar">
               <img :src="friend.avatar" :alt="friend.name" />
@@ -152,6 +159,9 @@ const userStore = useUserStore()
 // 响应式数据
 const searchQuery = ref('')
 
+// 移动端显示控制
+const showMobileFriendsList = ref(false)
+
 // 添加好友弹窗相关数据
 const showAddDialog = ref(false)
 const addFriendInput = ref('')
@@ -180,6 +190,26 @@ function handleSearch() {
 
 function selectFriend(friend) {
   friendStore.selectFriend(friend.id)
+}
+
+// 移动端选择好友
+function selectFriendMobile(friend) {
+  friendStore.selectFriend(friend.id)
+  showMobileFriendsList.value = false // 选择后隐藏好友列表
+}
+
+// 检查是否为移动端
+function isMobile() {
+  return typeof window !== 'undefined' && window.innerWidth <= 768
+}
+
+// 处理好友选择
+function handleFriendSelect(friend) {
+  if (isMobile()) {
+    selectFriendMobile(friend)
+  } else {
+    selectFriend(friend)
+  }
 }
 
 function startChatWithFriend(friend) {
@@ -340,6 +370,33 @@ onMounted(() => {
   display: flex;
   gap: 10px;
   align-items: center;
+  margin-left: auto;
+  margin-top:2%;
+}
+
+.add-friend-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.add-friend-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.add-friend-btn .btn-icon {
+  font-size: 16px;
 }
 
 .add-chat-btn {
@@ -740,5 +797,229 @@ onMounted(() => {
 .modal-content::-webkit-scrollbar-thumb:hover,
 .requests-list::-webkit-scrollbar-thumb:hover {
   background: rgba(102, 126, 234, 0.7);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .friends-container {
+    flex-direction: column;
+    padding-bottom: 80px;
+    /* 为底部导航栏留空间 */
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* 移动端触发按钮 - 沿用customButton样式 */
+  .mobile-menu-trigger {
+    position: fixed;
+    top:20px;
+    left: 20px;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 10px;
+    border-radius: 15px;
+    border: none;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+    width: 48px;
+    height: 48px;
+  }
+
+  .mobile-menu-trigger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    background: linear-gradient(45deg, #764ba2, #667eea);
+  }
+
+  .mobile-menu-trigger:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+  }
+
+  .mobile-menu-trigger span {
+    width: 18px;
+    height: 2px;
+    background-color: white;
+    border-radius: 1px;
+    transition: all 0.3s ease;
+  }
+
+  .friends-list-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 80px;
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+  }
+
+  .friends-list-container.show {
+    transform: translateX(0);
+  }
+
+  .friends-list-header {
+    padding: 12px 16px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e0e0e0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+  }
+
+  .friends-list-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    font-weight: 600;
+  }
+
+  .header-actions {
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .add-chat-btn {
+    width: auto;
+    justify-content: center;
+    padding: 12px 16px;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .add-friend-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .friends-list-content {
+    padding: 8px 12px;
+  }
+
+  .friend-item {
+    padding: 12px;
+    border-radius: 16px;
+    margin-bottom: 6px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .friend-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .friend-avatar img {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+  }
+
+  .friend-name {
+    font-size: 15px;
+    margin-bottom: 3px;
+    font-weight: 500;
+  }
+
+  .friend-status {
+    font-size: 13px;
+    color: #666;
+  }
+
+  /* 添加好友弹窗移动端优化 */
+  .add-friend-modal {
+    width: 95%;
+    max-width: none;
+    margin: 20px auto;
+    max-height: 90vh;
+    border-radius: 16px;
+  }
+
+  .modal-header {
+    padding: 20px;
+  }
+
+  .modal-header h3 {
+    font-size: 18px;
+  }
+
+  .modal-content {
+    padding: 0 20px 20px;
+    max-height: calc(90vh - 80px);
+  }
+
+  .input-group {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .friend-input {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px; /* 防止iOS缩放 */
+    border-radius: 12px;
+  }
+
+  .send-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    border-radius: 12px;
+  }
+
+  .request-item {
+    padding: 15px;
+    border-radius: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .request-avatar {
+    margin-right: 0;
+    align-self: flex-start;
+  }
+
+  .request-info {
+    margin-right: 0;
+    width: 100%;
+  }
+
+  .request-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .accept-btn, .reject-btn {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
+/* 桌面端隐藏移动端按钮 */
+@media (min-width: 769px) {
+  .mobile-menu-trigger {
+    display: none;
+  }
 }
 </style>

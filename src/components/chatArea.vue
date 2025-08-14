@@ -7,15 +7,7 @@
         <button class="mobile-menu-btn" @click="$emit('toggle-chat-list')" v-if="isMobile">
           <span class="hamburger-icon">🔙</span>
         </button>
-        <div class="chat-user-info">
-          <div class="chat-user-avatar">
-            <img :src="currentChat.avatar" :alt="currentChat.name" />
-          </div>
-          <div class="chat-user-details">
-            <h3>{{ currentChat.name }}</h3>
-            <span class="user-status">{{ currentChat.online ? '在线' : '离线' }}</span>
-          </div>
-        </div>
+        <h3 style="text-align: center">{{ currentChat.name }}</h3>
         <div class="chat-actions">
           <div class="more-menu-container">
             <button class="action-btn" title="更多" @click="showMore()">⋯</button>

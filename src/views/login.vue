@@ -6,8 +6,15 @@
       <div class="logo-container">
         <img src="../assets/images/logo.svg" alt="ChatSpace Logo" class="app-logo" />
       </div>
+      
+      <!-- 移动端切换按钮 -->
+      <div class="mobile-switch" v-if="isMobile">
+        <button :class="{ active: !isRegisterMode }" @click="switchToLogin">登录</button>
+        <button :class="{ active: isRegisterMode }" @click="switchToRegister">注册</button>
+      </div>
+      
       <!-- 注册登录区域 -->
-      <div class="in-up" id="loginAndRegist">
+      <div class="in-up" id="loginAndRegist" :class="{ 'mobile-register-mode': isMobile && isRegisterMode }">
         <div class="form-container sign-up-container">
           <div class="myCenter">
             <h1>注册</h1>
@@ -77,7 +84,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user.js'
 import customButton from '../components/customButton.vue'
@@ -147,6 +154,10 @@ const showAlertDialog = ref(false)
 const alertMessage = ref('')
 const alertType = ref('warning')
 
+// 移动端相关数据
+const isMobile = ref(false)
+const isRegisterMode = ref(false)
+
 // 显示提示弹窗
 function showAlert(message, type = 'warning') {
   alertMessage.value = message
@@ -159,6 +170,27 @@ function closeAlertDialog() {
   showAlertDialog.value = false
   alertMessage.value = ''
   alertType.value = 'warning'
+}
+
+// 检测是否为移动端
+function checkMobile() {
+  isMobile.value = window.innerWidth <= 920
+}
+
+// 移动端切换到登录
+function switchToLogin() {
+  if (isMobile.value) {
+    isRegisterMode.value = false
+    document.querySelector("#loginAndRegist").classList.remove('right-panel-active')
+  }
+}
+
+// 移动端切换到注册
+function switchToRegister() {
+  if (isMobile.value) {
+    isRegisterMode.value = true
+    document.querySelector("#loginAndRegist").classList.add('right-panel-active')
+  }
 }
 
 // 切换到注册面板
@@ -372,7 +404,7 @@ function goToLogin() {
   }
 }
 
-// 初始化记住我功能
+// 初始化记住我功能和移动端检测
 onMounted(() => {
   // 检查是否有保存的登录信息
   const savedRememberMe = localStorage.getItem('rememberMe')
@@ -382,6 +414,17 @@ onMounted(() => {
     rememberMe.value = true
     username.value = savedAccount
   }
+
+  // 初始化移动端检测
+  checkMobile()
+  
+  // 监听窗口大小变化
+  window.addEventListener('resize', checkMobile)
+})
+
+// 组件卸载时清理事件监听
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
 })
 </script>
 
@@ -448,6 +491,18 @@ onMounted(() => {
   z-index: 1;
 }
 
+.sign-up-container div {
+  border-radius: 20px 0 0 20px;
+}
+
+.in-up.right-panel-active .sign-up-container div {
+  border-radius: 20px 0 0 20px;
+}
+
+.in-up.right-panel-active .sign-in-container div {
+  border-radius: 0 20px 20px 0;
+}
+
 .in-up.right-panel-active .sign-in-container {
   z-index: 1;
 }
@@ -459,9 +514,14 @@ onMounted(() => {
 .form-container div {
   background: rgba(255, 255, 255, 0.95);
   flex-direction: column;
-  padding: 0 40px;
+  padding: 40px;
   height: 100%;
   backdrop-filter: blur(10px);
+  border-radius: 20px 0 0 20px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .form-container h1 {
@@ -474,15 +534,17 @@ onMounted(() => {
 
 .form-container input {
   background: rgba(240, 240, 240, 0.8);
-  border-radius: 25px;
+  border-radius: 15px;
   border: 2px solid transparent;
-  padding: 15px 20px;
-  margin: 8px 0;
+  padding: 16px 20px;
+  margin: 10px 0;
   width: 100%;
   outline: none;
   font-size: 14px;
   transition: all 0.3s ease;
   backdrop-filter: blur(5px);
+  box-sizing: border-box;
+  min-height: 50px;
 }
 
 .form-container input:focus {
@@ -555,14 +617,16 @@ onMounted(() => {
 }
 
 .checkmark {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border: 2px solid #ddd;
-  border-radius: 4px;
-  margin-right: 8px;
+  border-radius: 6px;
+  margin-right: 10px;
   position: relative;
   transition: all 0.3s ease;
   background: white;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .remember-me input[type="checkbox"]:checked+.checkmark,
@@ -721,17 +785,27 @@ onMounted(() => {
   animation: fadeInUp 0.8s ease-out;
 }
 
-/* 响应式设计 */
+/* 移动端优化的响应式设计 */
 @media screen and (max-width: 920px) {
+  .in-up-container {
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
   .in-up {
-    width: 95%;
-    min-height: 400px;
+    width: 100%;
+    max-width: 400px;
+    min-height: auto;
     flex-direction: column;
+    border-radius: 25px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(15px);
   }
 
   .form-container {
     width: 100%;
     position: relative;
+    height: auto;
   }
 
   .overlay-container {
@@ -742,25 +816,299 @@ onMounted(() => {
   .sign-up-container {
     width: 100%;
     left: 0;
+    position: relative;
+    height: auto;
   }
-}
+
+  .form-container div {
+    padding: 30px 25px;
+    height: auto;
+    min-height: auto;
+    border-radius: 25px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 移动端切换按钮 */
+  .mobile-switch {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 30px;
+    padding: 6px;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .mobile-switch button {
+    flex: 1;
+    padding: 14px 20px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-sizing: border-box;
+    min-height: 44px;
+  }
+
+  .mobile-switch button.active {
+    background: rgba(255, 255, 255, 0.95);
+    color: #667eea;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+  }
+
+  .mobile-switch button:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .mobile-switch button.active:hover {
+    color: #667eea;
+    background: rgba(255, 255, 255, 0.95);
+  }
+
+  /* 移动端模式下的表单显示控制 */
+  .in-up.mobile-register-mode .sign-in-container {
+    display: none;
+  }
+
+  .in-up:not(.mobile-register-mode) .sign-up-container {
+    display: none;
+  }
+
+  .in-up.mobile-register-mode .sign-up-container {
+    display: block;
+    opacity: 1;
+    transform: none;
+  }
+
+  .in-up:not(.mobile-register-mode) .sign-in-container {
+     display: block;
+     opacity: 1;
+     transform: none;
+   }
+
+   /* 移动端触控优化 */
+   .form-container input,
+   .form-container button,
+   .mobile-switch button,
+   .remember-me,
+   .in-up a {
+     -webkit-tap-highlight-color: rgba(102, 126, 234, 0.3);
+     -webkit-touch-callout: none;
+     -webkit-user-select: none;
+     user-select: none;
+   }
+
+   /* 移动端输入框聚焦时防止页面缩放 */
+   .form-container input {
+     font-size: 16px !important;
+   }
+
+   /* 移动端滚动优化 */
+   .in-up-container {
+     -webkit-overflow-scrolling: touch;
+     overflow-y: auto;
+   }
+
+   /* 移动端动画优化 */
+   .mobile-switch button {
+     -webkit-transform: translateZ(0);
+     transform: translateZ(0);
+   }
+ }
+
+/* 平板端适配 */
+@media screen and (min-width: 481px) and (max-width: 920px) {
+  .in-up {
+    max-width: 450px;
+  }
+
+  .form-container div {
+    padding: 35px 30px;
+  }
+
+  .form-container input {
+    padding: 18px 22px;
+    font-size: 15px;
+  }
+
+  .app-logo {
+    width: 200px;
+  }
+ }
 
 @media screen and (max-width: 480px) {
   .in-up-container {
     padding: 10px;
+    justify-content: flex-start;
+    padding-top: 20px;
+  }
+
+  .in-up {
+    width: 100%;
+    max-width: 350px;
+    border-radius: 20px;
   }
 
   .form-container div {
-    padding: 0 20px;
+    padding: 30px 20px;
+    border-radius: 20px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .form-container h1 {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
+    margin-bottom: 25px;
   }
 
-  .in-up button {
-    padding: 12px 30px;
-    font-size: 14px;
+  .form-container input {
+    padding: 18px 20px;
+    margin: 12px 0;
+    font-size: 16px; /* 防止iOS缩放 */
+    border-radius: 12px;
+    -webkit-appearance: none; /* 移除iOS默认样式 */
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 52px;
+  }
+
+  .form-container input:focus {
+    transform: none; /* 移动端不需要上移动画 */
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+    border-color: #667eea;
+  }
+
+  /* 移动端按钮优化 */
+  .form-container .custom-button {
+    width: 100%;
+    padding: 18px 20px;
+    font-size: 16px;
+    border-radius: 12px;
+    margin-top: 18px;
+    min-height: 52px; /* 确保触控区域足够大 */
+    box-sizing: border-box;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  /* 记住密码选项移动端优化 */
+  .remember-me {
+    margin: 18px 0;
+    font-size: 15px;
+    padding: 12px 0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .checkmark {
+    width: 22px;
+    height: 22px;
+    margin-right: 12px;
+    border-radius: 6px;
+  }
+
+  /* 链接按钮移动端优化 */
+  .in-up a {
+    font-size: 15px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    display: inline-block;
+    min-height: 44px; /* iOS推荐的最小触控区域 */
+    line-height: 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+  }
+
+  .in-up a:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
+  }
+
+  /* 移动端密码切换按钮优化 */
+    .password-toggle-btn-login,
+    .password-toggle-btn-regis {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      font-size: 18px;
+      z-index: 10;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    .password-toggle-btn-login:hover,
+    .password-toggle-btn-regis:hover {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(102, 126, 234, 0.4);
+      transform: translateY(-50%) scale(1.05);
+    }
+
+    /* 移动端隐藏密码切换按钮 */
+    @media screen and (max-width: 920px) {
+      .password-toggle-btn-login,
+      .password-toggle-btn-regis {
+        display: none;
+      }
+    }
+
+   /* 移动端密码输入框容器 */
+   .form-container {
+     position: relative;
+   }
+
+   .form-container > div {
+     position: relative;
+   }
+
+  /* 移动端Logo优化 */
+  .logo-container {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 0;
+  }
+
+  .app-logo {
+    width: 140px;
+  }
+
+  /* 移动端表单容器相对定位 */
+  .form-container {
+    position: relative;
+  }
+
+  .form-container input {
+    position: relative;
+    padding-right: 55px; /* 为密码切换按钮留出空间 */
+  }
+}
+
+/* 移动端切换按钮在桌面端隐藏，移动端显示 */
+.mobile-switch {
+  display: none;
+}
+
+@media screen and (max-width: 920px) {
+  .mobile-switch {
+    display: flex;
   }
 }
 
@@ -790,7 +1138,9 @@ onMounted(() => {
 /* 响应式Logo */
 @media screen and (max-width: 920px) {
   .logo-container {
+    margin-top: 20px;
     margin-bottom: 30px;
+    margin-left: 0;
   }
 
   .app-logo {
@@ -799,12 +1149,14 @@ onMounted(() => {
 }
 
 @media screen and (max-width: 480px) {
-  .app-logo {
-    width: 160px;
+  .logo-container {
+    margin-top: 20px;
+    margin-bottom: 25px;
+    margin-left: 0;
   }
 
-  .logo-container {
-    margin-bottom: 25px;
+  .app-logo {
+    width: 160px;
   }
 }
 
@@ -862,7 +1214,15 @@ onMounted(() => {
 
 .password-toggle-btn-login i,
 .password-toggle-btn-regis i {
-  font-size: 14px;
+  pointer-events: none;
+}
+
+/* 移动端隐藏密码切换按钮 - 覆盖所有样式 */
+@media screen and (max-width: 920px) {
+  .password-toggle-btn-login,
+  .password-toggle-btn-regis {
+    display: none !important;
+  }
 }
 
 </style>
