@@ -172,3 +172,70 @@ export async function revokeMessageApi(messageId){
     return 2
   }
 }
+
+export async function createMyAi(aiData)
+{
+  try{
+    const resp = await api.post('/myai', aiData)
+    if(resp.code === 200){
+      return 0
+    }
+    else {
+      return 1
+    }
+  }catch(err){
+    return 2
+  }
+}
+
+export async function addAiFriend(aiId,senderId)
+{
+  try{
+    const resp = await api.post(`/friend/${aiId}`,{
+      senderId:userProfile.value.userId
+    })
+    if(resp.code === 200){
+      return 0
+    }
+    else {
+      return 1
+    }
+  }catch(err){
+    return 2
+  }
+}
+
+export async function createGroup(groupData)
+{
+  try{
+    const resp = await api.post('/group', groupData)
+    if(resp.code === 200){
+      return 0
+    }
+    else {
+      return 1
+    }
+  }catch(err){
+    return 2
+  }
+}
+
+export async function sendMessage(senderId,sessionId,content,contentType)
+{
+   try{
+    const resp = await api.post('/private-message', {
+      senderId: userProfile.value.userId,
+      sessionId: chatStore.selectedChatId,
+      content: messageInput.value.trim(),
+      contentType: 'text'
+    })
+    if(resp.code === 200){
+      return 0
+    }
+    else {
+      return 1
+    }
+   }catch(err){
+    return 2
+   }
+}

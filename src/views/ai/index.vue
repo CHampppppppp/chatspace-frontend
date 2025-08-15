@@ -34,7 +34,7 @@
 import { ref, computed } from 'vue'
 import { useAIStore } from '../../store/ai.js'
 import ToolBar from '../../components/toolBar.vue'
-import AiArea from '../../components/aiArea.vue'
+import AiArea from './aiArea.vue'
 
 const aiStore = useAIStore()
 

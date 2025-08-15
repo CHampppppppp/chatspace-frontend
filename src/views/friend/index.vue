@@ -128,17 +128,7 @@
     </div>
   </div>
   
-  <!-- 提示弹窗 -->
-  <CustomDialog 
-    v-model:visible="showAlertDialog"
-    :title="alertType === 'success' ? '成功' : alertType === 'error' ? '错误' : '提示'"
-    :type="alertType"
-    :message="alertMessage"
-    :show-cancel="false"
-    confirm-text="确定"
-    @confirm="closeAlertDialog"
-    @close="closeAlertDialog"
-  />
+
 </template>
 
 <script setup>
@@ -147,10 +137,11 @@ import { useRouter } from 'vue-router'
 import { useFriendStore } from '../../store/friend.js'
 import { useUserStore } from '../../store/user.js'
 import ToolBar from '../../components/toolBar.vue'
-import FriendArea from '../../components/friendArea.vue'
+import FriendArea from './friendArea.vue'
 import SearchBox from '../../components/SearchBox.vue'
 import CustomDialog from '../../components/customDialog.vue'
 import { api } from '../../utils/axiosApi.js'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const friendStore = useFriendStore()
@@ -165,9 +156,7 @@ const showMobileFriendsList = ref(false)
 // 添加好友弹窗相关数据
 const showAddDialog = ref(false)
 const addFriendInput = ref('')
-const showAlertDialog = ref(false)
-const alertMessage = ref('')
-const alertType = ref('warning')
+
 
 // 好友请求列表
 const friendRequests = ref([])
@@ -259,16 +248,13 @@ function closeAddFriendDialog() {
 
 // 显示提示弹窗
 function showAlert(message, type = 'warning') {
-  alertMessage.value = message
-  alertType.value = type
-  showAlertDialog.value = true
-}
-
-// 关闭提示弹窗
-function closeAlertDialog() {
-  showAlertDialog.value = false
-  alertMessage.value = ''
-  alertType.value = 'warning'
+  if (type === 'success') {
+    ElMessage.success(message)
+  } else if (type === 'error') {
+    ElMessage.error(message)
+  } else {
+    ElMessage.warning(message)
+  }
 }
 
 // 获取好友请求列表

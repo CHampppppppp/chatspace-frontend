@@ -51,9 +51,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import AdminLayout from '../../components/AdminLayout.vue'
-import UserDetailArea from '../../components/UserDetailArea.vue'
-import { api } from '../../utils/axiosApi.js'
+import AdminLayout from '../../../components/AdminLayout.vue'
+import UserDetailArea from './UserDetailArea.vue'
+import { api } from '../../../utils/axiosApi.js'
 
 // 响应式数据
 const selectedUserId = ref(null)

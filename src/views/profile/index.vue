@@ -119,11 +119,7 @@
       </div>
     </CustomDialog>
 
-    <!-- 提示弹窗组件 -->
-    <CustomDialog v-model:visible="showAlertDialog"
-      :title="alertType === 'success' ? '成功' : alertType === 'error' ? '错误' : '提示'" :type="alertType"
-      :message="alertMessage" :show-cancel="false" confirm-text="确定" @confirm="closeAlertDialog"
-      @close="closeAlertDialog" />
+
 
     <!-- 确认弹窗组件 -->
     <CustomDialog v-model:visible="showConfirmDialog" title="确认" type="confirm" :message="confirmMessage"
@@ -134,10 +130,11 @@
 
 <script setup>
 import { ref, reactive, nextTick, computed, onMounted } from 'vue'
-import CustomDialog from '../components/customDialog.vue'
+import CustomDialog from '../../components/customDialog.vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '../store/user.js'
-import { deleteAccountApi, logoutApi, updateUserInfoApi, resetPasswordApi } from '../utils/api.js'
+import { useUserStore } from '../../store/user.js'
+import { deleteAccountApi, logoutApi, updateUserInfoApi, resetPasswordApi } from '../../utils/api.js'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -188,10 +185,7 @@ const avatarInput = ref(null)
 const showAvatarCrop = ref(false)
 const cropImageSrc = ref('')
 
-// 提示弹窗相关数据
-const showAlertDialog = ref(false)
-const alertMessage = ref('')
-const alertType = ref('warning')
+
 
 // 确认弹窗相关数据
 const showConfirmDialog = ref(false)
@@ -200,16 +194,13 @@ const confirmCallback = ref(null)
 
 // 显示提示弹窗
 function showAlert(message, type = 'warning') {
-  alertMessage.value = message
-  alertType.value = type
-  showAlertDialog.value = true
-}
-
-// 关闭提示弹窗
-function closeAlertDialog() {
-  showAlertDialog.value = false
-  alertMessage.value = ''
-  alertType.value = 'warning'
+  if (type === 'success') {
+    ElMessage.success(message)
+  } else if (type === 'error') {
+    ElMessage.error(message)
+  } else {
+    ElMessage.warning(message)
+  }
 }
 
 // 显示确认弹窗

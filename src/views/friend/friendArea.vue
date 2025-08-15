@@ -94,7 +94,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useFriendStore } from '../store/friend.js'
+import { useFriendStore } from '../../store/friend.js'
 
 // 使用store
 const friendStore = useFriendStore()

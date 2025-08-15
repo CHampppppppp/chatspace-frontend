@@ -117,9 +117,7 @@
       </div>
     </CustomDialog>
 
-    <!-- 提示弹窗 -->
-    <CustomDialog v-model:visible="showAlertDialog" :title="alertTitle" :type="alertType" :message="alertMessage"
-      :show-cancel="false" />
+
 
     <!-- 聊天内容区 -->
     <ChatArea ref="chatAreaRef" @toggle-chat-list="toggleMobileChatList" />
@@ -130,14 +128,15 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useChatStore } from '../store/chat'
-import { useUserStore } from '../store/user'
-import { useFriendStore } from '../store/friend'
-import ToolBar from '../components/toolBar.vue'
-import ChatArea from '../components/chatArea.vue'
-import SearchBox from '../components/SearchBox.vue'
-import CustomDialog from '../components/customDialog.vue'
-import { api } from '../utils/axiosApi.js'
+import { useChatStore } from '../../store/chat'
+import { useUserStore } from '../../store/user'
+import { useFriendStore } from '../../store/friend'
+import ToolBar from '../../components/toolBar.vue'
+import ChatArea from './chatArea.vue'
+import SearchBox from '../../components/SearchBox.vue'
+import CustomDialog from '../../components/customDialog.vue'
+import { createGroup } from '../../utils/api.js'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const chatStore = useChatStore()
@@ -164,11 +163,7 @@ const selectedFriends = ref([])
 const friendSearchQuery = ref('')
 const avatarInput = ref(null)
 
-// 提示弹窗数据
-const showAlertDialog = ref(false)
-const alertTitle = ref('提示')
-const alertType = ref('message')
-const alertMessage = ref('')
+
 
 // 计算属性
 const filteredFriends = computed(() => {
@@ -324,7 +319,7 @@ function removeAvatar() {
   }
 }
 
-function createGroupChat() {
+async function createGroupChat() {
   if (!canCreateGroup.value) {
     showAlert('请填写群聊名称并选择至少一个好友', 'warning')
     return
@@ -338,11 +333,9 @@ function createGroupChat() {
     ownerId: userStore.userProfile.userId
   }
 
-  api.post('/group', groupData)
-    .then(resp => {
-      if (resp.code === 200) {
-        // 创建成功，添加到聊天列表
-        const newGroupChat = {
+  const res = await createGroup(groupData)
+  if(res === 0){
+    const newGroupChat = {
           id: resp.data.groupId,
           name: resp.data.groupName,
           avatar: resp.data.avatar || '/images/group-default.png',
@@ -353,26 +346,29 @@ function createGroupChat() {
           isGroup: true,
           memberCount: resp.data.memberCount
         }
-        console.log(resp.data)
-
         chatStore.addChat(newGroupChat)
         chatStore.selectChat(newGroupChat.id)
-
         showAlert('群聊创建成功！', 'success')
         closeGroupChatDialog()
-      } else {
-        showAlert(resp.msg)
-      }
-    }).catch(err => {
-      showAlert('服务器未响应', 'error')
-    })
+  }
+  else if(res === 1){
+    showAlert('创建失败')
+  }
+  else{
+    showAlert('服务器未响应')
+  }
 }
 
 function showAlert(message, type = 'message', title = '提示') {
-  alertMessage.value = message
-  alertType.value = type
-  alertTitle.value = title
-  showAlertDialog.value = true
+  if (type === 'success') {
+    ElMessage.success(message)
+  } else if (type === 'error') {
+    ElMessage.error(message)
+  } else if (type === 'warning') {
+    ElMessage.warning(message)
+  } else {
+    ElMessage.info(message)
+  }
 }
 
 // 监听路由参数变化

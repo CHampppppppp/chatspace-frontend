@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import login from '../views/login.vue'
-import home from '../views/home.vue'
+import login from '../views/login/index.vue'
+import home from '../views/home/index.vue'
 
 const routes = [
   {
@@ -20,7 +20,7 @@ const routes = [
   {
     path: '/friends',
     name: 'Friends',
-    component: () => import('../views/friends/index.vue')
+    component: () => import('../views/friend/index.vue')
   },
   {
     path: '/ai',
@@ -35,22 +35,22 @@ const routes = [
   {
     path: '/profile',
     name: 'Profile',
-    component: () => import('../views/profile.vue')
+    component: () => import('../views/profile/index.vue')
   },
   {
     path: '/admin/users',
     name: 'AdminUsers',
-    component: () => import('../views/admin/user.vue'),
+    component: () => import('../views/admin/user/index.vue'),
   },
   {
     path: '/admin/myai',
     name: 'AdminMyAI',
-    component: () => import('../views/admin/myai.vue'),
+    component: () => import('../views/admin/myai/index.vue'),
   },
   {
     path: '/admin/groups',
     name: 'AdminGroups',
-    component: () => import('../views/admin/groups.vue'),
+    component: () => import('../views/admin/groups/index.vue'),
   },
   // 保留原有路由以兼容
   {

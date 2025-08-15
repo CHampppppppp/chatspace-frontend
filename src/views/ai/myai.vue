@@ -3,8 +3,15 @@
     <!-- 左侧工具栏 -->
     <ToolBar ref="toolBarRef" />
     
+    <!-- 移动端汉堡菜单按钮 -->
+    <div class="mobile-menu-trigger" @click="showMobileAIList = !showMobileAIList">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    
     <!-- 我的AI列表区域 -->
-    <div class="my-ai-list-container">
+    <div class="my-ai-list-container" :class="{ show: showMobileAIList }">
       <div class="my-ai-list-header">
         <h2>我的AI</h2>
         <SearchBox
@@ -100,17 +107,7 @@
     </div>
   </div>
   
-  <!-- 提示弹窗组件 -->
-  <CustomDialog
-    v-model:visible="showAlertDialog"
-    :title="alertType === 'success' ? '成功' : alertType === 'error' ? '错误' : '提示'"
-    :type="alertType"
-    :message="alertMessage"
-    :show-cancel="false"
-    confirm-text="确定"
-    @confirm="closeAlertDialog"
-    @close="closeAlertDialog"
-  />
+
 
   <!-- 确认弹窗组件 -->
   <CustomDialog
@@ -134,8 +131,13 @@ import { useAIStore } from '../../store/ai'
 import CustomDialog from '../../components/customDialog.vue'
 import ToolBar from '../../components/toolBar.vue'
 import SearchBox from '../../components/SearchBox.vue'
-import myaiArea from '../../components/myaiArea.vue'
-import { api } from '../../utils/axiosApi.js'
+import myaiArea from './myaiArea.vue'
+import { createMyAi, addAiFriend } from '../../utils/api.js'
+import { ElMessage } from 'element-plus'
+
+// 移动端显示控制
+const showMobileAIList = ref(false)
+
 
 // Store实例
 const userStore = useUserStore()
@@ -151,9 +153,6 @@ const showCreateDialog = ref(false)
 
 
 // 弹窗相关数据
-const showAlertDialog = ref(false)
-const alertMessage = ref('')
-const alertType = ref('warning')
 const showConfirmDialog = ref(false)
 const confirmMessage = ref('')
 const confirmCallback = ref(null)
@@ -166,12 +165,6 @@ const aiForm = ref({
   description: '',
   prompt: ''
 })
-
-// 移除availableIcons数组，改用URL输入
-
-const myAIList = ref([])
-
-const messages = ref({})
 
 // 计算属性
 const filteredMyAIList = computed(() => {
@@ -198,7 +191,17 @@ function selectMyAI(aiId) {
     selectedAIId.value = aiId
   }
   
+  // 移动端选择后隐藏AI列表
+  if (isMobile()) {
+    showMobileAIList.value = false
+  }
+  
   scrollToBottom()
+}
+
+// 检查是否为移动端
+function isMobile() {
+  return typeof window !== 'undefined' && window.innerWidth <= 768
 }
 
 
@@ -213,7 +216,7 @@ function closeCreateDialog() {
   }
 }
 
-function saveAI() {
+async function saveAI() {
   if (!aiForm.value.name.trim()) {
     showAlert('请输入AI名称')
     return
@@ -238,39 +241,33 @@ function saveAI() {
     userId: userProfile.value.userId
   }
   
-  api.post('/myai', aiData).then(resp => {
-    if (resp.code === 200) {
-      showAlert('AI创建成功', 'success')
-      closeCreateDialog()
-      // 重新获取AI列表
-      fetchMyAIList()
-    } else {
-      showAlert(resp.msg || 'AI创建失败', 'error')
-    }
-  }).catch(err => {
+  //创建Ai接口
+  const res = await createMyAi(aiData)
+  if(res === 0){
+    showAlert('AI创建成功', 'success')
+    closeCreateDialog()
+    // 重新获取AI列表
+    fetchMyAIList()
+  }
+  else if(res === 1){
+    showAlert('AI创建失败', 'error')
+  }
+  else{
     showAlert('服务器未响应', 'error')
-  })
+  }
 }
 
 // 显示提示弹窗
 function showAlert(message, type = 'warning') {
-  alertMessage.value = message
-  alertType.value = type
-  showAlertDialog.value = true
-}
-
-// 关闭提示弹窗
-function closeAlertDialog() {
-  showAlertDialog.value = false
-  alertMessage.value = ''
-  alertType.value = 'warning'
-}
-
-// 显示确认弹窗
-function showConfirm(message, callback) {
-  confirmMessage.value = message
-  confirmCallback.value = callback
-  showConfirmDialog.value = true
+  if (type === 'success') {
+    ElMessage.success(message)
+  } else if (type === 'error') {
+    ElMessage.error(message)
+  } else if (type === 'info') {
+    ElMessage.info(message)
+  } else {
+    ElMessage.warning(message)
+  }
 }
 
 // 关闭确认弹窗
@@ -298,7 +295,7 @@ function scrollToBottom() {
 }
 
 // 处理添加AI为好友
-function handleAddAIAsFriend(ai) {
+async function handleAddAIAsFriend(ai) {
   // 检查是否已经是好友
   const existingFriend = aiStore.getMyAIList.find(friend => friend.aiId === ai.aiId)
   if (existingFriend) {
@@ -306,23 +303,21 @@ function handleAddAIAsFriend(ai) {
     return
   }
   
-  api.post(`/friend/${ai.aiId}`,{
-  senderId:userProfile.value.userId
-}).then(resp => {
-  if(resp.code === 200){
+  //添加Ai好友接口
+  const res = await addAiFriend(ai.aiId,userProfile.value.userId)
+  if(res === 0){
     showAlert('添加成功，去和他/她聊聊天吧')
   }
-  else{
-    showAlert(resp.msg)
+  else if(res === 1){
+    showAlert('添加失败')
   }
-}).catch(err => {
-  showAlert('服务器未响应')
-})
+  else{
+    showAlert('服务器未响应', 'error')
+  }
 }
 
 // 处理点赞数更新
 function handleUpdateLikes(aiId, newLikes) {
-  // 只更新本地状态，不重复调用API
   // API调用已经在myaiArea组件中完成
   const ai = aiStore.getMyAIList.find(a => a.aiId === aiId)
   if (ai) {
@@ -938,5 +933,258 @@ onMounted(() => {
 .messages-container::-webkit-scrollbar-thumb:hover,
 .dialog-content::-webkit-scrollbar-thumb:hover {
   background: rgba(102, 126, 234, 0.7);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .customization-container {
+    flex-direction: column;
+    height: 100vh;
+    padding-bottom: 80px; /* 为底部导航栏留空间 */
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* 移动端触发按钮 - 沿用customButton样式 */
+  .mobile-menu-trigger {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 10px;
+    border-radius: 15px;
+    border: none;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+    width: 48px;
+    height: 48px;
+  }
+
+  .mobile-menu-trigger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    background: linear-gradient(45deg, #764ba2, #667eea);
+  }
+
+  .mobile-menu-trigger:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+  }
+
+  .mobile-menu-trigger span {
+    width: 18px;
+    height: 2px;
+    background-color: white;
+    border-radius: 1px;
+    transition: all 0.3s ease;
+  }
+
+  /* AI列表容器移动端适配 */
+  .my-ai-list-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 80px;
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+  }
+
+  .my-ai-list-container.show {
+    transform: translateX(0);
+  }
+
+  .my-ai-list-header {
+    padding: 80px 20px 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .my-ai-list-header h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .my-ai-list-content {
+    padding: 20px;
+    height: calc(100vh - 200px);
+    overflow-y: auto;
+  }
+
+  /* 创建AI按钮移动端优化 */
+  .create-ai-btn {
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 16px;
+    font-size: 16px;
+  }
+
+  .create-icon {
+    font-size: 24px;
+    margin-right: 12px;
+  }
+
+  /* AI项目移动端优化 */
+  .my-ai-item {
+    padding: 20px 15px;
+    margin-bottom: 12px;
+    border-radius: 16px;
+  }
+
+  .my-ai-avatar {
+    margin-right: 15px;
+  }
+
+  .my-ai-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 22px;
+  }
+
+  .my-ai-name {
+    font-size: 17px;
+    margin-bottom: 6px;
+  }
+
+  .my-ai-description {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* AI详情区域移动端适配 */
+  .ai-detail-container {
+    margin: 0;
+    border-radius: 0;
+    height: calc(100vh - 80px);
+  }
+
+  /* 创建AI对话框移动端优化 */
+  .dialog-overlay {
+    padding: 20px;
+  }
+
+  .dialog-content {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border-radius: 20px;
+    max-height: 90vh;
+  }
+
+  .dialog-header {
+    padding: 25px 20px 20px;
+  }
+
+  .dialog-header h3 {
+    font-size: 20px;
+  }
+
+  .dialog-body {
+    padding: 0 20px;
+    max-height: calc(90vh - 140px);
+    overflow-y: auto;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    padding: 15px;
+    font-size: 16px; /* 防止iOS缩放 */
+    border-radius: 12px;
+  }
+
+  .form-group textarea {
+    min-height: 100px;
+  }
+
+  .avatar-preview {
+    margin-top: 15px;
+  }
+
+  .preview-image {
+    width: 80px;
+    height: 80px;
+  }
+
+  .dialog-footer {
+    padding: 20px;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cancel-btn,
+  .save-btn {
+    width: 100%;
+    padding: 15px 24px;
+    font-size: 16px;
+    border-radius: 12px;
+  }
+}
+
+/* 桌面端隐藏移动端按钮 */
+@media (min-width: 769px) {
+  .mobile-menu-trigger {
+    display: none;
+  }
+}
+
+/* 超小屏幕优化 */
+@media (max-width: 360px) {
+  .mobile-menu-trigger {
+    width: 44px;
+    height: 44px;
+    top: 15px;
+    left: 15px;
+  }
+
+  .mobile-menu-trigger span {
+    width: 16px;
+  }
+
+  .my-ai-list-header {
+    padding: 70px 15px 15px;
+  }
+
+  .my-ai-list-header h2 {
+    font-size: 22px;
+  }
+
+  .my-ai-list-content {
+    padding: 15px;
+  }
+
+  .create-ai-btn {
+    padding: 18px 15px;
+  }
+
+  .my-ai-item {
+    padding: 18px 12px;
+  }
+
+  .dialog-content {
+    border-radius: 16px;
+  }
+
+  .dialog-header,
+  .dialog-body,
+  .dialog-footer {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
 }
 </style>

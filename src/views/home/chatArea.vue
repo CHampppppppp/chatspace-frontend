@@ -111,12 +111,12 @@
 
 <script setup>
 import { ref, computed, nextTick, watch, onMounted, onUnmounted } from 'vue'
-import { useChatStore } from '../store/chat'
-import { useUserStore } from '../store/user'
-import CustomDialog from './customDialog.vue'
-import EmojiPicker from './EmojiPicker.vue'
-import { api } from '../utils/axiosApi.js'
-import { revokeMessageApi } from '../utils/api.js'
+import { useChatStore } from '../../store/chat.js'
+import { useUserStore } from '../../store/user.js'
+import CustomDialog from '../../components/customDialog.vue'
+import EmojiPicker from '../../components/EmojiPicker.vue'
+import { api } from '../../utils/axiosApi.js'
+import { revokeMessageApi, sendMessage as sendMessageApi } from '../../utils/api.js'
 
 // 定义emit事件
 const emit = defineEmits(['toggle-chat-list'])
@@ -155,7 +155,7 @@ const currentMessages = computed(() => {
   return chatStore.currentMessages
 })
 
-function sendMessage() {
+async function sendMessage() {
   if (!messageInput.value.trim() || !chatStore.selectedChatId) return
 
   let actualContent = messageInput.value.trim()
@@ -192,24 +192,19 @@ function sendMessage() {
   // 直接使用store方法添加消息
   chatStore.addMessage(chatStore.selectedChatId, newMessage)
 
-  //使用api发送消息
-  api.post('/private-message', {
-    senderId: userProfile.value.userId,
-    sessionId: chatStore.selectedChatId,
-    content: messageInput.value.trim(),
-    contentType: 'text'
-  }).then(resp => {
-    if (resp.code === 200) {
-      console.log('发送消息： ' + messageInput.value.trim())
-    }
-    else {
-      showConfirmDialog.value = true
-      confirmMessage.value = resp.msg
-    }
-  }).catch(err => {
+  //发送消息接口
+  const res = await sendMessageApi(userProfile.value.userId,chatStore.selectedChatId,messageInput.value.trim(),'text')
+  if(res === 0){
+
+  }
+  else if(res === 1){
+    showConfirmDialog.value = true
+    confirmMessage.value = '发送失败'
+  }
+  else{
     showConfirmDialog.value = true
     confirmMessage.value = '服务器未响应'
-  })
+  }
 
   // 直接使用store方法更新聊天列表
   chatStore.updateChatLastMessage(chatStore.selectedChatId, newMessage.content, newMessage.time)
@@ -369,7 +364,6 @@ function deleteChatHistory() {
 }
 
 function deleteFriend() {
-  console.log('删除好友')
   showConfirm('确定要删除该好友吗？删除后将无法恢复聊天记录。', () => {
     // 删除好友逻辑
     // TODO: 实现删除好友功能

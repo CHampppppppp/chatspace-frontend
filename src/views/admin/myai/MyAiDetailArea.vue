@@ -198,9 +198,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { api } from '../utils/axiosApi.js'
-import toast from '../utils/toast.js'
-import confirm from '../utils/confirm.js'
+import { api } from '../../../utils/axiosApi.js'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 // 定义props
 const props = defineProps({
@@ -260,13 +259,13 @@ async function saveAiInfo() {
       if (response.data.code === 200) {
         emit('update-ai', props.selectedAi.aiId, editForm.value)
         closeDialog()
-        toast.success('保存成功', 'AI信息已更新')
+        ElMessage.success('保存成功，AI信息已更新')
       } else {
-        toast.error('保存失败', response.data.msg || '请稍后重试')
+        ElMessage.error(response.data.msg || '保存失败，请稍后重试')
       }
     } catch (error) {
       console.error('更新AI信息失败:', error)
-      toast.error('保存失败', '网络错误，请稍后重试')
+      ElMessage.error('保存失败，网络错误，请稍后重试')
     }
   }
 }
@@ -275,21 +274,27 @@ async function toggleAiStatus() {
   if (props.selectedAi) {
     const action = props.selectedAi.status === 'paused' ? '恢复运行' : '暂停'
     try {
-      await confirm.warning(`确定要${action}AI "${props.selectedAi.name}" 吗？`, {
-        confirmText: `确认${action}`
-      })
+      await ElMessageBox.confirm(
+        `确定要${action}AI "${props.selectedAi.name}" 吗？`,
+        '警告',
+        {
+          confirmButtonText: `确认${action}`,
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      )
       
       const response = await api.post(`/admin/${props.selectedAi.aiId}/pause`)
       if (response.data.code === 200) {
         emit('pause-ai', props.selectedAi.aiId)
-        toast.success(`${action}成功`, `AI已${action}`)
+        ElMessage.success(`${action}成功，AI已${action}`)
       } else {
-        toast.error(`${action}失败`, response.data.msg || '请稍后重试')
+        ElMessage.error(response.data.msg || `${action}失败，请稍后重试`)
       }
     } catch (error) {
       if (error.message !== '用户取消操作') {
         console.error('切换AI状态失败:', error)
-        toast.error('操作失败', '网络错误，请稍后重试')
+        ElMessage.error('操作失败，网络错误，请稍后重试')
       }
     }
   }
@@ -299,21 +304,27 @@ async function toggleBanStatus() {
   if (props.selectedAi) {
     const action = props.selectedAi.status === 'banned' ? '解除封禁' : '封禁'
     try {
-      await confirm.warning(`确定要${action}AI "${props.selectedAi.name}" 吗？`, {
-        confirmText: `确认${action}`
-      })
+      await ElMessageBox.confirm(
+        `确定要${action}AI "${props.selectedAi.name}" 吗？`,
+        '警告',
+        {
+          confirmButtonText: `确认${action}`,
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      )
       
       const response = await api.post(`/admin/${props.selectedAi.aiId}/ban`)
       if (response.data.code === 200) {
         emit('ban-ai', props.selectedAi.aiId)
-        toast.success(`${action}成功`, `AI已${action}`)
+        ElMessage.success(`${action}成功，AI已${action}`)
       } else {
-        toast.error(`${action}失败`, response.data.msg || '请稍后重试')
+        ElMessage.error(response.data.msg || `${action}失败，请稍后重试`)
       }
     } catch (error) {
       if (error.message !== '用户取消操作') {
         console.error('切换封禁状态失败:', error)
-        toast.error('操作失败', '网络错误，请稍后重试')
+        ElMessage.error('操作失败，网络错误，请稍后重试')
       }
     }
   }
@@ -322,35 +333,41 @@ async function toggleBanStatus() {
 function configureAi() {
   if (props.selectedAi) {
     // 这里可以打开AI配置界面
-    toast.info('配置功能', `即将配置AI ${props.selectedAi.name} 的参数`)
+    ElMessage.info(`即将配置AI ${props.selectedAi.name} 的参数`)
   }
 }
 
 function testAi() {
   if (props.selectedAi) {
     // 这里可以调用AI测试接口
-    toast.info('测试功能', `即将测试AI ${props.selectedAi.name} 的功能`)
+    ElMessage.info(`即将测试AI ${props.selectedAi.name} 的功能`)
   }
 }
 
 async function confirmDelete() {
   if (props.selectedAi) {
     try {
-      await confirm.delete(`确定要删除AI "${props.selectedAi.name}" 吗？`, {
-        message: '此操作不可撤销，请谨慎操作。'
-      })
+      await ElMessageBox.confirm(
+        `确定要删除AI "${props.selectedAi.name}" 吗？\n此操作不可撤销，请谨慎操作。`,
+        '危险操作',
+        {
+          confirmButtonText: '确认删除',
+          cancelButtonText: '取消',
+          type: 'error'
+        }
+      )
       
       const response = await api.delete(`/admin/${props.selectedAi.aiId}`)
       if (response.data.code === 200) {
         emit('delete-ai', props.selectedAi.aiId)
-        toast.success('删除成功', 'AI已被删除')
+        ElMessage.success('删除成功，AI已被删除')
       } else {
-        toast.error('删除失败', response.data.msg || '请稍后重试')
+        ElMessage.error(response.data.msg || '删除失败，请稍后重试')
       }
     } catch (error) {
       if (error.message !== '用户取消操作') {
         console.error('删除AI失败:', error)
-        toast.error('删除失败', '网络错误，请稍后重试')
+        ElMessage.error('删除失败，网络错误，请稍后重试')
       }
     }
   }

@@ -102,9 +102,9 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import customButton from './customButton.vue'
-import customDialog from './customDialog.vue'
-import { useUserStore } from '../store/user.js'
+import customButton from '../../components/customButton.vue'
+import customDialog from '../../components/customDialog.vue'
+import { useUserStore } from '../../store/user.js'
 
 const userStore = useUserStore()
 
@@ -138,7 +138,7 @@ watch(() => props.selectedAI, async (newAI) => {
     
     // 获取用户对当前AI的点赞状态
     try {
-      const { api } = await import('../utils/axiosApi.js')
+      const { api } = await import('../../utils/axiosApi.js')
       const response = await api.get(`/like/status/${newAI.aiId}/${userStore.userInfo.userId}`)
       if (response.code === 200 && response.data && response.data.isLiked) {
         likedAIs.value.add(newAI.aiId)
@@ -182,7 +182,7 @@ async function handleLike() {
   likeLoading.value = true
   
   try {
-    const { api } = await import('../utils/axiosApi.js')
+    const { api } = await import('../../utils/axiosApi.js')
     const aiId = props.selectedAI.aiId
     const wasLiked = likedAIs.value.has(aiId)
     

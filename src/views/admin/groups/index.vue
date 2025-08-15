@@ -50,11 +50,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import AdminLayout from '../../components/AdminLayout.vue'
-import GroupDetailArea from '../../components/GroupDetailArea.vue'
-import { api } from '../../utils/axiosApi.js'
-import toast from '../../utils/toast.js'
-import confirm from '../../utils/confirm.js'
+import AdminLayout from '../../../components/AdminLayout.vue'
+import GroupDetailArea from './GroupDetailArea.vue'
+import { api } from '../../../utils/axiosApi.js'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 // 响应式数据
 const selectedGroupId = ref(null)
@@ -155,10 +154,10 @@ async function fetchGroupList() {
       console.log("stats: ")
       console.log(statsData.value)
     } else {
-      toast.error('获取群聊列表失败', response.msg || '请稍后重试')
+      ElMessage.error(response.msg || '获取群聊列表失败，请稍后重试')
     }
   } catch (error) {
-    toast.error('网络错误', '无法连接到服务器，请检查网络连接')
+    ElMessage.error('网络错误，无法连接到服务器，请检查网络连接')
     console.error('获取群聊列表失败:', error)
   } finally {
     loading.value = false
@@ -177,10 +176,10 @@ async function fetchGroupDetail(groupId) {
         groups.value[index] = { ...groups.value[index], ...response.data }
       }
     } else {
-      toast.error('获取群聊详情失败', response.msg || '请稍后重试')
+      ElMessage.error(response.msg || '获取群聊详情失败，请稍后重试')
     }
   } catch (error) {
-    toast.error('网络错误', '无法获取群聊详情')
+    ElMessage.error('网络错误，无法获取群聊详情')
     console.error('获取群聊详情失败:', error)
   }
 }
@@ -199,12 +198,20 @@ function updateGroup(updatedGroup) {
 async function confirmDeleteGroup(groupId) {
   const group = groups.value.find(g => g.groupId === groupId)
   if (!group) {
-    toast.error('删除失败', '未找到要删除的群聊')
+    ElMessage.error('删除失败，未找到要删除的群聊')
     return
   }
 
   try {
-    await confirm.delete(group.name)
+    await ElMessageBox.confirm(
+          `确定要删除群聊 "${group.name}" 吗？\n此操作不可撤销，请谨慎操作。`,
+          '危险操作',
+          {
+            confirmButtonText: '确认删除',
+            cancelButtonText: '取消',
+            type: 'error'
+          }
+        )
     
     // 用户确认删除，执行删除操作
     const response = await api.delete(`/groups/${groupId}`)
@@ -220,13 +227,13 @@ async function confirmDeleteGroup(groupId) {
       
       // 重新获取列表以更新统计数据
       fetchGroupList()
-      toast.success('删除成功', `群聊 "${group.name}" 已被删除`)
-    } else {
-      toast.error('删除失败', response.msg || '请稍后重试')
+      ElMessage.success(`删除成功，群聊 "${group.name}" 已被删除`)
+      } else {
+        ElMessage.error(response.msg || '删除失败，请稍后重试')
     }
   } catch (error) {
     if (error.message !== '用户取消操作') {
-      toast.error('删除失败', '网络错误，请稍后重试')
+      ElMessage.error('删除失败，网络错误，请稍后重试')
       console.error('删除群聊失败:', error)
     }
   }

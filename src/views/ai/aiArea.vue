@@ -151,11 +151,11 @@
 
 <script setup>
 import {ref, computed, nextTick, watch, onUnmounted} from 'vue'
-import { useUserStore } from '../store/user'
-import { callDeepSeekAPI } from '../utils/deepseek.js'
-import { useAIStore } from '../store/ai.js'
-import CustomDialog from './customDialog.vue'
-import { revokeMessageApi } from '../utils/api.js'
+import { useUserStore } from '../../store/user'
+import { callDeepSeekAPI } from '../../utils/deepseek.js'
+import { useAIStore } from '../../store/ai.js'
+import CustomDialog from '../../components/customDialog.vue'
+import { revokeMessageApi } from '../../utils/api.js'
 
 // 使用Store
 const aiStore = useAIStore()

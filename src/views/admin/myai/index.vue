@@ -62,9 +62,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import AdminLayout from '../../components/AdminLayout.vue'
-import MyAiDetailArea from '../../components/MyAiDetailArea.vue'
-import { api } from '../../utils/axiosApi.js'
+import AdminLayout from '../../../components/AdminLayout.vue'
+import MyAiDetailArea from './MyAiDetailArea.vue'
+import { api } from '../../../utils/axiosApi.js'
 
 // 响应式数据
 const selectedAiId = ref(null)

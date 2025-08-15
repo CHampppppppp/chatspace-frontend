@@ -171,9 +171,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { api } from '../utils/axiosApi.js'
-import toast from '../utils/toast.js'
-import confirm from '../utils/confirm.js'
+import { api } from '../../../utils/axiosApi.js'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 // 定义props
 const props = defineProps({
@@ -223,12 +222,12 @@ async function saveEdit() {
     if (response.code === 200) {
       emit('update-group', { ...props.selectedGroup, ...editForm.value })
       closeEditDialog()
-      toast.success('保存成功', '群聊信息已更新')
+      ElMessage.success('保存成功，群聊信息已更新')
     } else {
-      toast.error('保存失败', response.msg || '请稍后重试')
+      ElMessage.error(response.msg || '保存失败，请稍后重试')
     }
   } catch (error) {
-    toast.error('保存失败', '网络错误，请稍后重试')
+    ElMessage.error('保存失败，网络错误，请稍后重试')
     console.error('更新群聊失败:', error)
   }
 }
@@ -238,9 +237,15 @@ async function toggleGroupStatus() {
   const statusText = newStatus === 'active' ? '启用' : '禁用'
   
   try {
-    await confirm.warning(`确定要${statusText}群聊 "${props.selectedGroup.name}" 吗？`, {
-      confirmText: `确认${statusText}`
-    })
+    await ElMessageBox.confirm(
+        `确定要${statusText}群聊 "${props.selectedGroup.name}" 吗？`,
+        '警告',
+        {
+          confirmButtonText: `确认${statusText}`,
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      )
     
     const response = await api.put(`/groups/${props.selectedGroup.groupId}/status`, {
       status: newStatus
@@ -248,13 +253,13 @@ async function toggleGroupStatus() {
     
     if (response.code === 200) {
       emit('update-group', { ...props.selectedGroup, status: newStatus })
-      toast.success(`${statusText}成功`, `群聊已${statusText}`)
-    } else {
-      toast.error(`${statusText}失败`, response.msg || '请稍后重试')
+      ElMessage.success(`${statusText}成功，群聊已${statusText}`)
+      } else {
+        ElMessage.error(response.msg || `${statusText}失败，请稍后重试`)
     }
   } catch (error) {
     if (error.message !== '用户取消操作') {
-      toast.error(`${statusText}失败`, '网络错误，请稍后重试')
+      ElMessage.error(`${statusText}失败，网络错误，请稍后重试`)
       console.error('更新群聊状态失败:', error)
     }
   }
@@ -266,21 +271,27 @@ function deleteGroup() {
 
 async function removeMember(member) {
   try {
-    await confirm.warning(`确定要移除成员 "${member.username}" 吗？`, {
-      confirmText: '确认移除'
-    })
+    await ElMessageBox.confirm(
+        `确定要移除成员 "${member.username}" 吗？`,
+        '警告',
+        {
+          confirmButtonText: '确认移除',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      )
     
     const response = await api.delete(`/groups/${props.selectedGroup.groupId}/members/${member.userId}`)
     
     if (response.code === 200) {
       emit('remove-member', member.userId)
-      toast.success('移除成功', `成员 "${member.username}" 已被移除`)
-    } else {
-      toast.error('移除失败', response.msg || '请稍后重试')
+      ElMessage.success(`移除成功，成员 "${member.username}" 已被移除`)
+      } else {
+        ElMessage.error(response.msg || '移除失败，请稍后重试')
     }
   } catch (error) {
     if (error.message !== '用户取消操作') {
-      toast.error('移除失败', '网络错误，请稍后重试')
+      ElMessage.error('移除失败，网络错误，请稍后重试')
       console.error('移除成员失败:', error)
     }
   }

@@ -4,7 +4,7 @@
     <div class="myCenter in-up-container my-animation-hideToShow">
       <!-- Logo区域 -->
       <div class="logo-container">
-        <img src="../assets/images/logo.svg" alt="ChatSpace Logo" class="app-logo" />
+        <img src="../../assets/images/logo.svg" alt="ChatSpace Logo" class="app-logo" />
       </div>
       
       <!-- 移动端切换按钮 -->
@@ -68,28 +68,18 @@
     </div>
   </div>
 
-  <!-- 弹窗组件 -->
-  <CustomDialog v-model:visible="showDialog" :title="dialogType === '找回密码' ? '找回密码' : '注册成功' ? '注册成功' : '注册失败'"
-    :type="dialogType === '找回密码' ? 'input' : dialogType === '注册成功' ? 'success' : 'error'"
-    :message="dialogType === '找回密码' ? '请输入您的邮箱地址，我们将发送重置密码链接到您的邮箱' : dialogType === '注册成功' ? '恭喜您！账户注册成功' : '注册失败ohhh'"
-    :input-type="'email'" :placeholder="'请输入邮箱地址'" :initial-value="resetEmail" :show-cancel="dialogType === '找回密码'"
-    :confirm-text="dialogType === '找回密码' ? '发送重置链接' : dialogTitle === '注册成功' ? '去登录' : '重视'"
-    @confirm="handleDialogConfirm" @cancel="closeDialog" @close="closeDialog" @input-change="resetEmail = $event" />
 
-  <!-- 提示弹窗组件 -->
-  <CustomDialog v-model:visible="showAlertDialog"
-    :title="alertType === 'success' ? '成功' : alertType === 'error' ? '错误' : '提示'" :type="alertType"
-    :message="alertMessage" :show-cancel="false" confirm-text="确定" @confirm="closeAlertDialog"
-    @close="closeAlertDialog" />
+
+
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '../store/user.js'
-import customButton from '../components/customButton.vue'
-import CustomDialog from '../components/customDialog.vue'
-import { loginApi, registerCodeApi, passwordCodeApi, registerApi } from '../utils/api.js'
+import { useUserStore } from '../../store/user.js'
+import customButton from '../../components/customButton.vue'
+import { loginApi, registerCodeApi, passwordCodeApi, registerApi } from '../../utils/api.js'
+import { ElMessage } from 'element-plus'
 
 // 路由、store
 const router = useRouter()
@@ -149,10 +139,7 @@ const dialogType = ref('')
 const dialogTitle = ref('')
 const resetEmail = ref('')
 
-// 提示弹窗相关数据
-const showAlertDialog = ref(false)
-const alertMessage = ref('')
-const alertType = ref('warning')
+
 
 // 移动端相关数据
 const isMobile = ref(false)
@@ -160,16 +147,13 @@ const isRegisterMode = ref(false)
 
 // 显示提示弹窗
 function showAlert(message, type = 'warning') {
-  alertMessage.value = message
-  alertType.value = type
-  showAlertDialog.value = true
-}
-
-// 关闭提示弹窗
-function closeAlertDialog() {
-  showAlertDialog.value = false
-  alertMessage.value = ''
-  alertType.value = 'warning'
+  if (type === 'success') {
+    ElMessage.success(message)
+  } else if (type === 'error') {
+    ElMessage.error(message)
+  } else {
+    ElMessage.warning(message)
+  }
 }
 
 // 检测是否为移动端
