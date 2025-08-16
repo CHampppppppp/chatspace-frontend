@@ -132,7 +132,9 @@ import CustomDialog from '../../components/customDialog.vue'
 import ToolBar from '../../components/toolBar.vue'
 import SearchBox from '../../components/SearchBox.vue'
 import myaiArea from './myaiArea.vue'
-import { createMyAi, addAiFriend } from '../../utils/api.js'
+import { createMyAi, addAiFriend, fetchMyAiDetail, fetchMyAiList } from '../../utils/api.js'
+
+
 import { ElMessage } from 'element-plus'
 
 // 移动端显示控制
@@ -146,7 +148,6 @@ const aiStore = useAIStore()
 // 响应式数据
 const selectedAIId = ref(null)
 const searchQuery = ref('')
-const messageInput = ref('')
 const messagesContainer = ref(null)
 const toolBarRef = ref(null)
 const showCreateDialog = ref(false)
@@ -180,13 +181,14 @@ const currentAI = computed(() => {
 })
 
 // 方法
-function selectMyAI(aiId) {
+async function selectMyAI(aiId) {
   // 确保类型一致性
   const targetAI = aiStore.getMyAIList.find(ai => ai.aiId == aiId)
   if (targetAI) {
     selectedAIId.value = targetAI.aiId
     // 获取AI详情
-    aiStore.fetchMyAIDetail(aiId)
+    aiStore.selectedMyAIDetail = await fetchMyAiDetail(aiId)
+
   } else {
     selectedAIId.value = aiId
   }
@@ -247,7 +249,7 @@ async function saveAI() {
     showAlert('AI创建成功', 'success')
     closeCreateDialog()
     // 重新获取AI列表
-    fetchMyAIList()
+    aiStore.myAIList = await fetchMyAiList()
   }
   else if(res === 1){
     showAlert('AI创建失败', 'error')
@@ -325,18 +327,9 @@ function handleUpdateLikes(aiId, newLikes) {
   }
 }
 
-// 从后端获取AI列表
-async function fetchMyAIList() {
-  try {
-    await aiStore.fetchMyAIList()
-  } catch (error) {
-    // 全局拦截器已处理错误
-  }
-}
-
 // 组件挂载时获取数据
-onMounted(() => {
-  fetchMyAIList()
+onMounted(async () => {
+  aiStore.myAIList = await fetchMyAiList()
 })
 </script>
 

@@ -280,6 +280,7 @@ defineExpose({
     background: transparent;
     box-shadow: none;
     border: none;
+    animation: none !important;
   }
 
   .toolbar:hover {
@@ -304,22 +305,41 @@ defineExpose({
     flex: 1;
     padding: 8px 4px;
     margin: 0;
+    transition: none !important;
+  }
+
+  .nav-item:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .nav-item.active {
+    transform: none !important;
+    box-shadow: none !important;
   }
 
   .nav-icon {
     font-size: 20px;
     margin-bottom: 2px;
+    transition: none !important;
   }
 
   .nav-label {
     font-size: 10px;
     margin-top: 2px;
+    transition: none !important;
   }
 
   .user-avatar {
     width: 35px;
     height: 35px;
     margin-top: 0;
+    transition: none !important;
+  }
+
+  .user-avatar:hover {
+    transform: none !important;
+    box-shadow: none !important;
   }
 
   .avatar-icon {
@@ -329,6 +349,11 @@ defineExpose({
   .avatar-image {
     width: 35px;
     height: 35px;
+    transition: none !important;
+  }
+
+  .user-avatar:hover .avatar-image {
+    transform: none !important;
   }
 
   /* 隐藏工具提示 */

@@ -366,8 +366,8 @@ onMounted(() => {
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  color: white;
+  background: #667eea1a;
+  color: #667eea;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -788,6 +788,9 @@ onMounted(() => {
 /* 移动端适配 */
 @media (max-width: 768px) {
   .friends-container {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
     flex-direction: column;
     padding-bottom: 80px;
     /* 为底部导航栏留空间 */
@@ -810,28 +813,16 @@ onMounted(() => {
     padding: 10px;
     border-radius: 15px;
     border: none;
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    background: #667eea1a;
     transition: all 0.3s ease;
     width: 48px;
     height: 48px;
   }
-
-  .mobile-menu-trigger:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-    background: linear-gradient(45deg, #764ba2, #667eea);
-  }
-
-  .mobile-menu-trigger:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
-  }
-
+  
   .mobile-menu-trigger span {
     width: 18px;
     height: 2px;
-    background-color: white;
+    background-color: rgb(107, 2, 128);
     border-radius: 1px;
     transition: all 0.3s ease;
   }
@@ -841,8 +832,9 @@ onMounted(() => {
     top: 0;
     left: 0;
     right: 0;
-    bottom: 80px;
+    bottom: 0;
     width: 100%;
+    height: 100vh;
     margin: 0;
     border-radius: 0;
     z-index: 1000;
@@ -850,6 +842,8 @@ onMounted(() => {
     transition: transform 0.3s ease;
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(20px);
+    padding-bottom: 80px;
+    box-sizing: border-box;
   }
 
   .friends-list-container.show {

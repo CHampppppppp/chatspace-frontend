@@ -87,19 +87,19 @@ export async function passwordCodeApi(emailToUse) {
 
 //修改密码接口
 export async function resetPasswordApi(emailToUse, codeToUse, newPassword) {
-  try{
+  try {
     const resp = await api.post('/user/password', {
       email: emailToUse,
       code: codeToUse,
       password: newPassword,
     })
-      if (resp.code === 200) {
-        return 0
-      }
-      else{
-        return 1
-      }
-  }catch(err){
+    if (resp.code === 200) {
+      return 0
+    }
+    else {
+      return 1
+    }
+  } catch (err) {
     return 2
   }
 }
@@ -127,8 +127,8 @@ export async function updateUserInfoApi(userId, formData) {
 }
 
 //退出登录接口
-export async function logoutApi(userId){
-  try{
+export async function logoutApi(userId) {
+  try {
     const resp = await api.post('/logout', {
       userId: userId
     })
@@ -138,14 +138,14 @@ export async function logoutApi(userId){
     else {
       return 1
     }
-  }catch(err){
+  } catch (err) {
     return 2
   }
 }
 
 //注销账号接口
-export async function deleteAccountApi(userId){
-  try{
+export async function deleteAccountApi(userId) {
+  try {
     const resp = await api.delete(`/${userId}`)
     if (resp.code === 200) {
       return 0
@@ -153,89 +153,117 @@ export async function deleteAccountApi(userId){
     else {
       return 1
     }
-  }catch(err){
+  } catch (err) {
     return 2
   }
 }
 
 //撤回消息接口
-export async function revokeMessageApi(messageId){
-  try{
-    const resp = await api.delete('/revokeMsg',{messageId: messageId})
+export async function revokeMessageApi(messageId) {
+  try {
+    const resp = await api.delete('/revokeMsg', { messageId: messageId })
     if (resp.code === 200) {
       return 0
     }
     else {
       return 1
     }
-  }catch(err){
+  } catch (err) {
     return 2
   }
 }
 
-export async function createMyAi(aiData)
-{
-  try{
+export async function createMyAi(aiData) {
+  try {
     const resp = await api.post('/myai', aiData)
-    if(resp.code === 200){
+    if (resp.code === 200) {
       return 0
     }
     else {
       return 1
     }
-  }catch(err){
+  } catch (err) {
     return 2
   }
 }
 
-export async function addAiFriend(aiId,senderId)
-{
-  try{
-    const resp = await api.post(`/friend/${aiId}`,{
-      senderId:userProfile.value.userId
+export async function addAiFriend(aiId, senderId) {
+  try {
+    const resp = await api.post(`/friend/${aiId}`, {
+      senderId: userProfile.value.userId
     })
-    if(resp.code === 200){
+    if (resp.code === 200) {
       return 0
     }
     else {
       return 1
     }
-  }catch(err){
+  } catch (err) {
     return 2
   }
 }
 
-export async function createGroup(groupData)
-{
-  try{
+export async function createGroup(groupData) {
+  try {
     const resp = await api.post('/group', groupData)
-    if(resp.code === 200){
+    if (resp.code === 200) {
       return 0
     }
     else {
       return 1
     }
-  }catch(err){
+  } catch (err) {
     return 2
   }
 }
 
-export async function sendMessage(senderId,sessionId,content,contentType)
-{
-   try{
+export async function sendMessage(senderId, sessionId, content, contentType) {
+  try {
     const resp = await api.post('/private-message', {
-      senderId: userProfile.value.userId,
-      sessionId: chatStore.selectedChatId,
-      content: messageInput.value.trim(),
-      contentType: 'text'
+      senderId: senderId,
+      sessionId: sessionId,
+      content: content,
+      contentType: contentType
     })
-    if(resp.code === 200){
+    if (resp.code === 200) {
       return 0
     }
     else {
       return 1
     }
-   }catch(err){
+  } catch (err) {
     return 2
-   }
+  }
+}
+
+//返回myai列表
+export async function fetchMyAiList() {
+  try {
+    const resp = await api.get('/myai/list')
+
+    if (resp.code === 200) {
+      return resp.data
+    } else {
+      throw new Error(resp.message || '获取我的AI列表失败')
+    }
+  } catch (error) {
+    throw error
+  }
+}
+
+// 获取我的AI详情
+export async function fetchMyAiDetail(aiId)
+{
+    try {
+        const resp = await api.get(`/myai/${aiId}`)
+        
+        if (resp.code === 200) {
+          return resp.data
+        } else {
+          throw new Error(resp.message || '获取我的AI详情失败')
+        }
+      } catch (error) {
+        // 全局拦截器已处理错误
+        throw error
+      }
 }

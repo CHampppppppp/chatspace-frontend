@@ -242,42 +242,6 @@ export const useAIStore = defineStore('ai', {
       }
     },
 
-    // 获取我的AI列表
-    async fetchMyAIList() {
-      try {
-        const { api } = await import('../utils/axiosApi.js')
-        const response = await api.get('/myai/list')
-        
-        if (response.code === 200) {
-          this.myAIList = response.data
-          return response.data
-        } else {
-          throw new Error(response.message || '获取我的AI列表失败')
-        }
-      } catch (error) {
-        // 全局拦截器已处理错误
-        throw error
-      }
-    },
-
-    // 获取我的AI详情
-    async fetchMyAIDetail(aiId) {
-      try {
-        const { api } = await import('../utils/axiosApi.js')
-        const response = await api.get(`/myai/${aiId}`)
-        
-        if (response.code === 200) {
-          this.selectedMyAIDetail = response.data
-          return response.data
-        } else {
-          throw new Error(response.message || '获取我的AI详情失败')
-        }
-      } catch (error) {
-        // 全局拦截器已处理错误
-        throw error
-      }
-    },
-
     // 设置我的AI列表
     setMyAIList(list) {
       this.myAIList = list
