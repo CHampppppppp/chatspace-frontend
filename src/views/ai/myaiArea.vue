@@ -524,6 +524,14 @@ function showPromptDialog() {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+  .ai-interface-container {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    padding-bottom: 80px;
+    box-sizing: border-box;
+  }
   .ai-interface {
     padding: 20px;
   }

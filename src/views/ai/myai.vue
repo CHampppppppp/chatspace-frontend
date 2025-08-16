@@ -931,8 +931,10 @@ onMounted(async () => {
 /* 移动端适配 */
 @media (max-width: 768px) {
   .customization-container {
-    flex-direction: column;
     height: 100vh;
+    margin: 0;
+    padding: 0;
+    flex-direction: column;
     padding-bottom: 80px; /* 为底部导航栏留空间 */
     overflow: hidden;
     position: relative;
@@ -984,8 +986,9 @@ onMounted(async () => {
     top: 0;
     left: 0;
     right: 0;
-    bottom: 80px;
+    bottom: 0;
     width: 100%;
+    height: 100vh;
     margin: 0;
     border-radius: 0;
     z-index: 1000;
@@ -993,6 +996,8 @@ onMounted(async () => {
     transition: transform 0.3s ease;
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(20px);
+    padding-bottom: 80px;
+    box-sizing: border-box;
   }
 
   .my-ai-list-container.show {
