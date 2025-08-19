@@ -792,8 +792,6 @@ onMounted(() => {
     margin: 0;
     padding: 0;
     flex-direction: column;
-    padding-bottom: 80px;
-    /* 为底部导航栏留空间 */
     height: 100vh;
     overflow: hidden;
     position: relative;
@@ -842,7 +840,6 @@ onMounted(() => {
     transition: transform 0.3s ease;
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(20px);
-    padding-bottom: 80px;
     box-sizing: border-box;
   }
 

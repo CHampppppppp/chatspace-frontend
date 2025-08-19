@@ -529,7 +529,6 @@ function showPromptDialog() {
     margin: 0;
     padding: 0;
     border-radius: 0;
-    padding-bottom: 80px;
     box-sizing: border-box;
   }
   .ai-interface {

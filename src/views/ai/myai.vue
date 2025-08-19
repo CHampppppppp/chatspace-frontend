@@ -125,7 +125,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useUserStore } from '../../store/user'
 import { useAIStore } from '../../store/ai'
 import CustomDialog from '../../components/customDialog.vue'
@@ -205,6 +205,49 @@ async function selectMyAI(aiId) {
 function isMobile() {
   return typeof window !== 'undefined' && window.innerWidth <= 768
 }
+
+// 处理移动端菜单外部点击关闭
+function handleOutsideClick(event) {
+  if (showMobileAIList.value && !event.target.closest('.my-ai-list-container') && !event.target.closest('.mobile-menu-trigger')) {
+    showMobileAIList.value = false
+  }
+}
+
+// 处理ESC键关闭移动端菜单
+function handleEscKey(event) {
+  if (event.key === 'Escape' && showMobileAIList.value) {
+    showMobileAIList.value = false
+  }
+}
+
+// 处理窗口大小变化
+function handleResize() {
+  if (window.innerWidth > 768 && showMobileAIList.value) {
+    showMobileAIList.value = false
+  }
+}
+
+// 防止移动端菜单打开时页面滚动
+function toggleBodyScroll(disable) {
+  if (typeof document !== 'undefined') {
+    if (disable) {
+      document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.width = '100%'
+    } else {
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
+    }
+  }
+}
+
+// 监听移动端菜单状态变化
+watch(showMobileAIList, (newValue) => {
+  if (isMobile()) {
+    toggleBodyScroll(newValue)
+  }
+})
 
 
 
@@ -330,6 +373,24 @@ function handleUpdateLikes(aiId, newLikes) {
 // 组件挂载时获取数据
 onMounted(async () => {
   aiStore.myAIList = await fetchMyAiList()
+  
+  // 添加移动端事件监听器
+  if (typeof window !== 'undefined') {
+    document.addEventListener('click', handleOutsideClick)
+    document.addEventListener('keydown', handleEscKey)
+    window.addEventListener('resize', handleResize)
+  }
+})
+
+// 组件卸载时清理事件监听器
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    document.removeEventListener('click', handleOutsideClick)
+    document.removeEventListener('keydown', handleEscKey)
+    window.removeEventListener('resize', handleResize)
+    // 清理body样式
+    toggleBodyScroll(false)
+  }
 })
 </script>
 
@@ -928,19 +989,40 @@ onMounted(async () => {
   background: rgba(102, 126, 234, 0.7);
 }
 
-/* 移动端适配 */
+/* 全局移动端优化 */
 @media (max-width: 768px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  input, textarea {
+    -webkit-user-select: text;
+    -khtml-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+
+/* 移动端适配 */
   .customization-container {
     height: 100vh;
+    height: 100dvh; /* 动态视口高度，更好的移动端支持 */
     margin: 0;
     padding: 0;
     flex-direction: column;
-    padding-bottom: 80px; /* 为底部导航栏留空间 */
     overflow: hidden;
     position: relative;
+    /* 防止iOS Safari地址栏影响 */
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* 移动端触发按钮 - 沿用customButton样式 */
+  /* 移动端触发按钮 */
   .mobile-menu-trigger {
     position: fixed;
     top: 20px;
@@ -950,32 +1032,27 @@ onMounted(async () => {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    padding: 10px;
-    border-radius: 15px;
+    gap: 4px;
+    padding: 12px;
+    border-radius: 16px;
     border: none;
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    background: rgba(102, 126, 234, 0.15);
+    backdrop-filter: blur(10px);
     transition: all 0.3s ease;
-    width: 48px;
-    height: 48px;
+    width: 50px;
+    height: 50px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
-
+  
   .mobile-menu-trigger:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-    background: linear-gradient(45deg, #764ba2, #667eea);
+    background: rgba(102, 126, 234, 0.25);
+    transform: scale(1.05);
   }
-
-  .mobile-menu-trigger:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
-  }
-
+  
   .mobile-menu-trigger span {
-    width: 18px;
+    width: 20px;
     height: 2px;
-    background-color: white;
+    background-color: #667eea;
     border-radius: 1px;
     transition: all 0.3s ease;
   }
@@ -993,11 +1070,11 @@ onMounted(async () => {
     border-radius: 0;
     z-index: 1000;
     transform: translateX(-100%);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(20px);
-    padding-bottom: 80px;
     box-sizing: border-box;
+    border: none;
   }
 
   .my-ai-list-container.show {
@@ -1006,27 +1083,33 @@ onMounted(async () => {
 
   .my-ai-list-header {
     padding: 80px 20px 20px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.9);
   }
 
   .my-ai-list-header h2 {
-    font-size: 24px;
+    font-size: 26px;
     margin-bottom: 20px;
     text-align: center;
+    color: #333;
+    font-weight: 700;
   }
 
   .my-ai-list-content {
     padding: 20px;
-    height: calc(100vh - 200px);
+    height: calc(100vh - 180px);
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* 创建AI按钮移动端优化 */
   .create-ai-btn {
-    padding: 20px;
+    padding: 18px 20px;
     margin-bottom: 20px;
     border-radius: 16px;
     font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
   }
 
   .create-icon {
@@ -1036,41 +1119,164 @@ onMounted(async () => {
 
   /* AI项目移动端优化 */
   .my-ai-item {
-    padding: 20px 15px;
+    padding: 18px 16px;
     margin-bottom: 12px;
     border-radius: 16px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .my-ai-item:hover {
+    background: rgba(102, 126, 234, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .my-ai-item.selected {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
   }
 
   .my-ai-avatar {
-    margin-right: 15px;
+    margin-right: 16px;
   }
 
   .my-ai-icon {
-    width: 50px;
-    height: 50px;
+    width: 52px;
+    height: 52px;
     font-size: 22px;
   }
 
   .my-ai-name {
     font-size: 17px;
     margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .my-ai-type {
+    font-size: 13px;
+    color: #667eea;
+    margin-bottom: 4px;
+    font-weight: 500;
   }
 
   .my-ai-description {
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.5;
+    color: #666;
   }
 
-  /* AI详情区域移动端适配 */
-  .ai-detail-container {
+  /* 聊天区域移动端适配 */
+  .chat-area {
     margin: 0;
     border-radius: 0;
-    height: calc(100vh - 80px);
+    height: 100vh;
+  }
+
+  .chat-header {
+    padding: 20px;
+    border-radius: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+  }
+
+  .chat-ai-avatar .my-ai-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  .chat-ai-details h3 {
+    font-size: 18px;
+  }
+
+  .ai-status {
+    font-size: 14px;
+  }
+
+  /* 消息容器移动端优化 */
+  .messages-container {
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .message {
+    margin-bottom: 16px;
+  }
+
+  .message-content {
+    max-width: 85%;
+  }
+
+  .message-text {
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .message-avatar img,
+  .message-avatar .my-ai-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .message-avatar .my-ai-icon {
+    font-size: 16px;
+  }
+
+  /* 输入区域移动端优化 */
+  .message-input-container {
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 0;
+  }
+
+  .input-wrapper {
+    gap: 12px;
+  }
+
+  .message-input {
+    padding: 14px 16px;
+    font-size: 16px; /* 防止iOS缩放 */
+    border-radius: 20px;
+    min-height: 44px;
+    max-height: 120px;
+  }
+
+  .send-button {
+    padding: 14px 20px;
+    border-radius: 20px;
+    font-size: 15px;
+    min-height: 44px;
+  }
+
+  /* 空状态移动端优化 */
+  .empty-chat {
+    margin: 16px;
+  }
+
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  .empty-content h3 {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  .empty-content p {
+    font-size: 14px;
   }
 
   /* 创建AI对话框移动端优化 */
   .dialog-overlay {
-    padding: 20px;
+    padding: 16px;
   }
 
   .dialog-content {
@@ -1082,36 +1288,51 @@ onMounted(async () => {
   }
 
   .dialog-header {
-    padding: 25px 20px 20px;
+    padding: 24px 20px 20px;
   }
 
   .dialog-header h3 {
     font-size: 20px;
+    font-weight: 600;
+  }
+
+  .close-btn {
+    width: 32px;
+    height: 32px;
   }
 
   .dialog-body {
     padding: 0 20px;
     max-height: calc(90vh - 140px);
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .form-group {
     margin-bottom: 20px;
   }
 
+  .form-group label {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
   .form-group input,
   .form-group textarea {
-    padding: 15px;
+    padding: 16px;
     font-size: 16px; /* 防止iOS缩放 */
     border-radius: 12px;
+    min-height: 44px;
+    -webkit-appearance: none;
   }
 
   .form-group textarea {
     min-height: 100px;
+    resize: vertical;
   }
 
   .avatar-preview {
-    margin-top: 15px;
+    margin-top: 16px;
   }
 
   .preview-image {
@@ -1128,9 +1349,70 @@ onMounted(async () => {
   .cancel-btn,
   .save-btn {
     width: 100%;
-    padding: 15px 24px;
+    padding: 16px 24px;
     font-size: 16px;
     border-radius: 12px;
+    min-height: 48px;
+    font-weight: 600;
+  }
+}
+
+/* 平板设备适配 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .customization-container {
+    padding: 10px;
+  }
+
+  .my-ai-list-container {
+    width: 280px;
+    margin-left: 100px;
+  }
+
+  .my-ai-list-header {
+    padding: 16px;
+  }
+
+  .my-ai-list-header h2 {
+    font-size: 22px;
+  }
+
+  .create-ai-btn {
+    padding: 14px 16px;
+    margin: 8px;
+  }
+
+  .my-ai-item {
+    padding: 14px 12px;
+  }
+
+  .my-ai-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+  }
+
+  .my-ai-name {
+    font-size: 15px;
+  }
+
+  .my-ai-description {
+    font-size: 13px;
+  }
+
+  .chat-area {
+    margin: 10px;
+  }
+
+  .chat-header {
+    padding: 16px;
+  }
+
+  .messages-container {
+    padding: 16px;
+  }
+
+  .message-input-container {
+    padding: 16px;
   }
 }
 
@@ -1167,11 +1449,40 @@ onMounted(async () => {
   }
 
   .create-ai-btn {
-    padding: 18px 15px;
+    padding: 16px 15px;
+    font-size: 15px;
   }
 
   .my-ai-item {
-    padding: 18px 12px;
+    padding: 16px 12px;
+  }
+
+  .my-ai-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  .my-ai-name {
+    font-size: 16px;
+  }
+
+  .my-ai-description {
+    font-size: 13px;
+  }
+
+  .message-text {
+    font-size: 14px;
+  }
+
+  .message-input {
+    font-size: 16px;
+    padding: 12px 14px;
+  }
+
+  .send-button {
+    padding: 12px 16px;
+    font-size: 14px;
   }
 
   .dialog-content {
@@ -1183,6 +1494,57 @@ onMounted(async () => {
   .dialog-footer {
     padding-left: 15px;
     padding-right: 15px;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    padding: 14px;
+  }
+}
+
+/* 横屏模式优化 */
+@media (max-width: 768px) and (orientation: landscape) {
+  .my-ai-list-header {
+    padding: 60px 20px 15px;
+  }
+
+  .my-ai-list-content {
+    height: calc(100vh - 140px);
+  }
+
+  .dialog-content {
+    max-height: 85vh;
+  }
+
+  .dialog-body {
+    max-height: calc(85vh - 120px);
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .my-ai-item,
+  .create-ai-btn,
+  .send-button,
+  .mobile-menu-trigger {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .my-ai-item:active {
+    background: rgba(102, 126, 234, 0.2);
+    transform: scale(0.98);
+  }
+
+  .create-ai-btn:active {
+    transform: scale(0.98);
+  }
+
+  .send-button:active {
+    transform: scale(0.98);
+  }
+
+  .mobile-menu-trigger:active {
+    transform: scale(0.95);
   }
 }
 </style>

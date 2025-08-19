@@ -580,12 +580,14 @@ defineExpose({
   margin-top: 20px;
   margin-bottom: 20px;
   margin-right: 20px;
+  min-height: 0; /* 确保flex子元素可以正确收缩 */
 }
 
 .chat-interface {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0; /* 确保flex子元素可以正确收缩 */
 }
 
 .chat-header {
@@ -837,6 +839,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  flex-shrink: 0; /* 防止输入区域被压缩 */
 }
 
 .input-tools {
@@ -999,6 +1002,7 @@ defineExpose({
   .chat-interface-container {
     border-radius: 0;
     margin: 0;
+    margin-bottom: 70px; /* 为底部工具栏留出空间 */
   }
   
   .mobile-menu-btn {
@@ -1022,6 +1026,18 @@ defineExpose({
     width: 35px;
     height: 35px;
     font-size: 14px;
+  }
+  
+  .input-container {
+    padding: 20px;
+    min-height: 100px;
+  }
+  
+  .message-input {
+    min-height: 36px;
+    padding: 10px 12px;
+    padding-right: 70px;
+    font-size: 16px; /* 防止iOS缩放 */
   }
 }
 

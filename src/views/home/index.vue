@@ -446,6 +446,7 @@ onUnmounted(() => {
   height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   overflow: hidden;
+  position: relative;
 }
 
 /* 中间聊天列表区域 */
@@ -461,6 +462,7 @@ onUnmounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.2);
   margin-top: 20px;
   margin-bottom: 20px;
+  min-height: 0; /* 确保flex子元素可以正确收缩 */
 }
 
 .chat-list-header {
@@ -1329,10 +1331,12 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .home-container {
     flex-direction: column;
-    padding-bottom: 80px;
-    /* 为底部导航栏留空间 */
     height: 100vh;
     overflow: hidden;
+    margin:0;
+    padding:0;
+    overflow: hidden;
+    position: relative;
   }
 
   .chat-list-container {
@@ -1340,7 +1344,6 @@ onUnmounted(() => {
     top: 0;
     left: 0;
     right: 0;
-    bottom: 80px;
     width: 100%;
     margin: 0;
     border-radius: 0;
@@ -1358,8 +1361,9 @@ onUnmounted(() => {
   .chat-interface-container {
     border-radius: 0;
     margin: 0;
-    height: calc(100vh - 80px);
+    height: calc(100vh - 70px); /* 为底部工具栏留出空间 */
     width: 100%;
+    margin-bottom: 70px; /* 确保不被底部工具栏遮挡 */
   }
 
   .chat-header {
@@ -1385,7 +1389,8 @@ onUnmounted(() => {
 
   .messages-container {
     padding: 15px;
-    height: calc(100vh - 200px);
+    height: calc(100vh - 280px); /* 调整高度以适应输入框 */
+    overflow-y: auto;
   }
 
   .input-section {
