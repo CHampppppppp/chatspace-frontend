@@ -4,6 +4,11 @@
         <div v-if="aiStore.selectedAIId" class="ai-interface">
             <!-- AI聊天头部 -->
             <div class="ai-header">
+                <!-- 移动端菜单按钮 -->
+                <button class="mobile-menu-btn" @click="toggleMobileMenu">
+                    <span class="hamburger-icon">☰</span>
+                </button>
+                
                 <div class="ai-user-info">
                     <div class="ai-user-avatar">
                         <img :src="currentAi.avatar" :alt="currentAi.name" />
@@ -156,6 +161,9 @@ import { callDeepSeekAPI } from '../../utils/deepseek.js'
 import { useAIStore } from '../../store/ai.js'
 import CustomDialog from '../../components/customDialog.vue'
 import { revokeMessageApi } from '../../utils/api.js'
+
+// 定义emit
+const emit = defineEmits(['toggle-mobile-menu'])
 
 // 使用Store
 const aiStore = useAIStore()
@@ -392,6 +400,11 @@ function focusInput() {
     messageTextarea.value.focus()
   }
 }
+// 移动端菜单切换
+function toggleMobileMenu() {
+  emit('toggle-mobile-menu')
+}
+
 // 菜单相关功能
 function showMore() {
   showMoreMenu.value = !showMoreMenu.value
@@ -666,6 +679,24 @@ onUnmounted(() => {
 .ai-actions {
   display: flex;
   gap: 10px;
+}
+
+.mobile-menu-btn {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  color: #667eea;
+}
+
+.mobile-menu-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: translateY(-2px);
 }
 
 .more-menu-container {
@@ -1257,6 +1288,72 @@ onUnmounted(() => {
   .ai-interface-container {
     border-radius: 0;
     margin: 0;
+    margin-bottom: 60px; /* 为移动端工具栏留出空间 */
+  }
+  
+  .mobile-menu-btn {
+    display: block;
+  }
+  
+  .ai-header {
+    padding: 12px 15px;
+  }
+  
+  .ai-user-avatar img {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .ai-user-details h3 {
+    font-size: 1rem;
+  }
+  
+  .action-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+  }
+  
+  .ai-messages-container {
+    padding: 15px;
+    gap: 12px;
+  }
+  
+  .message-content {
+    max-width: 85%;
+  }
+  
+  .message-bubble {
+    padding: 10px 14px;
+    font-size: 14px;
+    max-height: 300px;
+  }
+  
+  .ai-input-container {
+    padding: 15px;
+    min-height: 80px;
+  }
+  
+  .message-input {
+    min-height: 36px;
+    padding: 10px 12px;
+    padding-right: 70px;
+    font-size: 16px; /* 防止iOS缩放 */
+    border-radius: 18px;
+  }
+  
+  .send-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+    right: 6px;
+    bottom: 6px;
+  }
+  
+  .ai-thinking {
+    padding: 6px 12px;
+    font-size: 11px;
+    right: 6px;
+    bottom: 6px;
   }
   
   .welcome-content {
@@ -1296,6 +1393,125 @@ onUnmounted(() => {
 
   .reply-text {
     font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ai-header {
+    padding: 10px 12px;
+  }
+  
+  .ai-user-avatar img {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .ai-user-details h3 {
+    font-size: 0.9rem;
+  }
+  
+  .ai-status {
+    font-size: 11px;
+  }
+  
+  .action-btn, .mobile-menu-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+  
+  .ai-messages-container {
+    padding: 12px;
+    gap: 10px;
+  }
+  
+  .message-content {
+    max-width: 90%;
+  }
+  
+  .message-bubble {
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: 16px;
+    max-height: 250px;
+  }
+  
+  .message-avatar img {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .message-time {
+    font-size: 10px;
+  }
+  
+  .ai-input-container {
+    padding: 12px;
+    min-height: 70px;
+  }
+  
+  .input-tools {
+    margin-bottom: 8px;
+  }
+  
+  .tool-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+  
+  .message-input {
+    min-height: 32px;
+    padding: 8px 10px;
+    padding-right: 65px;
+    font-size: 16px;
+    border-radius: 16px;
+  }
+  
+  .send-btn, .ai-thinking {
+    padding: 5px 10px;
+    font-size: 10px;
+    right: 5px;
+    bottom: 5px;
+    border-radius: 12px;
+  }
+  
+  .welcome-avatar {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 15px;
+  }
+  
+  .welcome-text h3 {
+    font-size: 1.5rem;
+  }
+  
+  .welcome-text p {
+    font-size: 0.9rem;
+  }
+  
+  .tip-item {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+  
+  .more-menu {
+    min-width: 140px;
+    right: -10px;
+  }
+  
+  .menu-item {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  
+  .context-menu {
+    min-width: 120px;
+  }
+  
+  .context-menu-item {
+    padding: 6px 12px;
+    font-size: 13px;
   }
 }
 </style>

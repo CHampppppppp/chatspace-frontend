@@ -2,9 +2,16 @@
   <div class="ai-container">
     <!-- 左侧工具栏 -->
     <ToolBar ref="toolBarRef" />
+    
+    <!-- 移动端汉堡菜单按钮 -->
+    <div class="mobile-menu-trigger" @click="showMobileAIList = !showMobileAIList">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
 
     <!-- AI助手列表区域 -->
-    <div class="ai-list-container">
+    <div class="ai-list-container" :class="{ show: showMobileAIList }">
       <div class="ai-list-header">
         <h2>AI助手</h2>
         <searchBox v-model="searchQuery" placeholder="搜索AI助手..." @search="handleSearch" />
@@ -25,7 +32,7 @@
     </div>
 
     <!-- Ai内容区 -->
-    <AiArea />
+    <AiArea @toggle-mobile-menu="showMobileAIList = !showMobileAIList" />
     
   </div>
 </template>
@@ -41,6 +48,7 @@ const aiStore = useAIStore()
 // 响应式数据
 const toolBarRef = ref(null)
 const searchQuery = ref('')
+const showMobileAIList = ref(false)
 
 // 计算属性
 const filteredAIAssistants = computed(() => {
@@ -54,6 +62,20 @@ const filteredAIAssistants = computed(() => {
 // 方法
 function selectAI(aiId) {
   aiStore.selectAI(aiId)
+  // 移动端选择后隐藏AI列表
+  if (isMobile()) {
+    showMobileAIList.value = false
+  }
+}
+
+// 检查是否为移动端
+function isMobile() {
+  return typeof window !== 'undefined' && window.innerWidth <= 768
+}
+
+function handleSearch(query) {
+  // 搜索逻辑
+  console.log('搜索AI助手:', query)
 }
 
 </script>
@@ -190,5 +212,159 @@ function selectAI(aiId) {
 
 .ai-list-content::-webkit-scrollbar-thumb:hover {
   background: rgba(102, 126, 234, 0.7);
+}
+
+/* 移动端汉堡菜单按钮样式 */
+.mobile-menu-trigger {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1001;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px;
+  border-radius: 15px;
+  border: none;
+  background: rgba(102, 126, 234, 0.1);
+  transition: all 0.3s ease;
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+}
+
+.mobile-menu-trigger span {
+  width: 18px;
+  height: 2px;
+  background: #667eea;
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-trigger:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: scale(1.05);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .ai-container {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .mobile-menu-trigger {
+    display: flex;
+  }
+
+  .ai-list-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    height: 100vh;
+  }
+
+  .ai-list-container.show {
+    transform: translateX(0);
+  }
+
+  .ai-list-header {
+    padding: 70px 20px 20px;
+  }
+
+  .ai-list-header h2 {
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+
+  .ai-list-content {
+    padding: 0 15px 15px;
+    height: calc(100vh - 150px);
+    overflow-y: auto;
+  }
+
+  .ai-items {
+    padding: 0;
+  }
+
+  .ai-item {
+    padding: 18px 15px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+  }
+
+  .ai-avatar {
+    margin-right: 15px;
+  }
+
+  .ai-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 22px;
+  }
+
+  .ai-name {
+    font-size: 17px;
+    margin-bottom: 6px;
+  }
+
+  .ai-description {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-menu-trigger {
+    top: 15px;
+    left: 15px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .mobile-menu-trigger span {
+    width: 16px;
+  }
+
+  .ai-list-header {
+    padding: 65px 15px 15px;
+  }
+
+  .ai-list-header h2 {
+    font-size: 20px;
+  }
+
+  .ai-item {
+    padding: 15px 12px;
+  }
+
+  .ai-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
+
+  .ai-name {
+    font-size: 16px;
+  }
+
+  .ai-description {
+    font-size: 14px;
+  }
 }
 </style>
