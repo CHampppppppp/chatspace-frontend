@@ -927,4 +927,328 @@ function formatLogTime(time) {
 .logs-list::-webkit-scrollbar-thumb:hover {
   background: rgba(102, 126, 234, 0.7);
 }
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .user-detail-container {
+    margin: 10px;
+    border-radius: 15px;
+  }
+  
+  .user-detail {
+    padding: 20px;
+  }
+  
+  .user-info-section {
+    flex-direction: column;
+    text-align: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+  }
+  
+  .user-avatar-large {
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+  
+  .user-avatar-large img {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .online-indicator-large {
+    width: 15px;
+    height: 15px;
+    bottom: 3px;
+    right: 3px;
+  }
+  
+  .blocked-indicator-large {
+    font-size: 16px;
+  }
+  
+  .user-name {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+  
+  .user-email {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  .user-badges {
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .role-badge, .status-badge {
+    padding: 3px 10px;
+    font-size: 11px;
+  }
+  
+  .user-stats-section,
+  .user-actions-section {
+    margin-bottom: 25px;
+  }
+  
+  .user-stats-section h3,
+  .user-actions-section h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .stat-item {
+    padding: 12px;
+    gap: 10px;
+  }
+  
+  .stat-icon {
+    font-size: 20px;
+  }
+  
+  .stat-label {
+    font-size: 11px;
+  }
+  
+  .stat-value {
+    font-size: 14px;
+  }
+  
+  .action-buttons {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .action-button {
+    padding: 10px 14px;
+    font-size: 13px;
+    gap: 6px;
+  }
+  
+  .button-icon {
+    font-size: 14px;
+  }
+  
+  .edit-dialog {
+    width: 95vw;
+    margin: 10px;
+  }
+  
+  .dialog-header {
+    padding: 15px;
+  }
+  
+  .dialog-header h3 {
+    font-size: 16px;
+  }
+  
+  .dialog-content {
+    padding: 15px;
+    max-height: 300px;
+  }
+  
+  .form-input,
+  .form-select {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  
+  .dialog-actions {
+    padding: 15px;
+    gap: 8px;
+  }
+  
+  .dialog-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+  
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+  }
+  
+  .empty-area h3 {
+    font-size: 18px;
+  }
+  
+  .empty-area p {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-detail-container {
+    margin: 5px;
+    border-radius: 12px;
+  }
+  
+  .user-detail {
+    padding: 15px;
+  }
+  
+  .user-info-section {
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+  }
+  
+  .user-avatar-large {
+    margin-bottom: 12px;
+  }
+  
+  .user-avatar-large img {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .online-indicator-large {
+    width: 12px;
+    height: 12px;
+    bottom: 2px;
+    right: 2px;
+  }
+  
+  .blocked-indicator-large {
+    font-size: 14px;
+  }
+  
+  .user-name {
+    font-size: 18px;
+    margin-bottom: 5px;
+  }
+  
+  .user-email {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .user-badges {
+    gap: 6px;
+  }
+  
+  .role-badge, .status-badge {
+    padding: 2px 8px;
+    font-size: 10px;
+  }
+  
+  .user-stats-section,
+  .user-actions-section {
+    margin-bottom: 20px;
+  }
+  
+  .user-stats-section h3,
+  .user-actions-section h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  .stats-grid {
+    gap: 8px;
+  }
+  
+  .stat-item {
+    padding: 10px;
+    gap: 8px;
+  }
+  
+  .stat-icon {
+    font-size: 18px;
+  }
+  
+  .stat-label {
+    font-size: 10px;
+  }
+  
+  .stat-value {
+    font-size: 12px;
+  }
+  
+  .action-buttons {
+    gap: 8px;
+  }
+  
+  .action-button {
+    padding: 8px 12px;
+    font-size: 12px;
+    gap: 5px;
+  }
+  
+  .button-icon {
+    font-size: 12px;
+  }
+  
+  .dialog-header {
+    padding: 12px;
+  }
+  
+  .dialog-header h3 {
+    font-size: 14px;
+  }
+  
+  .dialog-content {
+    padding: 12px;
+    max-height: 250px;
+  }
+  
+  .form-group {
+    margin-bottom: 12px;
+  }
+  
+  .form-group label {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  
+  .form-input,
+  .form-select {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  
+  .dialog-actions {
+    padding: 12px;
+    gap: 6px;
+  }
+  
+  .dialog-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .empty-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
+  
+  .empty-area h3 {
+    font-size: 16px;
+  }
+  
+  .empty-area p {
+    font-size: 12px;
+  }
+  
+  .log-item {
+    padding: 10px;
+    gap: 8px;
+  }
+  
+  .log-icon {
+    font-size: 14px;
+  }
+  
+  .log-message {
+    font-size: 12px;
+  }
+  
+  .log-time {
+    font-size: 10px;
+  }
+}
 </style>

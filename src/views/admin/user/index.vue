@@ -1,5 +1,6 @@
 <template>
   <AdminLayout 
+    ref="adminLayoutRef"
     title="用户管理"
     search-placeholder="搜索用户..."
     :stats-data="statsData"
@@ -54,6 +55,9 @@ import { ref, computed, onMounted } from 'vue'
 import AdminLayout from '../../../components/AdminLayout.vue'
 import UserDetailArea from './UserDetailArea.vue'
 import { api } from '../../../utils/axiosApi.js'
+
+// AdminLayout组件引用
+const adminLayoutRef = ref(null)
 
 // 响应式数据
 const selectedUserId = ref(null)
@@ -134,6 +138,10 @@ function handleSearch(query) {
 
 function selectUser(user) {
   selectedUserId.value = user.userId
+  // 在移动端选择用户后关闭列表
+  if (adminLayoutRef.value) {
+    adminLayoutRef.value.closeMobileList()
+  }
 }
 
 function deleteUser(user) {
@@ -599,5 +607,199 @@ onMounted(() => {
 
 .users-list-content::-webkit-scrollbar-thumb:hover {
   background: rgba(102, 126, 234, 0.7);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .user-items {
+    padding: 0 5px;
+  }
+  
+  .user-item {
+    padding: 12px 8px;
+    margin-bottom: 3px;
+    border-radius: 10px;
+  }
+  
+  .user-avatar img {
+    width: 38px;
+    height: 38px;
+  }
+  
+  .online-indicator {
+    width: 10px;
+    height: 10px;
+    bottom: 1px;
+    right: 1px;
+  }
+  
+  .blocked-indicator {
+    font-size: 10px;
+  }
+  
+  .user-name {
+    font-size: 13px;
+  }
+  
+  .user-email {
+    font-size: 11px;
+  }
+  
+  .user-role,
+  .user-status {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+  
+  .action-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 9px;
+  }
+  
+  .user-dialog {
+    width: 95vw;
+    margin: 10px;
+  }
+  
+  .confirm-dialog {
+    width: 90vw;
+    margin: 10px;
+  }
+  
+  .dialog-header {
+    padding: 15px;
+  }
+  
+  .dialog-header h3 {
+    font-size: 16px;
+  }
+  
+  .dialog-content {
+    padding: 15px;
+    max-height: 300px;
+  }
+  
+  .form-input,
+  .form-select {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  
+  .dialog-actions,
+  .confirm-actions {
+    padding: 15px;
+    gap: 8px;
+  }
+  
+  .dialog-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-items {
+    padding: 0 3px;
+  }
+  
+  .user-item {
+    padding: 10px 6px;
+    margin-bottom: 2px;
+    border-radius: 8px;
+  }
+  
+  .user-avatar {
+    margin-right: 8px;
+  }
+  
+  .user-avatar img {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .online-indicator {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .user-name {
+    font-size: 12px;
+  }
+  
+  .user-email {
+    font-size: 10px;
+  }
+  
+  .user-meta {
+    gap: 4px;
+  }
+  
+  .user-role,
+  .user-status {
+    font-size: 8px;
+    padding: 1px 3px;
+  }
+  
+  .user-actions {
+    gap: 2px;
+  }
+  
+  .action-btn {
+    width: 18px;
+    height: 18px;
+    font-size: 8px;
+  }
+  
+  .dialog-header {
+    padding: 12px;
+  }
+  
+  .dialog-header h3 {
+    font-size: 14px;
+  }
+  
+  .dialog-content {
+    padding: 12px;
+    max-height: 250px;
+  }
+  
+  .form-group {
+    margin-bottom: 12px;
+  }
+  
+  .form-group label {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  
+  .form-input,
+  .form-select {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  
+  .dialog-actions,
+  .confirm-actions {
+    padding: 12px;
+    gap: 6px;
+  }
+  
+  .dialog-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .confirm-content {
+    padding: 15px;
+  }
+  
+  .confirm-content h3 {
+    font-size: 14px;
+  }
+  
+  .confirm-content p {
+    font-size: 12px;
+  }
 }
 </style>

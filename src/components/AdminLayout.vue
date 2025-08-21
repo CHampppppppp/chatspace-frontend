@@ -1,15 +1,32 @@
 <template>
   <div class="admin-container">
+    <!-- 移动端汉堡菜单按钮 -->
+    <div class="mobile-menu-trigger" :class="{ 'hidden': showMobileList }" @click="toggleMobileList">
+      <div class="hamburger-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+    
+    <!-- 移动端遮罩层 -->
+    <div v-if="showMobileList" class="mobile-overlay" @click="toggleMobileList"></div>
+    
     <!-- 左侧工具栏 -->
     <ToolBar ref="toolBarRef" />
     
     <!-- 主要内容区域 -->
-    <div class="list-container">
+    <div class="list-container" :class="{ 'show': showMobileList }">
       <div class="list-header">
+        <!-- 移动端关闭按钮 -->
+        <div class="mobile-close-btn" @click="toggleMobileList">
+          <span>×</span>
+        </div>
+        
         <h2>{{ title }}</h2>
         <SearchBox 
           v-model="searchQuery" 
-          :placeholder="searchPlaceholder" 
+          :placeholder="searchPlaceholder"
           @search="handleSearch"
         />
       </div>
@@ -74,6 +91,7 @@ const emit = defineEmits(['search', 'filter-change'])
 
 // 响应式数据
 const searchQuery = ref('')
+const showMobileList = ref(false)
 
 // 处理搜索
 function handleSearch() {
@@ -85,9 +103,20 @@ function handleFilterChange(filterKey) {
   emit('filter-change', filterKey)
 }
 
-// 暴露搜索查询给父组件
+// 切换移动端列表显示
+function toggleMobileList() {
+  showMobileList.value = !showMobileList.value
+}
+
+// 关闭移动端列表
+function closeMobileList() {
+  showMobileList.value = false
+}
+
+// 暴露搜索查询和关闭方法给父组件
 defineExpose({
-  searchQuery
+  searchQuery,
+  closeMobileList
 })
 </script>
 
@@ -115,6 +144,86 @@ defineExpose({
 .list-header {
   padding: 20px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.mobile-menu-trigger {
+  display: none;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+  z-index: 1001;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-menu-trigger:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.mobile-menu-trigger.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+}
+
+.hamburger-icon {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hamburger-icon span {
+  width: 20px;
+  height: 2px;
+  background: #667eea;
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: none;
+}
+
+.mobile-close-btn {
+  display: none;
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.mobile-close-btn:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.1);
+}
+
+.mobile-close-btn span {
+  font-size: 20px;
+  color: #666;
+  line-height: 1;
 }
 
 .list-header h2 {
@@ -231,47 +340,115 @@ defineExpose({
 /* 响应式设计 */
 @media (max-width: 768px) {
   .admin-container {
-    flex-direction: column;
+    position: relative;
   }
   
   .list-container {
-    width: 100%;
-    height: 50%;
-    border-radius: 20px 20px 0 0;
-    margin: 20px 20px 0;
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 280px;
+    height: 100vh;
+    z-index: 1000;
+    margin: 0;
+    border-radius: 0 20px 20px 0;
+    transition: left 0.3s ease;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(15px);
+  }
+  
+  .list-container.show {
+    left: 0;
+  }
+  
+  .mobile-menu-trigger {
+    display: flex;
+  }
+  
+  .mobile-overlay {
+    display: block;
+  }
+  
+  .mobile-close-btn {
+    display: flex;
   }
   
   .list-header {
-    padding: 20px 15px 15px;
-    border-radius: 20px 20px 0 0;
+    padding: 15px;
+    border-radius: 0 20px 0 0;
   }
   
   .list-header h2 {
-    font-size: 20px;
-    margin-bottom: 15px;
+    font-size: 18px;
+    margin-bottom: 12px;
   }
   
   .stats-section {
-    padding: 15px 10px;
+    padding: 10px 15px;
     gap: 6px;
   }
   
   .stat-card {
-    padding: 8px 4px;
-    min-width: 50px;
-    max-width: 70px;
+    padding: 8px 6px;
+    min-width: 45px;
+    max-width: 60px;
   }
   
   .stat-icon {
-    font-size: 16px;
+    font-size: 14px;
   }
   
   .stat-label {
-    font-size: 9px;
+    font-size: 8px;
   }
   
   .stat-number {
-    font-size: 14px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .list-container {
+    width: 100%;
+    left: -100%;
+    border-radius: 0;
+  }
+  
+  .list-container.show {
+    left: 0;
+  }
+  
+  .list-header {
+    padding: 12px;
+    border-radius: 0;
+  }
+  
+  .list-header h2 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .stats-section {
+    padding: 8px 12px;
+    gap: 4px;
+  }
+  
+  .stat-card {
+    padding: 6px 4px;
+    min-width: 40px;
+    max-width: 55px;
+  }
+  
+  .stat-icon {
+    font-size: 12px;
+  }
+  
+  .stat-label {
+    font-size: 7px;
+  }
+  
+  .stat-number {
+    font-size: 11px;
   }
 }
 </style>
