@@ -215,38 +215,32 @@ function handleSearch(query) {
 }
 
 /* 移动端汉堡菜单按钮样式 */
-.mobile-menu-trigger {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  z-index: 1001;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 10px;
-  border-radius: 15px;
-  border: none;
-  background: rgba(102, 126, 234, 0.1);
-  transition: all 0.3s ease;
-  width: 48px;
-  height: 48px;
-  cursor: pointer;
-}
-
-.mobile-menu-trigger span {
-  width: 18px;
-  height: 2px;
-  background: #667eea;
-  border-radius: 1px;
-  transition: all 0.3s ease;
-}
-
-.mobile-menu-trigger:hover {
-  background: rgba(102, 126, 234, 0.2);
-  transform: scale(1.05);
-}
+  .mobile-menu-trigger {
+    position: fixed;
+    top:20px;
+    left: 20px;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 10px;
+    border-radius: 15px;
+    border: none;
+    background: #667eea1a;
+    transition: all 0.3s ease;
+    width: 48px;
+    height: 48px;
+  }
+  
+  .mobile-menu-trigger span {
+    width: 18px;
+    height: 2px;
+    background-color: rgb(107, 2, 128);
+    border-radius: 1px;
+    transition: all 0.3s ease;
+  }
 
 /* 移动端适配 */
 @media (max-width: 768px) {
@@ -331,14 +325,30 @@ function handleSearch(query) {
 
 @media (max-width: 480px) {
   .mobile-menu-trigger {
-    top: 15px;
-    left: 15px;
-    width: 44px;
-    height: 44px;
+    position: fixed;
+    top:20px;
+    left: 20px;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 10px;
+    border-radius: 15px;
+    border: none;
+    background: #667eea1a;
+    transition: all 0.3s ease;
+    width: 48px;
+    height: 48px;
   }
-
+  
   .mobile-menu-trigger span {
-    width: 16px;
+    width: 18px;
+    height: 2px;
+    background-color: rgb(107, 2, 128);
+    border-radius: 1px;
+    transition: all 0.3s ease;
   }
 
   .ai-list-header {

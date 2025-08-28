@@ -1,5 +1,11 @@
 <template>
   <div class="user-detail-container">
+    <!-- 移动端返回按钮 -->
+    <div class="mobile-back-btn" @click="goBackToList">
+      <span>←</span>
+      <span>返回</span>
+    </div>
+    
     <div v-if="selectedUser" class="user-detail">
       <!-- 用户基本信息区域 -->
       <div class="user-info-section">
@@ -173,6 +179,15 @@ const props = defineProps({
 
 // 定义emits
 const emit = defineEmits(['update-user', 'delete-user'])
+
+// 移动端返回列表函数
+function goBackToList() {
+  // 在移动端隐藏详情区域，显示列表
+  const adminContainer = document.querySelector('.admin-container')
+  if (adminContainer) {
+    adminContainer.classList.add('show-list')
+  }
+}
 
 // 响应式数据
 const showDialog = ref(false)
@@ -420,6 +435,32 @@ function formatLogTime(time) {
 </script>
 
 <style scoped>
+/* 移动端返回按钮 */
+.mobile-back-btn {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  transition: background-color 0.3s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.mobile-back-btn:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+.mobile-back-btn span:first-child {
+  font-size: 18px;
+  font-weight: bold;
+}
+
 .user-detail-container {
   flex: 1;
   background: rgba(255, 255, 255, 0.95);
@@ -930,6 +971,10 @@ function formatLogTime(time) {
 
 /* 移动端适配 */
 @media (max-width: 768px) {
+  .mobile-back-btn {
+    display: flex;
+  }
+  
   .user-detail-container {
     margin: 10px;
     border-radius: 15px;
@@ -1084,6 +1129,16 @@ function formatLogTime(time) {
 }
 
 @media (max-width: 480px) {
+  .mobile-back-btn {
+    display: flex;
+    padding: 10px 15px;
+    font-size: 13px;
+  }
+  
+  .mobile-back-btn span:first-child {
+    font-size: 16px;
+  }
+  
   .user-detail-container {
     margin: 5px;
     border-radius: 12px;

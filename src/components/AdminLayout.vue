@@ -1,28 +1,13 @@
 <template>
   <div class="admin-container">
-    <!-- 移动端汉堡菜单按钮 -->
-    <div class="mobile-menu-trigger" :class="{ 'hidden': showMobileList }" @click="toggleMobileList">
-      <div class="hamburger-icon">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-    </div>
-    
-    <!-- 移动端遮罩层 -->
-    <div v-if="showMobileList" class="mobile-overlay" @click="toggleMobileList"></div>
+
     
     <!-- 左侧工具栏 -->
     <ToolBar ref="toolBarRef" />
     
     <!-- 主要内容区域 -->
-    <div class="list-container" :class="{ 'show': showMobileList }">
+    <div class="list-container">
       <div class="list-header">
-        <!-- 移动端关闭按钮 -->
-        <div class="mobile-close-btn" @click="toggleMobileList">
-          <span>×</span>
-        </div>
-        
         <h2>{{ title }}</h2>
         <SearchBox 
           v-model="searchQuery" 
@@ -57,7 +42,9 @@
     </div>
     
     <!-- 详情区域插槽 -->
-    <slot name="detail-area"></slot>
+    <div class="detail-area">
+      <slot name="detail-area"></slot>
+    </div>
   </div>
 </template>
 
@@ -91,7 +78,6 @@ const emit = defineEmits(['search', 'filter-change'])
 
 // 响应式数据
 const searchQuery = ref('')
-const showMobileList = ref(false)
 
 // 处理搜索
 function handleSearch() {
@@ -103,20 +89,9 @@ function handleFilterChange(filterKey) {
   emit('filter-change', filterKey)
 }
 
-// 切换移动端列表显示
-function toggleMobileList() {
-  showMobileList.value = !showMobileList.value
-}
-
-// 关闭移动端列表
-function closeMobileList() {
-  showMobileList.value = false
-}
-
-// 暴露搜索查询和关闭方法给父组件
+// 暴露搜索查询给父组件
 defineExpose({
-  searchQuery,
-  closeMobileList
+  searchQuery
 })
 </script>
 
@@ -146,85 +121,9 @@ defineExpose({
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.mobile-menu-trigger {
-  display: none;
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  width: 40px;
-  height: 40px;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  transition: background-color 0.3s ease;
-  z-index: 1001;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
 
-.mobile-menu-trigger:hover {
-  background: rgba(102, 126, 234, 0.1);
-}
 
-.mobile-menu-trigger.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.8);
-}
 
-.hamburger-icon {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.hamburger-icon span {
-  width: 20px;
-  height: 2px;
-  background: #667eea;
-  border-radius: 1px;
-  transition: all 0.3s ease;
-}
-
-.mobile-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-  display: none;
-}
-
-.mobile-close-btn {
-  display: none;
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.8);
-  transition: all 0.3s ease;
-  z-index: 10;
-}
-
-.mobile-close-btn:hover {
-  background: rgba(255, 255, 255, 1);
-  transform: scale(1.1);
-}
-
-.mobile-close-btn span {
-  font-size: 20px;
-  color: #666;
-  line-height: 1;
-}
 
 .list-header h2 {
   margin: 0 0 15px 0;
@@ -251,7 +150,6 @@ defineExpose({
 .stat-card {
   flex: 1;
   min-width: 60px;
-  max-width: 80px;
   background: rgba(255, 255, 255, 0.8);
   border-radius: 12px;
   padding: 12px 8px;
@@ -314,6 +212,20 @@ defineExpose({
   overflow-y: auto;
 }
 
+/* 详情区域样式 */
+.detail-area {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 0 20px 20px 0;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-right: 20px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+
 /* 滚动条样式 */
 .list-content::-webkit-scrollbar,
 .items-container::-webkit-scrollbar {
@@ -361,17 +273,31 @@ defineExpose({
     left: 0;
   }
   
-  .mobile-menu-trigger {
-    display: flex;
+  .admin-container.show-list .list-container {
+    left: 0;
   }
   
-  .mobile-overlay {
-    display: block;
+  .admin-container.show-list .detail-area {
+    left: 100%;
   }
   
-  .mobile-close-btn {
-    display: flex;
+  .detail-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    border-radius: 0;
+    z-index: 500;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(15px);
+    transition: left 0.3s ease;
   }
+  
+
+  
+  
   
   .list-header {
     padding: 15px;
@@ -391,7 +317,6 @@ defineExpose({
   .stat-card {
     padding: 8px 6px;
     min-width: 45px;
-    max-width: 60px;
   }
   
   .stat-icon {
@@ -418,6 +343,28 @@ defineExpose({
     left: 0;
   }
   
+  .admin-container.show-list .list-container {
+    left: 0;
+  }
+  
+  .admin-container.show-list .detail-area {
+    left: 100%;
+  }
+  
+  .detail-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    border-radius: 0;
+    z-index: 500;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(15px);
+    transition: left 0.3s ease;
+  }
+  
   .list-header {
     padding: 12px;
     border-radius: 0;
@@ -436,7 +383,6 @@ defineExpose({
   .stat-card {
     padding: 6px 4px;
     min-width: 40px;
-    max-width: 55px;
   }
   
   .stat-icon {

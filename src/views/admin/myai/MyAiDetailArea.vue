@@ -1,5 +1,11 @@
 <template>
   <div class="ai-detail-container">
+    <!-- 移动端返回按钮 -->
+    <div class="mobile-back-btn" @click="goBackToList">
+       <span>←</span>
+       <span>我的ai</span>
+     </div>
+    
     <div v-if="selectedAi" class="ai-detail">
       <!-- AI基本信息区域 -->
       <div class="ai-info-section">
@@ -371,6 +377,31 @@ async function confirmDelete() {
       }
     }
   }
+}
+
+// 移动端返回列表
+function goBackToList() {
+  if (isMobile()) {
+    // 显示移动端列表
+    const adminLayoutRef = document.querySelector('.admin-container')
+    if (adminLayoutRef) {
+      const listContainer = adminLayoutRef.querySelector('.list-container')
+      const mobileOverlay = adminLayoutRef.querySelector('.mobile-overlay')
+      
+      if (listContainer) {
+        listContainer.classList.add('show')
+      }
+      
+      if (mobileOverlay) {
+        mobileOverlay.style.display = 'block'
+      }
+    }
+  }
+}
+
+// 移动端检测函数
+function isMobile() {
+  return window.innerWidth <= 768
 }
 
 function getStatusText(status) {
@@ -1143,5 +1174,330 @@ function togglePromptExpanded() {
 
 .cancel-btn:hover {
   background: #d1d5db;
+}
+
+/* 移动端返回按钮样式 */
+.mobile-back-btn {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(102, 126, 234, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+  color: #667eea;
+}
+
+.mobile-back-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+}
+
+.mobile-back-btn span:first-child {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .mobile-back-btn {
+    display: flex;
+  }
+  
+  .ai-detail-container {
+    margin: 10px;
+    border-radius: 15px;
+    height: calc(100vh - 20px);
+    overflow: hidden;
+  }
+  
+  .ai-detail {
+    padding: 20px 20px 100px 20px;
+    height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+  
+  .ai-info-section {
+    flex-direction: column;
+    text-align: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+  }
+  
+  .ai-avatar-large {
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+  
+  .ai-avatar-large img {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .online-indicator-large {
+    width: 15px;
+    height: 15px;
+    bottom: 3px;
+    right: 3px;
+  }
+  
+  .paused-indicator-large {
+    font-size: 16px;
+  }
+  
+  .ai-name {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+  
+  .ai-description {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  .ai-badges {
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .status-badge {
+    padding: 3px 10px;
+    font-size: 11px;
+  }
+  
+  .ai-stats-section,
+  .ai-actions-section,
+  .ai-prompt-section,
+  .ai-performance-section {
+    margin-bottom: 25px;
+  }
+  
+  .ai-stats-section h3,
+  .ai-actions-section h3,
+  .ai-prompt-section h3,
+  .ai-performance-section h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .stat-item {
+    padding: 0px;
+  }
+  
+  .stat-icon {
+    font-size: 18px;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+  }
+  
+  .stat-value {
+    font-size: 14px;
+  }
+  
+  .action-buttons {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .action-button {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  .button-text {
+    font-size: 14px;
+  }
+  
+  .prompt-container {
+    margin-bottom: 15px;
+  }
+  
+  .prompt-header {
+    padding: 12px;
+  }
+  
+  .prompt-title {
+    font-size: 14px;
+  }
+  
+  .prompt-text {
+    font-size: 13px;
+    padding: 12px;
+  }
+  
+  .performance-grid {
+    gap: 10px;
+  }
+  
+  .performance-item {
+    padding: 12px;
+  }
+  
+  .performance-label {
+    font-size: 11px;
+  }
+  
+  .performance-value {
+    font-size: 14px;
+  }
+  
+  .empty-area {
+    padding: 20px;
+  }
+  
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+  }
+  
+  .empty-area h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+  
+  .empty-area p {
+    font-size: 13px;
+  }
+  
+  .edit-dialog {
+    width: 95vw;
+    margin: 10px;
+    border-radius: 12px;
+  }
+  
+  .dialog-header {
+    padding: 15px;
+  }
+  
+  .dialog-header h3 {
+    font-size: 16px;
+  }
+  
+  .dialog-content {
+    padding: 15px;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  
+  .form-input,
+  .form-select,
+  .form-textarea {
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  .dialog-actions {
+    padding: 15px;
+    gap: 10px;
+  }
+  
+  .dialog-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-back-btn {
+    display: flex;
+    padding: 10px 15px;
+    font-size: 13px;
+  }
+  
+  .mobile-back-btn span:first-child {
+    font-size: 16px;
+  }
+  
+  .ai-detail {
+    padding: 15px 15px 100px 15px;
+    height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+  
+  .ai-performance-section {
+    display: none;
+  }
+  
+  .ai-avatar-large img {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .ai-name {
+    font-size: 20px;
+  }
+  
+  .ai-description {
+    font-size: 13px;
+  }
+  
+  .stats-grid {
+    gap: 8px;
+  }
+  
+  .stat-item {
+    padding: 0px;
+  }
+  
+  .stat-icon {
+    font-size: 16px;
+  }
+  
+  .stat-label {
+    font-size: 11px;
+  }
+  
+  .stat-value {
+    font-size: 13px;
+  }
+  
+  .action-buttons {
+    gap: 8px;
+  }
+  
+  .action-button {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .prompt-text {
+    font-size: 12px;
+    padding: 10px;
+  }
+  
+  .performance-item {
+    padding: 10px;
+  }
+  
+  .edit-dialog {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    border-radius: 0;
+  }
+  
+  .dialog-header,
+  .dialog-content,
+  .dialog-actions {
+    padding: 12px;
+  }
 }
 </style>

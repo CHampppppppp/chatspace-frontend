@@ -146,6 +146,29 @@ function selectAi(ai) {
   selectedAiId.value = ai.aiId
   // 获取AI详情
   fetchAiDetail(ai.aiId)
+  
+  // 移动端自动跳转到详情区域
+  if (isMobile()) {
+    // 关闭移动端列表，显示详情区域
+    const adminLayoutRef = document.querySelector('.admin-container')
+    if (adminLayoutRef) {
+      const listContainer = adminLayoutRef.querySelector('.list-container')
+      const mobileOverlay = adminLayoutRef.querySelector('.mobile-overlay')
+      
+      if (listContainer && listContainer.classList.contains('show')) {
+        listContainer.classList.remove('show')
+      }
+      
+      if (mobileOverlay) {
+        mobileOverlay.style.display = 'none'
+      }
+    }
+  }
+}
+
+// 移动端检测函数
+function isMobile() {
+  return window.innerWidth <= 768
 }
 
 // 获取AI列表
@@ -403,6 +426,240 @@ onMounted(() => {
 .ai-status.maintenance {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .ai-items {
+    gap: 10px;
+  }
+  
+  .ai-item {
+    padding: 12px;
+    border-radius: 10px;
+  }
+  
+  .ai-avatar {
+    margin-right: 12px;
+  }
+  
+  .ai-avatar img {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .online-indicator {
+    width: 10px;
+    height: 10px;
+    bottom: 1px;
+    right: 1px;
+  }
+  
+  .paused-indicator {
+    font-size: 10px;
+    width: 18px;
+    height: 18px;
+  }
+  
+  .ai-name {
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
+  
+  .ai-model {
+    font-size: 11px;
+    margin-bottom: 5px;
+  }
+  
+  .ai-meta {
+    gap: 6px;
+  }
+  
+  .ai-type {
+    padding: 2px 6px;
+    font-size: 9px;
+  }
+  
+  .ai-status {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ai-items {
+    gap: 8px;
+  }
+  
+  .ai-item {
+    padding: 10px;
+  }
+  
+  .ai-avatar {
+    margin-right: 10px;
+  }
+  
+  .ai-avatar img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .online-indicator {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .paused-indicator {
+    font-size: 9px;
+    width: 16px;
+    height: 16px;
+  }
+  
+  .ai-name {
+    font-size: 12px;
+  }
+  
+  .ai-model {
+    font-size: 10px;
+  }
+  
+  .ai-type {
+    padding: 1px 5px;
+    font-size: 8px;
+  }
+  
+  .ai-status {
+    font-size: 10px;
+  }
+}
+
+/* 删除确认对话框样式 */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirm-dialog {
+  background: white;
+  border-radius: 16px;
+  width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+}
+
+.confirm-content {
+  padding: 30px;
+  text-align: center;
+}
+
+.confirm-content h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.confirm-content p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  padding: 0 30px 30px;
+  justify-content: center;
+}
+
+.dialog-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.delete-btn {
+  background: #ef4444;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #dc2626;
+}
+
+.cancel-btn {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.cancel-btn:hover {
+  background: #d1d5db;
+}
+
+/* 删除对话框移动端适配 */
+@media (max-width: 768px) {
+  .confirm-dialog {
+    width: 95vw;
+    margin: 20px;
+  }
+  
+  .confirm-content {
+    padding: 25px 20px;
+  }
+  
+  .confirm-content h3 {
+    font-size: 18px;
+  }
+  
+  .confirm-content p {
+    font-size: 13px;
+  }
+  
+  .confirm-actions {
+    padding: 0 20px 25px;
+    gap: 10px;
+  }
+  
+  .dialog-btn {
+    padding: 10px 20px;
+    font-size: 13px;
+    min-width: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .confirm-dialog {
+    width: 100vw;
+    margin: 0;
+    border-radius: 0;
+  }
+  
+  .confirm-content {
+    padding: 20px 15px;
+  }
+  
+  .confirm-actions {
+    padding: 0 15px 20px;
+    flex-direction: column;
+  }
+  
+  .dialog-btn {
+    width: 100%;
+    padding: 12px;
+  }
 }
 
 </style>
